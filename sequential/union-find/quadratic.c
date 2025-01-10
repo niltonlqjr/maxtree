@@ -3,6 +3,8 @@
 
 #define NUM_NEIGHBORS 4
 
+int verbose=0;
+
 typedef struct {
     int id;
     int x,y;
@@ -75,17 +77,21 @@ void max_tree(pel_inf values[], int parent[], pel_inf s[], int l, int c){
     sort_pixels(s,tam);
 
     for(int i=tam-1; i>=0; i--){
-        printf("I=%d\n",i);
         int pid = s[i].id;
         parent[pid] = pid;
         zpar[pid] = pid;
-        print_pel_inf(values[pid]);
-        printf("\n");
+        if(verbose){
+            printf("I=%d\n",i);
+            print_pel_inf(values[pid]);
+            printf("\n");
+        }
         int num_n = get_neighbors_4(values[pid],l,c,nb);
         for(int inb=0; inb<num_n; inb++){
-            printf("neighbor:");
-            print_pel_inf(values[nb[inb]]);
-            printf("\n");
+            if(verbose){
+                printf("neighbor:");
+                print_pel_inf(values[nb[inb]]);
+                printf("\n");
+            }
             int nb_idx = nb[inb];
             if(parent[nb_idx] != -1){
                 int r = find_root(zpar, nb_idx);
@@ -95,7 +101,8 @@ void max_tree(pel_inf values[], int parent[], pel_inf s[], int l, int c){
                 }
             }
         }
-        printf("===========\n\n");
+        if(verbose){
+        printf("===========\n\n");}
     }
     canonicalize(parent, s, tam);
 }
@@ -104,13 +111,14 @@ void max_tree(pel_inf values[], int parent[], pel_inf s[], int l, int c){
 int main(int argc, char *argv[]){
     VipsImage *im, *imm;
     int h, w, tam;
-    int verbose=1;
+    
     VipsInterpretation interpretation;
     
     VipsPel *p;
 
     if(argc < 2){
         fprintf(stderr, "Usage: %s <image>\n", argv[0]);
+        return 0;
     }
 
     im = vips_image_new_from_file(argv[1],NULL);
@@ -159,13 +167,13 @@ int main(int argc, char *argv[]){
     int *parent = (int*)malloc(sizeof(int) * tam);
 
     max_tree(values, parent, s, h, w);
-
-    for(int i=0;i<tam;i++){
-        printf("%d ",parent[i]);
-        print_pel_inf(values[i]);
-        printf("\n");
+    if(verbose){    
+        for(int i=0;i<tam;i++){
+            printf("%d ",parent[i]);
+            print_pel_inf(values[i]);
+            printf("\n");
+        }
     }
-
     printf("\n");
     return 0;
 }
