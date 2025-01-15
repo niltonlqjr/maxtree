@@ -3,7 +3,7 @@
 
 #define NUM_NEIGHBORS 4
 
-int verbose=0;
+int verbose=1;
 
 typedef struct {
     int id;
