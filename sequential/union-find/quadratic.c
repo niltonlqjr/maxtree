@@ -22,6 +22,37 @@ void print_pel_inf(pel_inf p){
     printf("(x: %d, y: %d, value: %d)", p.x, p.y, p.value);
 }
 
+void print_image_of_pels(pel_inf img[], int npel){
+    u_int8_t **mat;
+    int i, j, h=0, w=0;
+    for(i=0;i<npel; i++){
+        if(img[i].x > w){
+            w = img[i].x;
+        }
+        if(img[i].y > h){;
+            h = img[i].y;
+        }
+    }
+    w++;
+    h++;
+    printf("h:%d, w:%d, npel:%d\n",h,w,npel);
+    mat = (u_int8_t**)malloc(h*sizeof(u_int8_t*));
+    for (i=0;i<h;i++){
+        mat[i] = (u_int8_t*)malloc(w*sizeof(u_int8_t));
+    }
+
+    for(i=0;i<npel;i++){
+        mat[img[i].y][img[i].x] = img[i].value;
+    }
+
+    for(i=0;i<h;i++){
+        for(j=0;j<w;j++){
+            printf("%4hhu ",mat[i][j]);
+        }
+        printf("\n");
+    }
+}
+
 void sort_pixels(pel_inf values[], size_t n){
     qsort(values, n, sizeof(pel_inf), cmp_pel_inf);
 }
@@ -175,5 +206,7 @@ int main(int argc, char *argv[]){
         }
     }
     printf("\n");
+
+    print_image_of_pels(values, tam);
     return 0;
 }
