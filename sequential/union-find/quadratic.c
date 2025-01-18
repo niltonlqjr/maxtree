@@ -1,14 +1,17 @@
 #include <stdio.h>
 #include <vips/vips.h>
+#include <stdint.h>
+#include <stddef.h>
 
 #define NUM_NEIGHBORS 4
 
-int verbose=1;
+#define verbose 1
 
 typedef struct {
     int id;
     int x,y;
-    u_int8_t value;
+    uint8_t value;
+    int parent;
 } pel_inf;
 
 int cmp_pel_inf(const void *pel_inf1, const void *pel_inf2){
@@ -19,11 +22,12 @@ int cmp_pel_inf(const void *pel_inf1, const void *pel_inf2){
 }
 
 void print_pel_inf(pel_inf p){
-    printf("(x: %d, y: %d, value: %d)", p.x, p.y, p.value);
+    printf("(id: %d, x: %d, y: %d, value: %d, parent: %d)",p.id, p.x, p.y, p.value, p.parent);
 }
 
-void print_image_of_pels(pel_inf img[], int npel){
-    u_int8_t **mat;
+
+void print_parents(pel_inf img[], int npel){
+    int **mat;
     int i, j, h=0, w=0;
     for(i=0;i<npel; i++){
         if(img[i].x > w){
@@ -36,9 +40,40 @@ void print_image_of_pels(pel_inf img[], int npel){
     w++;
     h++;
     printf("h:%d, w:%d, npel:%d\n",h,w,npel);
-    mat = (u_int8_t**)malloc(h*sizeof(u_int8_t*));
+    mat = (int**)malloc(h*sizeof(int*));
     for (i=0;i<h;i++){
-        mat[i] = (u_int8_t*)malloc(w*sizeof(u_int8_t));
+        mat[i] = (int*)malloc(w*sizeof(int));
+    }
+
+    for(i=0;i<npel;i++){
+        mat[img[i].y][img[i].x] = img[i].parent;
+    }
+
+    for(i=0;i<h;i++){
+        for(j=0;j<w;j++){
+            printf("%4d ",mat[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+void print_image_of_pels(pel_inf img[], int npel ){
+    uint8_t **mat;
+    int i, j, h=0, w=0;
+    for(i=0;i<npel; i++){
+        if(img[i].x > w){
+            w = img[i].x;
+        }
+        if(img[i].y > h){;
+            h = img[i].y;
+        }
+    }
+    w++;
+    h++;
+    printf("h:%d, w:%d, npel:%d\n",h,w,npel);
+    mat = (uint8_t**)malloc(h*sizeof(uint8_t*));
+    for (i=0;i<h;i++){
+        mat[i] = (uint8_t*)malloc(w*sizeof(uint8_t));
     }
 
     for(i=0;i<npel;i++){
@@ -51,18 +86,12 @@ void print_image_of_pels(pel_inf img[], int npel){
         }
         printf("\n");
     }
+    return;
 }
 
 void sort_pixels(pel_inf values[], size_t n){
+    print_image_of_pels(values, n);
     qsort(values, n, sizeof(pel_inf), cmp_pel_inf);
-}
-
-
-int find_root(int parents[], int p){
-    if(parents[p] != p){
-        parents[p] = find_root(parents, parents[p]);
-    }
-    return parents[p];
 }
 
 int get_neighbors_4(pel_inf p, int l, int c, int N[]){
@@ -86,30 +115,45 @@ int get_neighbors_4(pel_inf p, int l, int c, int N[]){
     return nn;
 }
 
-void canonicalize(int parent[], pel_inf s[], int tam){
-    for(int pid=0;pid<tam;pid++){
-        int q = parent[pid];
-        if(s[q].value == s[parent[q]].value){
-            parent[pid] = parent[q];
+int find_root(int parents[], int p){
+    if(parents[p] != p){
+        parents[p] = find_root(parents, parents[p]);
+    }
+    return parents[p];
+}
+
+void canonicalize(pel_inf values[], pel_inf s[], int tam){
+    for(int i=0;i<tam;i++){
+        int p = s[i].id;
+        int q = values[p].parent;
+        if(values[q].value == values[values[q].parent].value){
+            values[p].parent = values[q].parent;
         }
     }
 }
 
-void max_tree(pel_inf values[], int parent[], pel_inf s[], int l, int c){
+void max_tree(pel_inf values[], pel_inf s[], int l, int c){
     int tam = l*c;
-    int *zpar = (int*)malloc(sizeof(int) * tam);
 
+    int *zpar = (int*)malloc(sizeof(int) * tam);
     int *nb = malloc(NUM_NEIGHBORS*sizeof(int));
 
-    for(int i=0;i<tam;i++){
-        parent[i] = -1;
+    if(verbose){
+        printf("initi\n");
     }
-
+    for(int i=0;i<tam;i++){
+        if(verbose){
+            print_pel_inf(s[i]);
+            printf("\n");
+        } 
+        values[i].parent = -1;
+    }
+    
     sort_pixels(s,tam);
 
     for(int i=tam-1; i>=0; i--){
         int pid = s[i].id;
-        parent[pid] = pid;
+        values[pid].parent = pid;
         zpar[pid] = pid;
         if(verbose){
             printf("I=%d\n",i);
@@ -119,24 +163,38 @@ void max_tree(pel_inf values[], int parent[], pel_inf s[], int l, int c){
         int num_n = get_neighbors_4(values[pid],l,c,nb);
         for(int inb=0; inb<num_n; inb++){
             if(verbose){
-                printf("neighbor:");
+                printf("neighbor:%d",inb);
                 print_pel_inf(values[nb[inb]]);
                 printf("\n");
             }
             int nb_idx = nb[inb];
-            if(parent[nb_idx] != -1){
-                int r = find_root(zpar, nb_idx);
+            int r=pid;
+            if(values[nb_idx].parent != -1){
+                r = find_root(zpar, nb_idx);
                 if(r!=pid){
                     zpar[r]=pid;
-                    parent[r]=pid;
+                    values[r].parent=pid;
+                    
                 }
+            }
+            if(verbose){
+                printf("values[r]: ");
+                print_pel_inf(values[r]);
+                printf("\n");
             }
         }
         if(verbose){
-        printf("===========\n\n");}
+            printf("===========\n\n");
+        }
     }
-    canonicalize(parent, s, tam);
+    if(verbose){
+        print_image_of_pels(values,tam);
+        print_parents(values,tam);
+        printf("cononicalizing\n");
+    }
+    canonicalize(values, s, tam);
 }
+
 
 
 int main(int argc, char *argv[]){
@@ -177,6 +235,7 @@ int main(int argc, char *argv[]){
             values[idx].x=col;
             values[idx].y=lin;
             values[idx].value = *p;
+            values[idx].parent = -1;
             s[idx] = values[idx];
             idx++;
         }
@@ -194,19 +253,18 @@ int main(int argc, char *argv[]){
 */  
     printf("interpretation = %d\n",interpretation);
     printf("element size: %ld\n", VIPS_IMAGE_SIZEOF_ELEMENT(imm));
-    
-    int *parent = (int*)malloc(sizeof(int) * tam);
-
-    max_tree(values, parent, s, h, w);
-    if(verbose){    
+    max_tree(values, s, h, w);
+    /*if(verbose){    
         for(int i=0;i<tam;i++){
-            printf("%d ",parent[i]);
+            
             print_pel_inf(values[i]);
             printf("\n");
         }
-    }
+    }*/
     printf("\n");
 
+    print_parents(values, tam);
     print_image_of_pels(values, tam);
+    
     return 0;
 }
