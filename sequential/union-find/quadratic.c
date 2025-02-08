@@ -5,7 +5,7 @@
 
 #define NUM_NEIGHBORS 4
 
-#define verbose 1
+int verbose;
 
 typedef struct {
     int id;
@@ -200,14 +200,18 @@ void max_tree(pel_inf values[], pel_inf s[], int l, int c){
 int main(int argc, char *argv[]){
     VipsImage *im, *imm;
     int h, w, tam;
-    
+
     VipsInterpretation interpretation;
     
     VipsPel *p;
 
     if(argc < 2){
-        fprintf(stderr, "Usage: %s <image>\n", argv[0]);
+        fprintf(stderr, "Usage: %s image-file [verbose 0/1]\n", argv[0]);
         return 0;
+    }else if(argc < 3){
+        verbose=0;
+    }else{
+        verbose=atoi(argv[2]);
     }
 
     im = vips_image_new_from_file(argv[1],NULL);

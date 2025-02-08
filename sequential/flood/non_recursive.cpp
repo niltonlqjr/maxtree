@@ -7,23 +7,10 @@ VImage *maxtree(VImage *in){
     return parents;
 }
 
-
-int main (int argc, char **argv){
-    VImage *in, fin;
-    int h, w;
-    
-    if (VIPS_INIT (argv[0])) 
-        vips_error_exit (NULL);
-    
-    
-    fin = VImage::new_from_file(argv[1],NULL);
-
-    in = new VImage(VImage::new_from_file(argv[1],NULL));
-
-
-    h=in->height();
-    w=in->width();
+void print_VImage(VImage *in){
     double p;
+    int h=in->height();
+    int w=in->width();
 
     for(int l=0; l < h; l++){
         for(int c=0; c < w; c++){
@@ -34,10 +21,23 @@ int main (int argc, char **argv){
         std::cout << "\n";
     }
 
+    return;
+}
+
+
+int main(int argc, char **argv){
+    VImage *in;
+    
+    if (VIPS_INIT (argv[0])) 
+        vips_error_exit (NULL);
+
+    in = new VImage(VImage::new_from_file(argv[1],NULL));
+
+    print_VImage(in);
     
     
 
-    vips_shutdown ();
+    vips_shutdown();
     std::cout << "\n";
     return 0;
 }
