@@ -32,7 +32,7 @@ class maxtree_node{
 };
 
 
-int index_of(int c, int l, int h, int w){
+unsigned int index_of(unsigned int l, unsigned int c, int h, int w){
     return l*w+c;    
 }
 
@@ -76,10 +76,18 @@ std::vector<unsigned int> get_neighbours(unsigned int pixel, int h, int w){
     std::vector<unsigned int> v;
     unsigned int pl, pc;
     std::tie(pl, pc) = lin_col(pixel, h, w);
-    v.push_back(index_of(pl+1, pc, h, w));
-    v.push_back(index_of(pl-1, pc, h, w));
-    v.push_back(index_of(pl, pc+1, h, w));
-    v.push_back(index_of(pl, pc-1, h, w));
+    if(pl < (unsigned int)h - 1){
+        v.push_back(index_of(pl+1, pc, h, w));
+    }
+    if(pl >= 1){
+        v.push_back(index_of(pl-1, pc, h, w));
+    }
+    if(pc < (unsigned int)w - 1){
+        v.push_back(index_of(pl, pc+1, h, w));
+    }
+    if(pc >= 1){
+        v.push_back(index_of(pl, pc-1, h, w));
+    }
     return v;
 }
 
@@ -94,12 +102,20 @@ unsigned int min_gval(std::vector<maxtree_node> *t){
     return min;
 }
 
+
+
+
 std::vector<maxtree_node> *maxtree(VImage *in, int band = 0){
     std::vector<maxtree_node> *data;
     data = new std::vector<maxtree_node>;
     int h=in->height();
     int w=in->width();
     std::vector<bool> *visited = new std::vector<bool>;
+    std::priority_queue<unsigned int> idx_pq;
+    std::stack<unsigned int> idx_stack;
+    unsigned int nextpix, smallest_idx, p,  t, stack_top;
+
+
     for(int l=0; l<h; l++){
         for(int c=0;c<w;c++){
             double pval = in->getpoint(c,l)[band];
@@ -108,21 +124,20 @@ std::vector<maxtree_node> *maxtree(VImage *in, int band = 0){
             visited->push_back(false);
         }
     }
-    print_matrix(data, h, w);
-    
-    std::priority_queue<unsigned int> idx_pq;
-    std::stack<unsigned int> idx_stack;
-    
-    unsigned int nextpix, smallest_idx, p;
-    nextpix = smallest_idx = min_gval(data);
 
+    nextpix = smallest_idx = min_gval(data);
     idx_pq.push(smallest_idx);
     idx_stack.push(smallest_idx);
     std::cout << nextpix << " "<< smallest_idx;
+
     do{
         p=nextpix;
         std::vector<unsigned int> neighbours = get_neighbours(p,h,w);
-        for(auto q : neighbours){
+        for(unsigned int q : neighbours){
+            if(!visited->at(q)){
+                idx_pq.push(q);
+                visited->at(q) = true;
+            }
             if(data->at(q).gval > data->at(p).gval){
                 break;
             }
@@ -132,14 +147,13 @@ std::vector<maxtree_node> *maxtree(VImage *in, int band = 0){
             idx_stack.push(nextpix);
         }else{
             idx_pq.pop();
-            unsigned int stack_top = idx_stack.top();
+            stack_top = idx_stack.top();
             if(p!=stack_top){
                 data->at(p).parent=stack_top;
 //                data->at(stack_top).area += data->at(p).area;
             }
             if(!idx_pq.empty()) nextpix = idx_pq.top();
             if(data->at(nextpix).gval < data->at(p).gval){
-                unsigned int t;
                 do{
                     
                     if(!idx_stack.empty()) t = idx_stack.top();
@@ -151,14 +165,13 @@ std::vector<maxtree_node> *maxtree(VImage *in, int band = 0){
                     }
                 }while(data->at(t).gval > data->at(nextpix).gval);
             }
-            unsigned int t;
             if(!idx_stack.empty()) t = idx_stack.top();
         }
 
     }while(!idx_pq.empty());
     
     while (!idx_stack.empty()){
-        unsigned int t = idx_stack.top();
+        t = idx_stack.top();
         idx_stack.pop();
         if(p!=t){
             data->at(p).parent=t;
