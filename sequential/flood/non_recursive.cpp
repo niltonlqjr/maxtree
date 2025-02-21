@@ -110,16 +110,16 @@ void print_VImage_band(VImage *in, int band = 0){
     return;
 }
 
-void print_matrix(std::vector<maxtree_node*> *m, int  h, int w){
+void print_matrix(std::vector<maxtree_node*> *m, int  h, int w, bool metadata=false){
     std::cout << h << ", " << w << "\n";
     std::cout << m->size()<<"\n";
     int l,c;
     for(l=0;l<h; l++){
-        std::cout << l << ":";
+        if(metadata) std::cout << l << ":";
         for(c=0;c<w; c++){
-            std::cout << "("<< l << "," << c <<")";
+            if(metadata) std::cout << "("<< l << "," << c <<")";
             std::cout.width(4);
-            std::cout << m->at(index_of(c,l,h,w))->parent;
+            std::cout << m->at(index_of(l,c,h,w))->parent;
         }
         std::cout << "\n";
     }
@@ -190,9 +190,8 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
     pixel_pq.push(nextpix);
     pixel_stack.push(nextpix);
     int __iter=0;
-    std::cout<<"iter:"<<__iter++<<"\n";
     do{
-        std::cout<<"iter:"<<__iter++<<"\n";
+        
         p=nextpix;
         std::vector<maxtree_node *> neighbours = get_neighbours(p,data,h,w);
         for(maxtree_node *q : neighbours){
@@ -222,14 +221,14 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
             if(nextpix->gval < p->gval){
                 do{
                     
-                    if(!pixel_stack.empty()) t = pixel_stack.top();
+                    //if(!pixel_stack.empty()) t = pixel_stack.top();
 
                     if(!pixel_stack.empty()) pixel_stack.pop();
                     if(p!=t){
                         p->parent=t->idx;
 //                        data->at(t).area += data->at(p).area;
                     }
-                }while(t->gval > nextpix->gval);
+                }while(t->gval > nextpix->gval && !pixel_stack.empty());
             }
             if(!pixel_stack.empty()) t = pixel_stack.top();
             if(stack_top->gval < nextpix->gval){
