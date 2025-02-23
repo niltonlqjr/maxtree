@@ -13,40 +13,45 @@ using namespace vips;
 
 
 
-template<typename T, typename cmp>
-class custom_priority_queue : public std::priority_queue<T, std::vector<T>, cmp>
+template<typename T>
+class custom_priority_queue : public std::priority_queue<T, std::vector<T>>
 {
   public:
 
-        bool remove(const T& value) {
-            //auto it= std::find(this->c.begin(), this->c.end(), value);
-            auto it = this->c.begin(); 
-            while(it != this->c.end()){
-                if(*it == value){
-                    break;
-                }
-                it++;
+      bool remove(const T& value) {
+          //auto it= std::find(this->c.begin(), this->c.end(), value);
+          auto it = this->c.begin(); 
+          while(it != this->c.end()){
+            if(*it == value){
+                break;
             }
+            it++;
+          }
 
-            if (it == this->c.end()) {
-                return false;
-            }else if (it == this->c.begin()) {
-                // deque the top element
-                this->pop();
-            }else{
-                // remove element and re-heap
-                this->c.erase(it);
-                std::make_heap(this->c.begin(), this->c.end(), this->comp);
-            }
-            return true;
-        }
+          if (it == this->c.end()) {
+              return false;
+          }
+          if (it == this->c.begin()) {
+              // deque the top element
+              this->pop();
+          }    
+          else {
+              // remove element and re-heap
+              this->c.erase(it);
+              std::make_heap(this->c.begin(), this->c.end(), this->comp);
+         }
+         return true;
+     }
 
-        void print(){
-            for(T n: this->c){
-                std::cout << *n;
-            }
-            std::cout << "\n";
+     std::string to_str(){
+        std::string r;
+        r="";
+        for(auto n: this->c){
+            std::cout << n;
         }
+     }
+
+
 
 };
 
@@ -76,14 +81,6 @@ class maxtree_node{
         this->gval = g;
     }
 
-    std::string to_str(){
-        std::string s;
-        s = "(id:"+ std::to_string(this->idx) 
-            +", parent:"+ std::to_string(this->parent) 
-            +", gval:"+std::to_string(this->gval)+")";
-        return s;
-    }
-
     bool operator>(const maxtree_node &r){
         return this->gval > r.gval;
     }
@@ -104,13 +101,6 @@ class maxtree_node{
     }
 };
 
-
-struct cmp_maxtree_nodes{
-    bool operator()(const maxtree_node* lhs, const maxtree_node* rhs) const
-    {
-        return lhs->gval < rhs->gval;
-    }
-};
 
 void operator<<(std::ostream &o, maxtree_node &n){
     o << "(idx:" << n.idx << " gval:"<< n.gval <<") ";
@@ -204,7 +194,7 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
     int h=in->height();
     int w=in->width();
     std::vector<bool> *visited = new std::vector<bool>;
-    custom_priority_queue<maxtree_node*, cmp_maxtree_nodes> pixel_pq;
+    custom_priority_queue<maxtree_node*> pixel_pq;
     std::stack<maxtree_node*> pixel_stack;
     maxtree_node *nextpix, *p, *stack_top;
 
@@ -219,48 +209,67 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
     }
 
     nextpix = min_gval(data);
-    p = nextpix;
+    pixel_pq.push(nextpix);
+    pixel_stack.push(nextpix);
+    int __iter=0;
 
-    pixel_pq.push(p);
-    pixel_stack.push(p);
+    do{
+        p=nextpix;
+        std::cout << *p;
 
-    while(!pixel_pq.empty()){
-        nextpix = pixel_pq.top();
-        p=nextpix;/* select p to process */
-        maxtree_node *q;
-        //std::cout << pixel_pq.size() << " " << pixel_stack.size() << "\n";
-        //std::cout << p;
-        int i=0;
-        std::vector<maxtree_node*> n;
-        n = get_neighbours(p,data,h,w);
-        while(i < n.size()){
-            q = n.at(i);
+        std::vector<maxtree_node *> neighbours = get_neighbours(p,data,h,w);
+        for(maxtree_node *q : neighbours){
             if(!visited->at(q->idx)){
-                //std::cout << "visited:" << q->idx << " origin:" << p->idx << "\n";
-
-                visited->at(q->idx) = true;
-                q->parent = INQUEUE;
                 pixel_pq.push(q);
-                if(p->gval < q->gval){ /*found a neighbour with gval greater than the processed pixel*/
-                    q->parent = p->idx;
-                    pixel_stack.push(q);
-                    nextpix=q;
+                visited->at(q->idx) = true;
+                if(q->gval > p->gval){
                     break;
                 }
             } 
-            i++;
+        }
+        if(!pixel_pq.empty()) nextpix = pixel_pq.top();
+        if(nextpix->gval > p->gval){
+            pixel_stack.push(nextpix);
+        }else{
+            pixel_pq.remove(p);
+            if (!pixel_stack.empty()) stack_top = pixel_stack.top();
+            if(p!=stack_top){
+                p->parent=stack_top->idx;
+//                data->at(stack_top).area += data->at(p).area;
+            }
+            if(!pixel_pq.empty()){
+                nextpix = pixel_pq.top();
+            }else{
+                nextpix = p;
+            }
+            if(nextpix->gval < p->gval){
+                do{
+                    
+                    if(!pixel_stack.empty()) stack_top = pixel_stack.top();
+
+                    if(!pixel_stack.empty()) pixel_stack.pop();
+                    if(p!=stack_top){
+                        p->parent=stack_top->idx;
+//                        data->at(t).area += data->at(p).area;
+                    }
+                }while(stack_top->gval > nextpix->gval && !pixel_stack.empty());
+            }
+            if(!pixel_stack.empty()) stack_top = pixel_stack.top();
+            if(stack_top->gval < nextpix->gval){
+                pixel_stack.push(nextpix);
+            }
         }
 
-        if(nextpix == p){/* if no changes on nextpix, the greater gval is of p, so i just remove it */
-            if (!pixel_stack.empty()) pixel_stack.pop();
-            pixel_pq.pop();
+    }while(!pixel_pq.empty());
+    
+    while (!pixel_stack.empty()){
+        stack_top = pixel_stack.top();
+        pixel_stack.pop();
+        if(p!=stack_top){
+            p->parent=stack_top->idx;
+//            data->at(t).area += data->at(p).area;
         }
-
-
-        
     }
-
-
 
     return data;
 }
