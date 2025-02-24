@@ -112,8 +112,9 @@ struct cmp_maxtree_nodes{
     }
 };
 
-void operator<<(std::ostream &o, maxtree_node &n){
+std::ostream &operator<<(std::ostream &o, maxtree_node &n){
     o << "(idx:" << n.idx << " gval:"<< n.gval <<") ";
+    return o;
  }
 
 
@@ -151,7 +152,7 @@ void print_matrix(std::vector<maxtree_node*> *m, int  h, int w, bool metadata=fa
         for(c=0;c<w; c++){
             if(metadata) std::cout << "("<< l << "," << c <<")";
             std::cout.width(4);
-            std::cout << m->at(index_of(l,c,h,w))->parent;
+            std::cout << m->at(index_of(l,c,h,w))->parent << " ";
         }
         std::cout << "\n";
     }
@@ -163,20 +164,20 @@ std::vector<maxtree_node*> get_neighbours(maxtree_node *pixel,
     std::vector<maxtree_node*> v;
     unsigned int idx, pl, pc;
     std::tie(pl, pc) = lin_col(pixel->idx, h, w);
-    if(pl < (unsigned int)h - 1){
-        idx = index_of(pl+1, pc, h, w);
-        v.push_back(t->at(idx));
-    }
     if(pl >= 1){
         idx = index_of(pl-1, pc, h, w);
         v.push_back(t->at(idx));
     }
-    if(pc < (unsigned int)w - 1){
-        idx = index_of(pl, pc+1, h, w);
+    if(pl < (unsigned int)h - 1){
+        idx = index_of(pl+1, pc, h, w);
         v.push_back(t->at(idx));
     }
     if(pc >= 1){
         idx = index_of(pl, pc-1, h, w);
+        v.push_back(t->at(idx));
+    }
+    if(pc < (unsigned int)w - 1){
+        idx = index_of(pl, pc+1, h, w);
         v.push_back(t->at(idx));
     }
     return v;
@@ -203,7 +204,8 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
     data = new std::vector<maxtree_node*>;
     int h=in->height();
     int w=in->width();
-    std::vector<bool> *visited = new std::vector<bool>;
+    std::vector<bool> *visited = new std::vector<bool>(h*w, false);
+    std::cout << visited->size() << " <--- visited size\n"; 
     custom_priority_queue<maxtree_node*, cmp_maxtree_nodes> pixel_pq;
     std::stack<maxtree_node*> pixel_stack;
     maxtree_node *nextpix, *p, *stack_top;
@@ -213,51 +215,45 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
         for(int c=0;c<w;c++){
             double pval = in->getpoint(c,l)[band];
             data->push_back(new maxtree_node(pval, idx));
-            visited->push_back(false);
             idx++;
         }
     }
 
-    nextpix = min_gval(data);
-    p = nextpix;
+    print_matrix(data,h,w);
 
-    pixel_pq.push(p);
-    pixel_stack.push(p);
+    nextpix = min_gval(data);
+    nextpix->parent = nextpix->idx;
+    pixel_pq.push(nextpix);
+    pixel_stack.push(nextpix);
+    visited->at(nextpix->idx) = true;
+    std::cout << "-------> visiting: " << *nextpix << "\n";
+
+    bool change_stack_top;
 
     while(!pixel_pq.empty()){
-        nextpix = pixel_pq.top();
-        p=nextpix;/* select p to process */
-        maxtree_node *q;
-        //std::cout << pixel_pq.size() << " " << pixel_stack.size() << "\n";
-        //std::cout << p;
-        int i=0;
-        std::vector<maxtree_node*> n;
-        n = get_neighbours(p,data,h,w);
-        while(i < n.size()){
-            q = n.at(i);
+        p = pixel_pq.top();
+        std::vector<maxtree_node *> neighbours = get_neighbours(p,data,h,w); 
+        change_stack_top = false;
+        std::cout<<*p << "\n";
+        stack_top = pixel_stack.top();
+        for(auto q: neighbours){
+            q->parent = INQUEUE;
             if(!visited->at(q->idx)){
-                //std::cout << "visited:" << q->idx << " origin:" << p->idx << "\n";
-
-                visited->at(q->idx) = true;
-                q->parent = INQUEUE;
                 pixel_pq.push(q);
-                if(p->gval < q->gval){ /*found a neighbour with gval greater than the processed pixel*/
-                    q->parent = p->idx;
+                visited->at(q->idx) = true;
+                std::cout << "-------> visiting: " << *q << "\n";
+                if(p->gval < q->gval){
+                    std::cout << *q;
                     pixel_stack.push(q);
-                    nextpix=q;
+                    change_stack_top = true;
                     break;
                 }
-            } 
-            i++;
+            }
+        }
+        if(!change_stack_top){
+            pixel_pq.remove(p);
         }
 
-        if(nextpix == p){/* if no changes on nextpix, the greater gval is of p, so i just remove it */
-            if (!pixel_stack.empty()) pixel_stack.pop();
-            pixel_pq.pop();
-        }
-
-
-        
     }
 
 
