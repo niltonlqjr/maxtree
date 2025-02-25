@@ -237,9 +237,11 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
         //std::cout<< "pixel processed:" << *p << "\n";
         stack_top = pixel_stack.top();
         for(auto q: neighbours){
-            q->parent = INQUEUE;
+
             if(!visited->at(q->idx)){
                 pixel_pq.push(q);
+                q->parent = INQUEUE;
+                std::cout << "new father for: " << p << " INQ" << "\n";                
                 visited->at(q->idx) = true;
                 //std::cout << "-------> visiting: " << *q << "\n";
                 if(p->gval < q->gval){
@@ -257,8 +259,20 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
                     stack_top = pixel_stack.top();
                     pixel_stack.pop();
                     std::cout << "pop:" << *stack_top << "\n";
+                    std::cout << "new father for: " << p << "-->" << (pixel_stack.top()) << "\n";
                     p->parent = pixel_stack.top()->idx;
                 }
+            }
+        }else{
+            stack_top = pixel_stack.top();
+            while(!pixel_pq.empty() && pixel_pq.top()->gval == stack_top->gval){
+                pixel_pq.top()->parent = stack_top->idx;
+                std::cout << "new father for: " << p << "-->" << (pixel_stack.top()) << "\n";
+                pixel_pq.pop();
+            }
+        
+            if(!pixel_stack.empty()){
+                pixel_pq.push(pixel_stack.top());
             }
         }
         
