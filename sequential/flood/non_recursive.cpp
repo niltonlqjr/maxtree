@@ -226,34 +226,42 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
     pixel_pq.push(nextpix);
     pixel_stack.push(nextpix);
     visited->at(nextpix->idx) = true;
-    std::cout << "-------> visiting: " << *nextpix << "\n";
+    //std::cout << "-------> visiting: " << *nextpix << "\n";
 
-    bool change_stack_top;
+    bool increased_top;
 
     while(!pixel_pq.empty()){
         p = pixel_pq.top();
         std::vector<maxtree_node *> neighbours = get_neighbours(p,data,h,w); 
-        change_stack_top = false;
-        std::cout<<*p << "\n";
+        increased_top = false;
+        //std::cout<< "pixel processed:" << *p << "\n";
         stack_top = pixel_stack.top();
         for(auto q: neighbours){
             q->parent = INQUEUE;
             if(!visited->at(q->idx)){
                 pixel_pq.push(q);
                 visited->at(q->idx) = true;
-                std::cout << "-------> visiting: " << *q << "\n";
+                //std::cout << "-------> visiting: " << *q << "\n";
                 if(p->gval < q->gval){
-                    std::cout << *q;
+                    std::cout << "push" << *q << "\n";
                     pixel_stack.push(q);
-                    change_stack_top = true;
+                    increased_top = true;
                     break;
                 }
             }
         }
-        if(!change_stack_top){
+        if(!increased_top){
             pixel_pq.remove(p);
+            if(!pixel_pq.empty()){
+                if(p->gval > pixel_pq.top()->gval){
+                    stack_top = pixel_stack.top();
+                    pixel_stack.pop();
+                    std::cout << "pop:" << *stack_top << "\n";
+                    p->parent = pixel_stack.top()->idx;
+                }
+            }
         }
-
+        
     }
 
 
