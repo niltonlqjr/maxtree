@@ -196,7 +196,41 @@ void print_hq(std::vector<std::deque<maxtree_node*>> *hqueue){
     std::cout <<"============================\n";
 }
 
+int flood(int lambda, maxtree_node *r, 
+          std::vector<std::deque<maxtree_node*>> *hqueue,
+          std::vector<maxtree_node*> *data,
+          std::vector<maxtree_node*> *levroot,
+          int h, int w){
 
+    while(!hqueue->at(lambda).empty()){
+        maxtree_node* p = hqueue->at(lambda).front();
+        hqueue->at(lambda).pop_front();
+        p->parent = r->idx;
+        auto N = get_neighbours(p,data, h, w);
+        for(auto n: N){
+            if(n->parent == -1){
+                int l = n->gval;
+                if(levroot->at(l) == NULL){
+                    levroot->at(l) = n;
+                }
+                hqueue->at(l).push_back(n);
+                n->parent = INQUEUE;
+                while(l>lambda){
+                    l=flood(l,levroot->at(l),hqueue,data,levroot,h,w);
+                }
+            }
+        }
+    }
+    levroot->at(lambda) = NULL;
+    int lpar = lambda-1;
+    while(lpar >= 0 && levroot->at(lpar) == NULL){
+        lpar--;
+    }
+    if(lpar != -1){
+        r->parent = levroot->at(lpar)->idx;
+    }
+    return lpar;
+}
 
 
 
@@ -228,7 +262,7 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0, int gl = 256){
     lmin = pmin->gval;
     hqueue->at(lmin).push_back(pmin);
     levroot->at(lmin) = pmin;
-    //flood()
+    flood(lmin, pmin, hqueue, data, levroot, h, w);
 
     //visited->at(nextpix->idx) = true;
     //std::cout << "-------> visiting: " << *nextpix << "\n";
