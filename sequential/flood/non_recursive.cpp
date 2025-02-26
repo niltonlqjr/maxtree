@@ -299,18 +299,18 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
         //std::cout << "complete for" << *p <<"\n";
         p->parent = r->idx;
         pixel_pq.remove(p);
-        while(!pixel_pq.empty() && r->gval >= pixel_pq.top()->gval){
+        /*while(!pixel_pq.empty() && r->gval >= pixel_pq.top()->gval){
             //print_pq(pixel_pq);
             q = pixel_pq.top();
             pixel_pq.pop();
             q->parent = r->idx;
             
-        }
+        }*/
         pixel_stack.pop();
         if(pixel_stack.empty()){
             pixel_stack.push(r);
         }
-        if(visited < h*w){
+        if(pixel_pq.empty() && visited < h*w){
             pixel_pq.push(q);
         }
     }
