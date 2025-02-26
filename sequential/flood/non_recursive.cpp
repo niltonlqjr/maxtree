@@ -197,18 +197,54 @@ maxtree_node *min_gval(std::vector<maxtree_node*> *t){
 }
 
 
+void print_pq(custom_priority_queue<maxtree_node*, cmp_maxtree_nodes> pq){
+    std::cout <<"===========QUEUE=============\n";
+    while(!pq.empty()){
+        auto e=pq.top();
+        std::cout<<*e<<" ";
+        pq.remove(e);
+    }
+    std::cout<<"\n";
+    std::cout <<"============================\n";
+}
 
+void print_stack(std::stack<maxtree_node*> s){
+    std::cout <<"=========STACK===========\n";
+    while(!s.empty()){
+        std::cout << *(s.top()) << " ";
+        s.pop();
+    }
+    std::cout<<"\n";
+    std::cout <<"============================\n";
+}
+
+void process_stack(std::stack<maxtree_node*> &s, maxtree_node *r, maxtree_node *q){
+    double l = q->gval;
+    maxtree_node *t;
+    s.pop();
+    while(!s.empty() && l < s.top()->gval){
+        //std::cout << l <<" "<< s.top()->gval << "\n";
+        t = s.top();
+        r->parent = t->idx;
+        r = t;
+    }
+    if(s.empty() || s.top()->gval != l){
+        s.push(q);
+    }
+    r->parent = s.top()->idx;
+
+}
 
 std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
     std::vector<maxtree_node*> *data;
     data = new std::vector<maxtree_node*>;
     int h=in->height();
     int w=in->width();
-    std::vector<bool> *visited = new std::vector<bool>(h*w, false);
-    std::cout << visited->size() << " <--- visited size\n"; 
+    //std::vector<bool> *visited = new std::vector<bool>(h*w, false);
+    //std::cout << visited->size() << " <--- visited size\n"; 
     custom_priority_queue<maxtree_node*, cmp_maxtree_nodes> pixel_pq;
     std::stack<maxtree_node*> pixel_stack;
-    maxtree_node *nextpix, *p, *stack_top;
+    maxtree_node *q, *p, *r;
 
     unsigned int idx=0;
     for(int l=0; l<h; l++){
@@ -221,65 +257,63 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
 
     print_matrix(data,h,w);
 
-    nextpix = min_gval(data);
-    nextpix->parent = nextpix->idx;
-    pixel_pq.push(nextpix);
-    pixel_stack.push(nextpix);
-    visited->at(nextpix->idx) = true;
+    p = min_gval(data);
+    p->parent = INQUEUE;
+    pixel_pq.push(p);
+    pixel_stack.push(p);
+
+    //visited->at(nextpix->idx) = true;
     //std::cout << "-------> visiting: " << *nextpix << "\n";
 
-    bool increased_top;
+    int visited = 0;
 
-    while(!pixel_pq.empty()){
+    while(visited<w*h){
+    loop_ini:
+        //print_pq(pixel_pq);
         p = pixel_pq.top();
         std::vector<maxtree_node *> neighbours = get_neighbours(p,data,h,w); 
-        increased_top = false;
         //std::cout<< "pixel processed:" << *p << "\n";
-        stack_top = pixel_stack.top();
+        //print_stack(pixel_stack);
+        r = pixel_stack.top();
         for(auto q: neighbours){
-
-            if(!visited->at(q->idx)){
+            if(q->parent == -1){
+                std::cout << *p << "visitando:" << *q << "\n";
+                visited++;
+                std::cout << visited << "\n";
                 pixel_pq.push(q);
                 q->parent = INQUEUE;
-                std::cout << "new father for: " << p << " INQ" << "\n";                
-                visited->at(q->idx) = true;
+
+                print_pq(pixel_pq);
+                print_stack(pixel_stack);
+                //std::cout << "new father for: " << p << " INQ" << "\n";                
                 //std::cout << "-------> visiting: " << *q << "\n";
                 if(p->gval < q->gval){
                     std::cout << "push" << *q << "\n";
                     pixel_stack.push(q);
-                    increased_top = true;
-                    break;
+                    /*visit_completed = false;
+                    increased_top = true;*/
+                    goto loop_ini;
                 }
             }
         }
-        if(!increased_top){
-            pixel_pq.remove(p);
-            if(!pixel_pq.empty()){
-                if(p->gval > pixel_pq.top()->gval){
-                    stack_top = pixel_stack.top();
-                    pixel_stack.pop();
-                    std::cout << "pop:" << *stack_top << "\n";
-                    std::cout << "new father for: " << p << "-->" << (pixel_stack.top()) << "\n";
-                    p->parent = pixel_stack.top()->idx;
-                }
-            }
-        }else{
-            stack_top = pixel_stack.top();
-            while(!pixel_pq.empty() && pixel_pq.top()->gval == stack_top->gval){
-                pixel_pq.top()->parent = stack_top->idx;
-                std::cout << "new father for: " << p << "-->" << (pixel_stack.top()) << "\n";
-                pixel_pq.pop();
-            }
-        
-            if(!pixel_stack.empty()){
-                pixel_pq.push(pixel_stack.top());
-            }
+        //std::cout << "complete for" << *p <<"\n";
+        p->parent = r->idx;
+        pixel_pq.remove(p);
+        while(!pixel_pq.empty() && r->gval >= pixel_pq.top()->gval){
+            //print_pq(pixel_pq);
+            q = pixel_pq.top();
+            pixel_pq.pop();
+            q->parent = r->idx;
+            
         }
-        
+        pixel_stack.pop();
+        if(pixel_stack.empty()){
+            pixel_stack.push(r);
+        }
+        if(visited < h*w){
+            pixel_pq.push(q);
+        }
     }
-
-
-
     return data;
 }
 
