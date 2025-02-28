@@ -41,6 +41,10 @@ class custom_priority_queue : public std::priority_queue<T, std::vector<T>, cmp>
             return true;
         }
 
+        T second(){
+            return this->c.at(1);
+        }
+
         void print(){
             for(T n: this->c){
                 std::cout << *n;
@@ -265,55 +269,50 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
     //visited->at(nextpix->idx) = true;
     //std::cout << "-------> visiting: " << *nextpix << "\n";
 
-    int visited = 0;
-
-    while(visited<w*h){
-    loop_ini:
-        //print_pq(pixel_pq);
+    //int visited = 0;
+    bool subir, descer;
+    
+    while(!pixel_pq.empty()){
+        subir = false;
+        descer = false;
         p = pixel_pq.top();
-        std::vector<maxtree_node *> neighbours = get_neighbours(p,data,h,w); 
-        //std::cout<< "pixel processed:" << *p << "\n";
-        //print_stack(pixel_stack);
         r = pixel_stack.top();
-        for(auto q: neighbours){
-            if(q->parent == -1){
-                std::cout << *p << "visitando:" << *q << "\n";
-                visited++;
-                std::cout << visited << "\n";
-                pixel_pq.push(q);
-                q->parent = INQUEUE;
-
-                print_pq(pixel_pq);
-                print_stack(pixel_stack);
-                //std::cout << "new father for: " << p << " INQ" << "\n";                
-                //std::cout << "-------> visiting: " << *q << "\n";
-                if(p->gval < q->gval){
-                    std::cout << "push" << *q << "\n";
-                    pixel_stack.push(q);
-                    /*visit_completed = false;
-                    increased_top = true;*/
-                    goto loop_ini;
+        std::cout << "processando o pixel:" << *p << "\n";
+        auto N=get_neighbours(p,data,h,w);
+        for(maxtree_node *n: N){
+            if(n->parent == -1){
+                pixel_pq.push(n);
+                n->parent = INQUEUE;
+                if(p->gval < n->gval){
+                    subir = true;
+                    q=n;
+                    break;
                 }
             }
-        }
-        //std::cout << "complete for" << *p <<"\n";
-        p->parent = r->idx;
-        pixel_pq.remove(p);
-        /*while(!pixel_pq.empty() && r->gval >= pixel_pq.top()->gval){
-            //print_pq(pixel_pq);
-            q = pixel_pq.top();
-            pixel_pq.pop();
-            q->parent = r->idx;
             
-        }*/
-        pixel_stack.pop();
-        if(pixel_stack.empty()){
-            pixel_stack.push(r);
         }
-        if(pixel_pq.empty() && visited < h*w){
-            pixel_pq.push(q);
+        if(!subir){
+            p->parent = r->idx;
+            pixel_pq.remove(p);
+            if(pixel_pq.size() <2 || 
+                pixel_pq.top()->gval != pixel_pq.second()->gval){
+                descer=true;
+            }
+            if(descer){
+                if(!pixel_stack.empty()){
+                    pixel_stack.pop();
+                    if(!pixel_stack.empty()){
+                        p->parent = pixel_stack.top()->idx;
+                    }else{
+                        p->parent = p->idx;
+                    }
+                }
+            }
+        }else{
+            pixel_stack.push(q);
         }
     }
+    
     return data;
 }
 
