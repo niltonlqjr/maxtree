@@ -9,10 +9,13 @@ args = `pkg-config vips-cpp --cflags --libs`
 dest_nonrec = exec/${non_rec_name}
 dest_rec = exec/${rec_name}
 
-all: non_rec rec
+all: non_rec rec wilkinson
 
 non_rec:
 	g++ -g -Wall $(source_non_rec) $(args) -o $(dest_nonrec)
 
 rec:
 	g++ -g -Wall $(source_rec) $(args) -o $(dest_rec)	
+
+wilkinson:
+	g++ -g -Wall non_recursive_wilk.cpp $(args) -o exec/non_recursive_wilk
