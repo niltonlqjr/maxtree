@@ -201,7 +201,7 @@ int flood(int lambda, maxtree_node *r,
           std::vector<maxtree_node*> *data,
           std::vector<maxtree_node*> *levroot,
           int h, int w){
-
+    
     while(!hqueue->at(lambda).empty()){
         maxtree_node* p = hqueue->at(lambda).front();
         hqueue->at(lambda).pop_front();
@@ -220,6 +220,7 @@ int flood(int lambda, maxtree_node *r,
                 }
             }
         }
+        
     }
     levroot->at(lambda) = NULL;
     int lpar = lambda-1;
@@ -229,6 +230,7 @@ int flood(int lambda, maxtree_node *r,
     if(lpar != -1){
         r->parent = levroot->at(lpar)->idx;
     }
+    
     return lpar;
 }
 

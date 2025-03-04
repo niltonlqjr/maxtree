@@ -271,13 +271,19 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
 
     //int visited = 0;
     bool subir, descer;
-    
+    int iter =0;
     while(!pixel_pq.empty()){
+        std::cout << ++iter << " " <<*pixel_pq.top() << "->" << *pixel_stack.top() <<"\n";
+
         subir = false;
         descer = false;
         p = pixel_pq.top();
         r = pixel_stack.top();
-        std::cout << "processando o pixel:" << *p << "\n";
+        /*std::cout << "processando o pixel:" << *p << "\n";
+        print_pq(pixel_pq);
+        print_stack(pixel_stack);
+        std::cout << "=========================================\n";*/
+
         auto N=get_neighbours(p,data,h,w);
         for(maxtree_node *n: N){
             if(n->parent == -1){
@@ -295,22 +301,25 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
             p->parent = r->idx;
             pixel_pq.remove(p);
             if(pixel_pq.size() <2 || 
-                pixel_pq.top()->gval != pixel_pq.second()->gval){
+                pixel_pq.top()->gval != p->gval){
                 descer=true;
             }
             if(descer){
-                if(!pixel_stack.empty()){
+                if(!pixel_stack.empty() ){
+                    r = pixel_stack.top();
                     pixel_stack.pop();
                     if(!pixel_stack.empty()){
-                        p->parent = pixel_stack.top()->idx;
+                        r->parent = pixel_stack.top()->idx;
                     }else{
-                        p->parent = p->idx;
+                        pixel_stack.push(r);
                     }
                 }
             }
         }else{
+            //q->parent = r->idx;
             pixel_stack.push(q);
         }
+        //print_matrix(data,h,w);
     }
     
     return data;
