@@ -43,18 +43,15 @@ class custom_priority_queue : public std::priority_queue<T, std::vector<T>, cmp>
 class maxtree_node{
     public:
         int parent;
-        int area;
+        int label;
         unsigned int idx;
-        bool correct_filter;
-        double out_value;
         double gval;
 
     maxtree_node(double g, unsigned int i, double v = 0){
         this->parent = -1;
         this->idx = i;
 //        this->area = 1;
-        this->correct_filter = false;
-        this->out_value = v;
+        this->label = -1;
         this->gval = g;
     }
 
@@ -86,6 +83,16 @@ class maxtree_node{
     }
 };
 
+
+void label_components(std::vector<maxtree_node*> *mt){
+    for(auto p: *mt){
+        if(p->gval == mt->at(p->parent)->gval){
+            p->label = p->parent;
+        }else{
+            p->label = p->idx;
+        }
+    }
+}
 
 struct cmp_maxtree_nodes{
     bool operator()(const maxtree_node* lhs, const maxtree_node* rhs) const
@@ -124,6 +131,22 @@ void print_VImage_band(VImage *in, int band = 0){
     
     return;
 }
+
+void print_labels(std::vector<maxtree_node*> *m, int  h, int w, bool metadata=false){
+    std::cout << h << ", " << w << "\n";
+    std::cout << m->size()<<"\n";
+    int l,c;
+    for(l=0;l<h; l++){
+        if(metadata) std::cout << l << ":";
+        for(c=0;c<w; c++){
+            if(metadata) std::cout << "("<< l << "," << c <<")";
+            std::cout.width(4);
+            std::cout << m->at(index_of(l,c,h,w))->label << " ";
+        }
+        std::cout << "\n";
+    }
+}
+
 
 void print_matrix(std::vector<maxtree_node*> *m, int  h, int w, bool metadata=false){
     std::cout << h << ", " << w << "\n";
@@ -288,6 +311,8 @@ int main(int argc, char **argv){
     print_VImage_band(in);
     t=maxtree(in);
     print_matrix(t, h, w);
+    label_components(t);
+    print_labels(t, h, w);
     vips_shutdown();
     return 0;
 }

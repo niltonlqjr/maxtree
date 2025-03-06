@@ -62,18 +62,15 @@ VImage *maxtree(VImage *in){
 class maxtree_node{
     public:
         int parent;
-        int area;
+        int label;
         unsigned int idx;
-        bool correct_filter;
-        double out_value;
         double gval;
 
     maxtree_node(double g, unsigned int i, double v = 0){
         this->parent = -1;
         this->idx = i;
 //        this->area = 1;
-        this->correct_filter = false;
-        this->out_value = v;
+        this->label = -1;
         this->gval = g;
     }
 
@@ -168,6 +165,22 @@ void print_stack(std::stack<maxtree_node*> s){
     std::cout <<"============================\n";
 }
 
+void print_labels(std::vector<maxtree_node*> *m, int  h, int w, bool metadata=false){
+    std::cout << h << ", " << w << "\n";
+    std::cout << m->size()<<"\n";
+    int l,c;
+    for(l=0;l<h; l++){
+        if(metadata) std::cout << l << ":";
+        for(c=0;c<w; c++){
+            if(metadata) std::cout << "("<< l << "," << c <<")";
+            std::cout.width(4);
+            std::cout << m->at(index_of(l,c,h,w))->label << " ";
+        }
+        std::cout << "\n";
+    }
+}
+
+
 void print_matrix(std::vector<maxtree_node*> *m, int  h, int w, bool metadata=false){
     std::cout << h << ", " << w << "\n";
     std::cout << m->size()<<"\n";
@@ -182,6 +195,18 @@ void print_matrix(std::vector<maxtree_node*> *m, int  h, int w, bool metadata=fa
         std::cout << "\n";
     }
 }
+
+void label_components(std::vector<maxtree_node*> *mt){
+    for(auto p: *mt){
+        if(p->gval == mt->at(p->parent)->gval){
+            p->label = p->parent;
+        }else{
+            p->label = p->idx;
+        }
+    }
+}
+
+
 
 std::vector<maxtree_node*> get_neighbours(maxtree_node *pixel, 
                                           std::vector<maxtree_node *> *t,
@@ -314,7 +339,12 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
         }
 
     }while(!pixel_pq.empty());
-
+    maxtree_node *root = pixel_stack.top();
+    root->parent = root->idx;
+    std::cout << "-----------------END---------------\n";
+    print_pq(pixel_pq);
+    print_stack(pixel_stack);
+    std::cout <<"____________________________________\n";
     return data;
 }
 
@@ -333,6 +363,8 @@ int main(int argc, char **argv){
     print_VImage_band(in);
     t=maxtree(in);
     print_matrix(t, h, w);
+    label_components(t);
+    print_labels(t, h, w);
     vips_shutdown();
     return 0;
 }
