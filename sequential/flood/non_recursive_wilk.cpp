@@ -12,50 +12,46 @@
 using namespace vips;
 
 
-
-template<typename T>
-class custom_priority_queue : public std::priority_queue<T, std::vector<T>>
+template<typename T, typename cmp>
+class custom_priority_queue : public std::priority_queue<T, std::vector<T>, cmp>
 {
   public:
 
-      bool remove(const T& value) {
-          //auto it= std::find(this->c.begin(), this->c.end(), value);
-          auto it = this->c.begin(); 
-          while(it != this->c.end()){
-            if(*it == value){
-                break;
+        bool remove(const T& value) {
+            //auto it= std::find(this->c.begin(), this->c.end(), value);
+            auto it = this->c.begin(); 
+            while(it != this->c.end()){
+                if(*it == value){
+                    break;
+                }
+                it++;
             }
-            it++;
-          }
 
-          if (it == this->c.end()) {
-              return false;
-          }
-          if (it == this->c.begin()) {
-              // deque the top element
-              this->pop();
-          }    
-          else {
-              // remove element and re-heap
-              this->c.erase(it);
-              std::make_heap(this->c.begin(), this->c.end(), this->comp);
-         }
-         return true;
-     }
-
-     std::string to_str(){
-        std::string r;
-        r="";
-        for(auto n: this->c){
-            r += n;
+            if (it == this->c.end()) {
+                return false;
+            }else if (it == this->c.begin()) {
+                // deque the top element
+                this->pop();
+            }else{
+                // remove element and re-heap
+                this->c.erase(it);
+                std::make_heap(this->c.begin(), this->c.end(), this->comp);
+            }
+            return true;
         }
-        return r;
-     }
 
+        T second(){
+            return this->c.at(1);
+        }
 
+        void print(){
+            for(T n: this->c){
+                std::cout << *n;
+            }
+            std::cout << "\n";
+        }
 
 };
-
 
 
 /*
@@ -63,7 +59,6 @@ VImage *maxtree(VImage *in){
     VImage *parents = NULL;
     return parents;
 }*/
-
 class maxtree_node{
     public:
         int parent;
@@ -80,6 +75,14 @@ class maxtree_node{
         this->correct_filter = false;
         this->out_value = v;
         this->gval = g;
+    }
+
+    std::string to_str(){
+        std::string s;
+        s = "(id:"+ std::to_string(this->idx) 
+            +", parent:"+ std::to_string(this->parent) 
+            +", gval:"+std::to_string(this->gval)+")";
+        return s;
     }
 
     bool operator>(const maxtree_node &r){
@@ -102,10 +105,19 @@ class maxtree_node{
     }
 };
 
+struct cmp_maxtree_nodes{
+    bool operator()(const maxtree_node* lhs, const maxtree_node* rhs) const
+    {
+        return lhs->gval < rhs->gval;
+    }
+};
 
-void operator<<(std::ostream &o, maxtree_node &n){
+
+std::ostream &operator<<(std::ostream &o, maxtree_node &n){
     o << "(idx:" << n.idx << " gval:"<< n.gval <<") ";
+    return o;
  }
+
 
 
 unsigned int index_of(unsigned int l, unsigned int c, int h, int w){
@@ -131,6 +143,29 @@ void print_VImage_band(VImage *in, int band = 0){
     }
     
     return;
+}
+
+
+
+void print_pq(custom_priority_queue<maxtree_node*, cmp_maxtree_nodes> pq){
+    std::cout <<"===========QUEUE=============\n";
+    while(!pq.empty()){
+        auto e=pq.top();
+        std::cout<<*e<<" ";
+        pq.remove(e);
+    }
+    std::cout<<"\n";
+    std::cout <<"============================\n";
+}
+
+void print_stack(std::stack<maxtree_node*> s){
+    std::cout <<"=========STACK===========\n";
+    while(!s.empty()){
+        std::cout << *(s.top()) << " ";
+        s.pop();
+    }
+    std::cout<<"\n";
+    std::cout <<"============================\n";
 }
 
 void print_matrix(std::vector<maxtree_node*> *m, int  h, int w, bool metadata=false){
@@ -210,9 +245,9 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
     int h=in->height();
     int w=in->width();
     std::vector<bool> *visited = new std::vector<bool>;
-    custom_priority_queue<maxtree_node*> pixel_pq;
+    custom_priority_queue<maxtree_node*,cmp_maxtree_nodes> pixel_pq;
     std::stack<maxtree_node*> pixel_stack;
-    maxtree_node *p, *r;
+    maxtree_node *xm, *nextpix, *p;
 
     unsigned int idx=0;
     for(int l=0; l<h; l++){
@@ -224,41 +259,61 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
         }
     }
 
-    auto pstart = min_gval(data);
-    pixel_pq.push(pstart);
-    pixel_stack.push(pstart);
-    int __iter=0;
+    xm= min_gval(data);
+    pixel_pq.push(xm);
+    pixel_stack.push(xm);
+    nextpix = xm;
+    int iter = 0;
+    do{
+        p = nextpix;
+        std::cout << "----------------------" << ++iter << "----------------------\n";
+        std::cout<< *p <<"\n";
+        print_pq(pixel_pq);
+        print_stack(pixel_stack);
 
-    pstart->parent = INQUEUE;
-
-    while(!pixel_pq.empty()){
-        ini_loop:
-        std::cout << ++__iter << "\n";
-        p = pixel_pq.top();
-        r = pixel_stack.top();
+        std::cout<<"_________________________________________________\n";
         auto N = get_neighbours(p, data, h, w);
-        for(auto n: N){
-            if(n->parent == -1){
-                n->parent = INQUEUE;
-                pixel_pq.push(n);
-                if(p->gval < n->gval){
-                    pixel_stack.push(n);
-                    goto ini_loop;
+        for(auto q: N){
+            if(q->parent == -1){/* if q not visited */
+                q->parent = INQUEUE;
+                pixel_pq.push(q);
+                if(q->gval > p->gval){
+                    break;
                 }
             }
         }
-        pixel_pq.pop();
-        p->parent = r->idx;
-        
-        while(!pixel_pq.empty()){
-            auto q = pixel_pq.top();
-            pixel_pq.pop();
-            if(q->gval != r->gval){
-                process_stack(r, q, data, pixel_stack);
+        nextpix = pixel_pq.top();
+
+        if(nextpix->gval > p->gval){
+            pixel_stack.push(nextpix);
+        }else{
+            pixel_pq.remove(p);
+            if(p!=pixel_stack.top()){
+                p->parent = pixel_stack.top()->idx;
             }
-    
+            
+            if(pixel_pq.empty()){
+                nextpix=p;
+            }else{
+                nextpix = pixel_pq.top();
+            }
+
+            if(nextpix->gval < p->gval){
+                
+                while(!pixel_stack.empty() && nextpix->gval < pixel_stack.top()->gval){
+                    auto st = pixel_stack.top();
+                    pixel_stack.pop();
+                    if(!pixel_stack.empty())
+                        st->parent = pixel_stack.top()->idx;
+                }
+                if(pixel_stack.empty() || pixel_stack.top()->gval < nextpix->gval){
+                    pixel_stack.push(nextpix);
+                }
+            }
+
         }
-    }
+
+    }while(!pixel_pq.empty());
 
     return data;
 }

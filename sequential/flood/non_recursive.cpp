@@ -261,11 +261,11 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
 
     print_matrix(data,h,w);
 
-    maxtree_node *base_pilha = new maxtree_node(-10,-1,-10);
+    //maxtree_node *base_pilha = new maxtree_node(-10,-1,-10);
 
     p = min_gval(data);
     p->parent = INQUEUE;
-    pixel_stack.push(base_pilha);
+    //pixel_stack.push(base_pilha);
     pixel_pq.push(p);
     pixel_stack.push(p);
 
@@ -276,9 +276,11 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
     bool subir, descer;
     int iter =0;
     while(!pixel_pq.empty()){
+        
+        std::cout << "--------------- " << ++iter << " ---------------\n";
         print_pq(pixel_pq);
         print_stack(pixel_stack);
-        std::cout << ++iter << " " <<*pixel_pq.top() << "->" << *pixel_stack.top() <<"\n";
+        std::cout << "_______________________________________________\n";
 
         subir = false;
         descer = false;
@@ -316,9 +318,12 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
                     p->parent = pixel_stack.top()->idx;
                 }
                 pixel_stack.pop();
+                if(!pixel_stack.empty()){
+                    r->parent = pixel_stack.top()->idx;
+                }
                     
             }else{
-                if(pixel_stack.top() != base_pilha && pixel_stack.top()->gval != p->gval){
+                if(!pixel_stack.empty() && pixel_stack.top()->gval != p->gval){
                     pixel_stack.push(p);
                 }
             }
