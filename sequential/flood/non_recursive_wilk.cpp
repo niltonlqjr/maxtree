@@ -291,12 +291,12 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
     int iter = 0;
     do{
         p = nextpix;
-        std::cout << "----------------------" << ++iter << "----------------------\n";
+        /* std::cout << "----------------------" << ++iter << "----------------------\n";
         std::cout<< *p <<"\n";
         print_pq(pixel_pq);
         print_stack(pixel_stack);
 
-        std::cout<<"_________________________________________________\n";
+        std::cout<<"_________________________________________________\n"; */
         auto N = get_neighbours(p, data, h, w);
         for(auto q: N){
             if(q->parent == -1){/* if q not visited */

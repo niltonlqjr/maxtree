@@ -6,6 +6,7 @@
 #include <tuple>
 #include <string>
 #include <ostream>
+#include <map>
 
 #define INQUEUE -2
 
@@ -261,6 +262,7 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
     //std::cout << visited->size() << " <--- visited size\n"; 
     custom_priority_queue<maxtree_node*, cmp_maxtree_nodes> pixel_pq;
     std::stack<maxtree_node*> pixel_stack;
+    std::map<double, int> in_stack;
     maxtree_node *q, *p, *r;
 
     unsigned int idx=0;
@@ -290,10 +292,10 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
     int iter =0;
     while(!pixel_pq.empty()){
         
-        std::cout << "--------------- " << ++iter << " ---------------\n";
+/*         std::cout << "--------------- " << ++iter << " ---------------\n";
         print_pq(pixel_pq);
         print_stack(pixel_stack);
-        std::cout << "_______________________________________________\n";
+        std::cout << "_______________________________________________\n"; */
 
         subir = false;
         descer = false;

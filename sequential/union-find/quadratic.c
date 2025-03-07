@@ -11,7 +11,7 @@ typedef struct {
     int id;
     int x,y;
     uint8_t value;
-    int parent;
+    int parent, label;
 } pel_inf;
 
 int cmp_pel_inf(const void *pel_inf1, const void *pel_inf2){
@@ -26,6 +26,56 @@ void print_pel_inf(pel_inf p){
 }
 
 
+void print_labels(pel_inf img[], int npel){
+    int **mat;
+    int i, j, h=0, w=0;
+    for(i=0;i<npel; i++){
+        if(img[i].x > w){
+            w = img[i].x;
+        }
+        if(img[i].y > h){;
+            h = img[i].y;
+        }
+    }
+    w++;
+    h++;
+    printf("h:%d, w:%d, npel:%d\n",h,w,npel);
+    mat = (int**)malloc(h*sizeof(int*));
+    for (i=0;i<h;i++){
+        mat[i] = (int*)malloc(w*sizeof(int));
+    }
+
+    for(i=0;i<npel;i++){
+        mat[img[i].y][img[i].x] = img[i].label;
+    }
+
+    for(i=0;i<h;i++){
+        for(j=0;j<w;j++){
+            printf("%4d ",mat[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+void label_components(pel_inf img[], int npel){
+    /* for(auto p: *mt){
+        if(p->gval == mt->at(p->parent)->gval){
+            p->label = p->parent;
+        }else{
+            p->label = p->idx;
+        }
+    } */
+
+    for(int i=0;i<npel;i++){
+        int i_parent = img[i].parent;
+        if(img[i].value == img[i_parent].value){
+            img[i].label = img[i].parent;
+        }else{
+            img[i].label = i;
+        }
+    }
+
+}
 void print_parents(pel_inf img[], int npel){
     int **mat;
     int i, j, h=0, w=0;
@@ -265,9 +315,11 @@ int main(int argc, char *argv[]){
             printf("\n");
         }
     }*/
+    label_components(values, tam);
     printf("\n");
 
     print_parents(values, tam);
+    print_labels(values,tam);
     print_image_of_pels(values, tam);
     
     return 0;
