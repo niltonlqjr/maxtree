@@ -240,7 +240,7 @@ void max_tree(pel_inf values[], pel_inf s[], int l, int c){
     if(verbose){
         print_image_of_pels(values,tam);
         print_parents(values,tam);
-        printf("cononicalizing\n");
+        printf("canonicalizing\n");
     }
     canonicalize(values, s, tam);
 }
