@@ -99,8 +99,6 @@ int flood(int lambda, maxtree_node *r,
     return lpar;
 }
 
-
-
 std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0, int gl = 256){
     std::vector<maxtree_node*> *data;
     data = new std::vector<maxtree_node*>;
