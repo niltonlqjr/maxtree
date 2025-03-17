@@ -5,6 +5,8 @@
 #include <vips/vips8>
 #include <vector>
 #include <algorithm>
+#include <threads>
+#include <queue>
 #include "maxtree_node.hpp"
 #include "utils.hpp"
 
@@ -44,6 +46,19 @@ std::map<std::string, std::string> *parse_config(char arg[]){
 
 }
 
+void maxtree_worker(
+    std::priority_queue<maxtree_node*, std::vector<maxtree_node*> ,cmp_maxtree_nodes> *pq,
+    std::map<int, maxtree_node*> *data){
+    
+}
+
+std::vector<maxtree_node*> *maxtree_main(VImage *in, int nth = 2){
+    std::vector<std::thread*> threads;
+    std::priority_queue<maxtree_node*, std::vector<maxtree_node*> ,cmp_maxtree_nodes> shared_pq;
+    
+    return NULL;
+}
+
 int main(int argc, char **argv){
     VImage *in;
     std::vector<maxtree_node*> *t;
@@ -55,10 +70,12 @@ int main(int argc, char **argv){
     std::map<std::string, std::string> *configs;
 
     configs = parse_config(argv[2]);
-    std::cout<<"+++++++\n";
+    std::cout<<"+++++++++++++++++++++++++\n";
     print_map(configs);
-    std::cout<<"+++++++\n";
-    int h,w;
+    std::cout<<"+++++++++++++++++++++++++\n";
+    int h,w,nth;
+    nth = std::stoi(configs->at("threads"));
+    std::cout << "nth:" << nth << "\n";
     h=in->height();
     w=in->width();
     print_VImage_band(in);
