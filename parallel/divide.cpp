@@ -49,19 +49,18 @@ std::map<std::string, std::string> *parse_config(char arg[]){
 void maxtree_worker(
     std::priority_queue<maxtree_node*, std::vector<maxtree_node*> ,cmp_maxtree_nodes> *pq,
     std::map<int, maxtree_node*> *data){
-    
 }
 
 std::vector<maxtree_node*> *maxtree_main(VImage *in, int nth = 2){
     std::vector<std::thread*> threads;
     std::priority_queue<maxtree_node*, std::vector<maxtree_node*> ,cmp_maxtree_nodes> shared_pq;
-    
+    sstd::map<int, maxtree_node*> *data;
     return NULL;
 }
 
 int main(int argc, char **argv){
     VImage *in;
-    std::vector<maxtree_node*> *t;
+    std::map<int, maxtree_node*> *t;
     if (VIPS_INIT (argv[0])) 
         vips_error_exit (NULL);
 
