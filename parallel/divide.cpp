@@ -5,7 +5,7 @@
 #include <vips/vips8>
 #include <vector>
 #include <algorithm>
-#include <threads>
+#include <thread>
 #include <queue>
 #include "maxtree_node.hpp"
 #include "utils.hpp"
@@ -54,7 +54,7 @@ void maxtree_worker(
 std::vector<maxtree_node*> *maxtree_main(VImage *in, int nth = 2){
     std::vector<std::thread*> threads;
     std::priority_queue<maxtree_node*, std::vector<maxtree_node*> ,cmp_maxtree_nodes> shared_pq;
-    sstd::map<int, maxtree_node*> *data;
+    std::map<int, maxtree_node*> *data;
     return NULL;
 }
 
