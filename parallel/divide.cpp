@@ -15,20 +15,42 @@ using namespace vips;
 typedef enum task_type {PROCESS, MERGE};
 
 class task{
-    std::vector<int> pixels_index;
-    int parent_thread;
-    int parent_pixel;
-    int size;
-    task(int pt, int pp){
+    private:
+        std::vector<int> pixels_index;
+        int parent_thread;
+        int parent_pixel;
+    public:
+        int size;
+        int threshold;
+    task(int threshold, int pt, int pp){
         parent_pixel = pp;
         parent_thread = pt;
-        size = 0
+        size = 0;
+        this->threshold = threshold;
     }
     void add_pixel(int p_idx){
         size += 1;
         pixels_index.push_back(p_idx);
     }
 };
+
+
+template <class Task>
+class bag_of_tasks{
+    private:
+        std::vector<Task> *tasks;
+    public:
+        bag_of_tasks(){
+            tasks = new std::vector<Task>();
+        }
+        ~bag_of_tasks(){
+            delete tasks;
+        }
+        void insert_task(Task t, bool race_condition = false){
+            tasks.push_back(t);
+        }      
+};
+
 
 void print_map(std::map<std::string, std::string> *m){
     for(auto x: *m){
@@ -64,7 +86,10 @@ std::map<std::string, std::string> *parse_config(char arg[]){
 
 }
 
-void maxtree_worker(std::vector<task> bag, std::map<int, maxtree_node*> *data){
+void maxtree_worker(std::vector<task> bag, std::map<int, maxtree_node*> *data, bool *end){
+    while(!end){
+        
+    }
 
 }
 
