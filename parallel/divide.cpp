@@ -48,7 +48,14 @@ class bag_of_tasks{
         }
         void insert_task(Task t, bool race_condition = false){
             tasks.push_back(t);
-        }      
+        }
+        Task get_task(bool race_condition = false){
+            Task r;
+            std::swap(tasks->front(), tasks->back());
+            r = tasks->back();
+            tasks->pop_back();
+            return r;
+        }
 };
 
 
@@ -87,10 +94,7 @@ std::map<std::string, std::string> *parse_config(char arg[]){
 }
 
 void maxtree_worker(bag_of_tasks<task> *bag, std::map<int, maxtree_node*> *data, bool *end){
-    while(!end){
-        
-    }
-
+    task *t;
 }
 
 std::vector<maxtree_node*> *maxtree_main(VImage *in, int nth = 2){
@@ -102,9 +106,24 @@ std::vector<maxtree_node*> *maxtree_main(VImage *in, int nth = 2){
 
 
 /*
+
+Modelo generico:
+Criar modelo de **Threads** que contemple:
+    - informações do computador (processador, memória, etc) onde está sendo executada
+    - Noção de seu poder de processamento no pool de Threads
+    - A forma de obter essas informações é indideferente (dentro do fonte, arquivo de configuração, argumentos do programa)
+
+Criar modelo de tarefas genérico que possui:
+    - um método virtual para sua execução e trabalha junto ao modelo de Threads
+    - Uma referência (heuristica ou exata) do custo da tarefa
+
+
+Maxtree:
 Ver a possibilidade das primeiras tarefas serem a criação dos componentes num threashold parametrizado. 
-Jogar Sementes em pontos aleatórios e crescer as regiões até encontrar todos componentes.
-Buscar colocar um tamnho minimo de crescimento.
+Jogar Sementes em pontos distribuidos pela imagem e crescer as regiões até encontrar todos componentes.
+Buscar colocar um tamnho minimo de crescimento para cada tarefa.
+
+
 
 */
 int main(int argc, char **argv){
