@@ -86,7 +86,7 @@ std::map<std::string, std::string> *parse_config(char arg[]){
 
 }
 
-void maxtree_worker(std::vector<task> bag, std::map<int, maxtree_node*> *data, bool *end){
+void maxtree_worker(bag_of_tasks<task> *bag, std::map<int, maxtree_node*> *data, bool *end){
     while(!end){
         
     }
@@ -95,11 +95,18 @@ void maxtree_worker(std::vector<task> bag, std::map<int, maxtree_node*> *data, b
 
 std::vector<maxtree_node*> *maxtree_main(VImage *in, int nth = 2){
     std::vector<std::thread*> threads;
-    std::vector<task> bag;
+    bag_of_tasks<task> *bag;
     std::map<int, maxtree_node*> *data;
     return NULL;
 }
 
+
+/*
+Ver a possibilidade das primeiras tarefas serem a criação dos componentes num threashold parametrizado. 
+Jogar Sementes em pontos aleatórios e crescer as regiões até encontrar todos componentes.
+Buscar colocar um tamnho minimo de crescimento.
+
+*/
 int main(int argc, char **argv){
     VImage *in;
     std::map<int, maxtree_node*> *t;
