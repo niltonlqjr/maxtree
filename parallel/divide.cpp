@@ -7,12 +7,45 @@
 #include <algorithm>
 #include <thread>
 #include <queue>
+#include <limits>
+#include <cmath>
 #include "maxtree_node.hpp"
 #include "utils.hpp"
 
 using namespace vips;
 
 typedef enum task_type {PROCESS, MERGE};
+
+class worker_status{
+    public:
+        double mem_size;
+        double mem_freq;
+        int num_cores;
+        std::vector<double> cores_freq;
+
+    worker_status(double mem_size, double mem_freq, int num_cores, std::vector<double> cores_freq){
+        this->num_cores = num_cores;
+        this->mem_size = mem_size;
+        this->cores_freq = cores_freq;
+        this->mem_freq = mem_freq;
+    }
+
+    double get_processor_power(){
+        double freq_sum=0.0;
+        double mem;
+        for(auto f: this->cores_freq){
+            freq_sum += f;
+        }
+        mem = this->mem_size * this->mem_freq;
+        return abs(freq_sum + mem) / (abs(freq_sum - mem)+1);
+    }
+
+   /*  template<typename Container>
+    double get_relative_power(Container<worker_status> workers){
+        return 0;
+    } */
+
+};
 
 class task{
     private:
