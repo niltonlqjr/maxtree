@@ -9,12 +9,11 @@
 #include <queue>
 #include <limits>
 #include <cmath>
+#include <cstdlib>
 #include "maxtree_node.hpp"
 #include "utils.hpp"
 
 using namespace vips;
-
-typedef enum task_type {PROCESS, MERGE};
 
 class worker_status{
     public:
@@ -30,20 +29,28 @@ class worker_status{
         this->mem_freq = mem_freq;
     }
 
-    double get_processor_power(){
+    double get_computation_power(){
         double freq_sum=0.0;
         double mem;
         for(auto f: this->cores_freq){
             freq_sum += f;
         }
         mem = this->mem_size * this->mem_freq;
-        return abs(freq_sum + mem) / (abs(freq_sum - mem)+1);
+        return abs(freq_sum + mem);
     }
 
-   /*  template<typename Container>
-    double get_relative_power(Container<worker_status> workers){
-        return 0;
-    } */
+    template<class Worker, class Container = std::vector<Worker>>
+    double get_relative_power(Container workers){
+        double max=-1;
+        double wp;
+        for(auto w: workers){
+            wp = w.get_computation_power();
+            if(wp>max){
+                max = wp;
+            }
+        }
+        return this->get_computation_power() / max;
+    } 
 
 };
 
@@ -155,10 +162,35 @@ Maxtree:
 Ver a possibilidade das primeiras tarefas serem a criação dos componentes num threashold parametrizado. 
 Jogar Sementes em pontos distribuidos pela imagem e crescer as regiões até encontrar todos componentes.
 Buscar colocar um tamnho minimo de crescimento para cada tarefa.
-
-
-
 */
+
+void test_workers(){
+    std::vector<worker_status> workers;
+    for(int i=0; i<10; i++){
+        std::vector<double> freqs = std::vector<double>();
+        int limite=(rand()%8+1)*2;
+        for(int f=0;f<limite; f++){
+            freqs.push_back(rand()%601+3000);
+        }
+        double mem_size = (rand()%8+1)*4;
+        double mem_freq = (rand()%8+8)*333;
+        worker_status w = worker_status(mem_size, mem_freq, freqs.size(), freqs);
+        std::cout << mem_size << " " << mem_freq << " " 
+                  << freqs.size() << "{";
+        for(auto f:freqs){
+            std::cout << " " << f;
+        }
+        std::cout << "}\n";
+        workers.push_back(w);
+    }
+    std::cout<<"=========";
+    for(auto w: workers){
+        std::cout << "absolute:" << w.get_computation_power() << "\n";
+        std::cout << "relative:" << w.get_relative_power<worker_status>(workers) << "\n";
+    }
+    std::cout << "\n=========\n";
+}
+
 int main(int argc, char **argv){
     VImage *in;
     std::map<int, maxtree_node*> *t;
@@ -169,7 +201,9 @@ int main(int argc, char **argv){
 
     std::map<std::string, std::string> *configs;
 
+    
     configs = parse_config(argv[2]);
+    test_workers();
     std::cout<<"+++++++++++++++++++++++++\n";
     print_map(configs);
     std::cout<<"+++++++++++++++++++++++++\n";
@@ -179,6 +213,10 @@ int main(int argc, char **argv){
     h=in->height();
     w=in->width();
     print_VImage_band(in);
+
+    auto workers = new std::vector<worker_status>();
+
+
     //t=maxtree(in);
     //print_matrix(t, h, w);
     //label_components(t);
