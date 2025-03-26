@@ -11,6 +11,7 @@
 #include <cmath>
 #include <cstdlib>
 #include "maxtree_node.hpp"
+#include "maxtree.hpp"
 #include "utils.hpp"
 
 using namespace vips;
@@ -53,6 +54,8 @@ class worker_status{
     } 
 
 };
+
+
 
 class task{
     private:
@@ -133,11 +136,18 @@ std::map<std::string, std::string> *parse_config(char arg[]){
 
 }
 
-void maxtree_worker(bag_of_tasks<task> *bag, std::map<int, maxtree_node*> *data, bool *end){
+
+
+std::map<int, maxtree_node*> grow_region(maxtree *m, double threshold, int ini){
+    std::queue<int> queue;
+
+}
+
+void maxtree_worker(bag_of_tasks<task> *bag, maxtree *m, bool *end){
     task *t;
 }
 
-std::vector<maxtree_node*> *maxtree_main(VImage *in, int nth = 2){
+maxtree *maxtree_main(VImage *in, int nth = 2){
     std::vector<std::thread*> threads;
     bag_of_tasks<task> *bag;
     std::map<int, maxtree_node*> *data;
@@ -193,13 +203,14 @@ void test_workers(){
 
 int main(int argc, char **argv){
     VImage *in;
-    std::map<int, maxtree_node*> *t;
+    maxtree *t;
     if (VIPS_INIT (argv[0])) 
         vips_error_exit (NULL);
 
     in = new VImage(VImage::new_from_file(argv[1],NULL));
 
     std::map<std::string, std::string> *configs;
+
 
     
     configs = parse_config(argv[2]);
@@ -213,8 +224,6 @@ int main(int argc, char **argv){
     h=in->height();
     w=in->width();
     print_VImage_band(in);
-
-    auto workers = new std::vector<worker_status>();
 
 
     //t=maxtree(in);

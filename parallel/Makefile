@@ -1,4 +1,5 @@
 maxtree_node_dir=../include
+maxtree_dir=../include
 utils_dir=../include
 
 vips_args = `pkg-config vips-cpp --cflags --libs`
@@ -10,12 +11,18 @@ dest_divide = exec/${divide_name}
 
 all: divide
 
-divide: maxtree_node.o utils.o
-	g++ -g -Wall -pthread ${source_divide} ${utils_dir}/utils.o ${maxtree_node_dir}/maxtree_node.o \
-    -I ${maxtree_node_dir} ${vips_args} -o ${dest_divide}
-	
+divide: maxtree_node.o maxtree.o utils.o
+	g++ -g -Wall -pthread ${source_divide} ${utils_dir}/utils.o \
+	 	${maxtree_node_dir}/maxtree_node.o \
+		${maxtree_dir}/maxtree.o \
+    	-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} \
+		${vips_args} -o ${dest_divide}
+
+maxtree.o:
+	g++ -g -c ${maxtree_dir}/maxtree.cpp -I${maxtree_dir} ${vips_args} -o ${maxtree_dir}/maxtree.o
+
 maxtree_node.o: #${maxtree_node_dir}/maxtree_node.cpp ${maxtree_node_dir}/maxtree_node.hpp 
 	g++ -g -c ${maxtree_node_dir}/maxtree_node.cpp -I${maxtree_node_dir} -o ${maxtree_node_dir}/maxtree_node.o
 
 utils.o:
-	g++ -g -c ${utils_dir}/utils.cpp $(vips_args) -I${utils_dir} -o ${utils_dir}/utils.o
+	g++ -g -c ${utils_dir}/utils.cpp ${vips_args} -I${utils_dir} -o ${utils_dir}/utils.o
