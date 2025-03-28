@@ -138,8 +138,23 @@ std::map<std::string, std::string> *parse_config(char arg[]){
 
 
 
-std::map<int, maxtree_node*> grow_region(maxtree *m, double threshold, int ini){
-    std::queue<int> queue;
+std::vector<int> grow_region(maxtree *m, double threshold, maxtree_node *ini){
+    maxtree_node * f;
+    std::vector<int> r;
+    std::queue< maxtree_node*> q;
+    q.push(ini);
+    while(!q.empty()){
+        f=q.front();
+        q.pop();
+        auto neighbours=m->get_neighbours(f->idx);
+        for(auto n:neighbours){
+            if(n->gval > threshold){
+                q.push(n);
+                r.push_back(n->idx);
+            }
+        }
+    }
+    return r;
 
 }
 
