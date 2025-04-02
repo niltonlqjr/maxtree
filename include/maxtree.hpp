@@ -9,12 +9,12 @@
 class maxtree{
     private:
         std::map<int, maxtree_node*> *data;
-        int h;
-        int w;
         int index_of(int l, int c);
          
         
     public:
+        int h;
+        int w;
         maxtree(int h, int w);
         maxtree(std::map<int, maxtree_node*> *data, int h, int w);
         maxtree_node *at_pos(int h, int w);

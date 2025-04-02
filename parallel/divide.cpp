@@ -138,19 +138,25 @@ std::map<std::string, std::string> *parse_config(char arg[]){
 
 
 
-std::vector<int> grow_region(maxtree *m, double threshold, maxtree_node *ini){
+std::vector<int> grow_region(maxtree *m, double threshold, maxtree_node *ini, std::vector<bool> *visited = NULL){
     maxtree_node * f;
     std::vector<int> r;
     std::queue< maxtree_node*> q;
-    q.push(ini);
+    if(!visited->at(ini->idx)){
+        q.push(ini);
+    }
     while(!q.empty()){
         f=q.front();
         q.pop();
         auto neighbours=m->get_neighbours(f->idx);
         for(auto n:neighbours){
             if(n->gval > threshold){
-                q.push(n);
-                r.push_back(n->idx);
+                if(visited != NULL && !visited->at(n->idx)){
+                    visited->at(n->idx) = true;
+                    q.push(n);
+                    r.push_back(n->idx);
+                }
+                
             }
         }
     }
@@ -165,7 +171,37 @@ void maxtree_worker(bag_of_tasks<task> *bag, maxtree *m, bool *end){
 maxtree *maxtree_main(VImage *in, int nth = 2){
     std::vector<std::thread*> threads;
     bag_of_tasks<task> *bag;
-    std::map<int, maxtree_node*> *data;
+    std::map<int, maxtree_node*> *data = new std::map<int, maxtree_node*>();
+
+    int x=0;
+    // h=in->height();
+    // w=in->width();
+
+    for(int l=0;l<in->height();l++){
+        for(int c=0;c<in->width();c++){
+            double p = in->getpoint(c,l)[0];
+            (*data)[x] = new maxtree_node(p,x);
+            //std::cout << data->at(x)->idx << " ";
+            x++;
+        }
+    }
+    std::cout << "\n";
+    maxtree *m = new maxtree(data, in->height(), in->width());
+    auto visited = new std::vector<bool>(m->h * m->w,false);
+
+    double th=100;
+    std::vector<int> v;
+    for(int i=0;i < m->h * m->w; i++){
+        if(m->at_pos(i)->gval > th){
+            v = grow_region(m,th,m->at_pos(i),visited);
+            for(auto mtn: v){
+                auto pos = m->lin_col(mtn);
+                std::cout << "(" << std::get<0>(pos) << "," << std::get<1>(pos) << ") ";
+            }
+            if(v.size() > 0) std::cout << "\n";
+        }
+    }
+    
     return NULL;
 }
 
@@ -241,7 +277,7 @@ int main(int argc, char **argv){
     print_VImage_band(in);
 
 
-    //t=maxtree(in);
+    t=maxtree_main(in);
     //print_matrix(t, h, w);
     //label_components(t);
     //print_labels(t, h, w);
