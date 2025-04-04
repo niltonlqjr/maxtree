@@ -14,6 +14,7 @@
 #include "maxtree_node.hpp"
 #include "maxtree.hpp"
 #include "utils.hpp"
+#include "tests.cpp"
 
 using namespace vips;
 
@@ -73,7 +74,7 @@ class task{
         this->size = 0;
         this->threshold = threshold;
         this->visited = new std::vector<bool>();
-        this->pixels_index = new td::vector<int>()
+        this->pixels_index = new std::vector<int>()
     }
     void add_pixel(int p_idx){
         size += 1;
@@ -157,9 +158,8 @@ std::map<std::string, std::string> *parse_config(char arg[]){
 
 
 
-std::vector<int> grow_region(maxtree *m, double threshold, int idx_ini, std::vector<bool> *visited){
+std::vector<int> grow_region(maxtree *m, double threshold, int idx_ini, std::vector<bool> *visited, task *t){
     maxtree_node * f, *ini;
-    std::vector<int> r;
     std::queue< maxtree_node*> q;
 
     ini = m->at_pos(idx_ini);
@@ -176,7 +176,7 @@ std::vector<int> grow_region(maxtree *m, double threshold, int idx_ini, std::vec
                 if(!visited->at(n->idx)){
                     visited->at(n->idx) = true;
                     q.push(n);
-                    r.push_back(n->idx);
+                    t->add_pixel(n->idx);
                 }
                 
             }
@@ -196,7 +196,7 @@ void maxtree_worker(bag_of_tasks<task> *bag, maxtree *m, bool *end){
         t = &bag->get_task();
         next_threshold = t->threshold+1;
         create_new_task=false;
-        for(i=0;i<t->size; i++)
+        for(i=0;i<t->size; i++){
             try{
                 idx_pixel = t->get_task_pixel(i);
                 if(m->at_pos(idx_pixel)->gval > next_threshold){
@@ -210,10 +210,9 @@ void maxtree_worker(bag_of_tasks<task> *bag, maxtree *m, bool *end){
         if(create_new_task){
             new_task = new task(next_threshold, 0, idx_pixel);
             auto p = m->at_pos(idx_pixel);
-            auto new_task_pixels = grow_region(m,next_threshold,idx_pixel,t->get_visited());
+            auto new_task_pixels = grow_region(m,next_threshold,idx_pixel,t->get_visited(),new_task);
+            bag->insert_task(*new_task);
         }
-        
-        
     }
 }
 
@@ -273,33 +272,6 @@ Ver a possibilidade das primeiras tarefas serem a criação dos componentes num 
 Jogar Sementes em pontos distribuidos pela imagem e crescer as regiões até encontrar todos componentes.
 Buscar colocar um tamnho minimo de crescimento para cada tarefa.
 */
-
-void test_workers(){
-    std::vector<worker_status> workers;
-    for(int i=0; i<10; i++){
-        std::vector<double> freqs = std::vector<double>();
-        int limite=(rand()%8+1)*2;
-        for(int f=0;f<limite; f++){
-            freqs.push_back(rand()%601+3000);
-        }
-        double mem_size = (rand()%8+1)*4;
-        double mem_freq = (rand()%8+8)*333;
-        worker_status w = worker_status(mem_size, mem_freq, freqs.size(), freqs);
-        std::cout << mem_size << " " << mem_freq << " " 
-                  << freqs.size() << "{";
-        for(auto f:freqs){
-            std::cout << " " << f;
-        }
-        std::cout << "}\n";
-        workers.push_back(w);
-    }
-    std::cout<<"=========";
-    for(auto w: workers){
-        std::cout << "absolute:" << w.get_computation_power() << "\n";
-        std::cout << "relative:" << w.get_relative_power<worker_status>(workers) << "\n";
-    }
-    std::cout << "\n=========\n";
-}
 
 int main(int argc, char **argv){
     VImage *in;
