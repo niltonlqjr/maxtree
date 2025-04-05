@@ -14,7 +14,6 @@
 #include "maxtree_node.hpp"
 #include "maxtree.hpp"
 #include "utils.hpp"
-#include "tests.cpp"
 
 using namespace vips;
 
@@ -74,7 +73,7 @@ class task{
         this->size = 0;
         this->threshold = threshold;
         this->visited = new std::vector<bool>();
-        this->pixels_index = new std::vector<int>()
+        this->pixels_index = new std::vector<int>();
     }
     void add_pixel(int p_idx){
         size += 1;
@@ -110,16 +109,42 @@ class bag_of_tasks{
             tasks.push_back(t);
         }
         Task get_task(bool race_condition = false){
-            Task r;
-            std::swap(tasks->front(), tasks->back());
-            r = tasks->back();
-            tasks->pop_back();
+            std::swap(tasks.front(), tasks.back());
+            Task r = tasks.back();
+            tasks.pop_back();
             return r;
         }
         bool empty(){
             return this->tasks->size == 0;
         }
 };
+
+void test_workers(){
+    std::vector<worker_status> workers;
+    for(int i=0; i<10; i++){
+        std::vector<double> freqs = std::vector<double>();
+        int limite=(rand()%8+1)*2;
+        for(int f=0;f<limite; f++){
+            freqs.push_back(rand()%601+3000);
+        }
+        double mem_size = (rand()%8+1)*4;
+        double mem_freq = (rand()%8+8)*333;
+        worker_status w = worker_status(mem_size, mem_freq, freqs.size(), freqs);
+        std::cout << mem_size << " " << mem_freq << " " 
+                  << freqs.size() << "{";
+        for(auto f:freqs){
+            std::cout << " " << f;
+        }
+        std::cout << "}\n";
+        workers.push_back(w);
+    }
+    std::cout<<"=========";
+    for(auto w: workers){
+        std::cout << "absolute:" << w.get_computation_power() << "\n";
+        std::cout << "relative:" << w.get_relative_power<worker_status>(workers) << "\n";
+    }
+    std::cout << "\n=========\n";
+}
 
 
 void print_map(std::map<std::string, std::string> *m){
@@ -158,7 +183,7 @@ std::map<std::string, std::string> *parse_config(char arg[]){
 
 
 
-std::vector<int> grow_region(maxtree *m, double threshold, int idx_ini, std::vector<bool> *visited, task *t){
+void grow_region(maxtree *m, double threshold, int idx_ini, std::vector<bool> *visited, task *t){
     maxtree_node * f, *ini;
     std::queue< maxtree_node*> q;
 
@@ -182,23 +207,20 @@ std::vector<int> grow_region(maxtree *m, double threshold, int idx_ini, std::vec
             }
         }
     }
-    return r;
-
 }
 
 void maxtree_worker(bag_of_tasks<task> *bag, maxtree *m, bool *end){
     task *new_task;
-    task *t;
     int idx_pixel, i;
     bool create_new_task;
     double next_threshold;
     while(!*end){
-        t = &bag->get_task();
-        next_threshold = t->threshold+1;
+        task t = bag->get_task();
+        next_threshold = t.threshold+1;
         create_new_task=false;
-        for(i=0;i<t->size; i++){
+        for(i=0;i<t.size; i++){
             try{
-                idx_pixel = t->get_task_pixel(i);
+                idx_pixel = t.get_task_pixel(i);
                 if(m->at_pos(idx_pixel)->gval > next_threshold){
                     create_new_task=true;
                     break;
@@ -210,7 +232,7 @@ void maxtree_worker(bag_of_tasks<task> *bag, maxtree *m, bool *end){
         if(create_new_task){
             new_task = new task(next_threshold, 0, idx_pixel);
             auto p = m->at_pos(idx_pixel);
-            auto new_task_pixels = grow_region(m,next_threshold,idx_pixel,t->get_visited(),new_task);
+            grow_region(m,next_threshold,idx_pixel,t.get_visited(),new_task);
             bag->insert_task(*new_task);
         }
     }
@@ -238,17 +260,7 @@ maxtree *maxtree_main(VImage *in, int nth = 2){
     auto visited = new std::vector<bool>(m->h * m->w,false);
 
     double th=0;
-    std::vector<int> v;
-    for(int i=0;i < m->h * m->w; i++){
-        if(m->at_pos(i)->gval > th){
-            v = grow_region(m,th,m->at_pos(i)->idx,visited);
-            for(auto mtn: v){
-                auto pos = m->lin_col(mtn);
-                std::cout << "(" << std::get<0>(pos) << "," << std::get<1>(pos) << ") ";
-            }
-            if(v.size() > 0) std::cout << "\n";
-        }
-    }
+
     
     return NULL;
 }
@@ -276,6 +288,11 @@ Buscar colocar um tamnho minimo de crescimento para cada tarefa.
 int main(int argc, char **argv){
     VImage *in;
     maxtree *t;
+    if(argc < 3){
+        std::cout << "usage:\n" << argv[0] << " <image file> <config file>\n";
+        std::cout << "example:\n" << argv[0] << " input.png configs/config_test.txt\n";
+        return 1;
+    }
     if (VIPS_INIT (argv[0])) 
         vips_error_exit (NULL);
 
