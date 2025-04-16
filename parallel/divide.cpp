@@ -65,8 +65,6 @@ class worker_status{
 
 };
 
-
-
 class task{
     private:
         std::vector<int> *pixels_index;
@@ -131,7 +129,6 @@ class task{
         return ret;
     }
 };
-
 
 template <class Task>
 class bag_of_tasks{
@@ -253,7 +250,6 @@ int grow_region(maxtree *m, int idx_ini, task *t, task *new_task){
                     visited->at(n->idx) = true;
                     q.push(n);
                     cont++;
-                    new_task->add_pixel(n->idx);
                 }
                 
             }
@@ -395,7 +391,7 @@ int main(int argc, char **argv){
         std::cout << "example:\n" << argv[0] << " input.png configs/config_test.txt\n";
         return 1;
     }
-    if (VIPS_INIT (argv[0])) 
+    if (VIPS_INIT(argv[0])) 
         vips_error_exit (NULL);
 
     in = new VImage(VImage::new_from_file(argv[1],NULL));
