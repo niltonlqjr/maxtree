@@ -78,6 +78,7 @@ class task{
         double threshold;
 
     task(int threshold, int parent_thread, int parent_pixel){
+
         this->parent_pixel = parent_pixel;
         this->parent_thread = parent_thread;
         this->size = 0;
@@ -85,6 +86,14 @@ class task{
         this->visited = new std::map<int, bool>();
         this->pixels_index = new std::vector<int>();
     }
+
+    void operator delete(void *ptr){
+        // std::cout << "delete task\n";
+        task *self = (task*)ptr;
+        delete self->pixels_index;
+        delete self->visited;
+    }
+    
     void add_pixel(int p_idx){
         this->size += 1;
         this->pixels_index->push_back(p_idx);
@@ -97,6 +106,20 @@ class task{
 
     std::map<int, bool> *get_visited(){
         return this->visited;
+    }
+    void print(){
+        std::cout << "===============\n";
+
+        std::cout << "parent pixel: " << this->parent_pixel << "\n";
+        std::cout << "parent thread: " << this->parent_thread << "\n";
+        std::cout << "size: " << this->size << "\n";
+        std::cout << "threshold: " << this-> threshold << "\n";
+        std::cout << "task pixels: ";
+        for(auto p: *this->pixels_index){
+            std::cout << p << " ";
+        }
+
+        std::cout << "\n===============\n";
     }
     int get_task_pixel(int idx){
         // try{
@@ -134,6 +157,15 @@ class bag_of_tasks{
             return this->tasks->size() == 0;
         }
 };
+
+bool is_running(std::vector<bool>*v){
+    for(auto x: *v){
+        if(x == true){
+            return true;
+        }
+    }
+    return false;
+}
 
 void test_workers(){
     std::vector<worker_status> workers;
@@ -197,7 +229,7 @@ std::map<std::string, std::string> *parse_config(char arg[]){
 
 
 int grow_region(maxtree *m, int idx_ini, task *t, task *new_task){
-    int cont;
+    int cont=0;
     maxtree_node *f, *ini;
     std::queue< maxtree_node*> q;
     double threshold = new_task->threshold;
@@ -205,14 +237,10 @@ int grow_region(maxtree *m, int idx_ini, task *t, task *new_task){
     std::vector<int> region;
     ini = m->at_pos(idx_ini);
 
-    if(visited->find(idx_ini) == visited->end()){
-        visited->emplace(idx_ini,false);
-    } 
     if(!visited->at(idx_ini)){
         visited->at(idx_ini) = true;
         q.push(ini);
-        cont = 1;
-        visited->emplace(idx_ini,true);
+        cont++;
     }
     while(!q.empty()){
         f=q.front();
@@ -221,9 +249,6 @@ int grow_region(maxtree *m, int idx_ini, task *t, task *new_task){
         auto neighbours=m->get_neighbours(f->idx);
         for(auto n:neighbours){
             if(n->gval >= threshold){
-                if(visited->find(n->idx) == visited->end()){
-                    visited->emplace(n->idx,false);
-                }
                 if(!visited->at(n->idx)){
                     visited->at(n->idx) = true;
                     q.push(n);
@@ -234,12 +259,14 @@ int grow_region(maxtree *m, int idx_ini, task *t, task *new_task){
             }
         }
     }
-    std::cout << "region: ";
-    for(auto idx: *(new_task->get_all_pixels_ids())){
-        auto pos = m->lin_col(idx);
-        std::cout << "(" <<std::get<0>(pos)<< "," << std::get<1>(pos) <<") ";
+    if(cont>1){
+        std::cout << "region: ";
+        for(auto idx: *(new_task->get_all_pixels_ids())){
+            auto pos = m->lin_col(idx);
+            std::cout << "(" <<std::get<0>(pos)<< "," << std::get<1>(pos) <<") ";
+        }
+        std::cout<<"\n";
     }
-    std::cout<<"\n";
     return cont;
 }
 
@@ -253,53 +280,51 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m, bool *
     bool repeat = true;
     int num_visited;
 
-    while(!(*end)){
+    while(is_running(processing)){
         
         if(!(bag->empty())){
             
             processing->at(id) = true;
             task aux_t = bag->get_task();
             t = new task(aux_t);
-            i = num_visited = 0;
+            i = 0;
+            num_visited = 0;
             next_threshold = t->threshold+1;
             while(i < t->size){
                 create_new_task=false;
-                std::cout<<" task size:" << t->size << "\n";
+                // std::cout<<" task size:" << t->size << "\n";
                 try{
                     idx_pixel = t->get_task_pixel(i);
-                    std::cout << idx_pixel << " ";
+                    // std::cout << "pixel index" << idx_pixel << " \n";
                     if(m->at_pos(idx_pixel)->gval >= next_threshold){
                         create_new_task=true;
-                        break;
                     }
                 }catch(std::out_of_range &e){
                     std::cout << e.what() << "\n";
+                    break;
                 }
-                
                 if(create_new_task){
-                    std::cout << "new task: next threshold: " << next_threshold << " idx: " << idx_pixel << "\n";
-                    new_task = new task(next_threshold, id, idx_pixel);
+                    // std::cout << "new task: next threshold: " << next_threshold << " idx: " << idx_pixel << "\n";
                     auto p = m->at_pos(idx_pixel);
-                    num_visited += grow_region(m,idx_pixel,t,new_task);
-                    bag->insert_task(*new_task);
+                    new_task = new task(next_threshold, id, idx_pixel);
+                    num_visited = grow_region(m,idx_pixel,t,new_task);
+                    if(num_visited > 0){
+                        new_task->print();
+                        bag->insert_task(*new_task);
+                    }else{
+                        delete new_task;
+                    }
                 }
                 i++;
             }
         }else{
             processing->at(id) = false;
             repeat=false;
-        }         
+        }     
     }
 }
 
-bool is_running(std::vector<bool>*v){
-    for(auto x: *v){
-        if(x == true){
-            return true;
-        }
-    }
-    return false;
-}
+
 
 maxtree *maxtree_main(VImage *in, int nth = 1){
     std::vector<std::thread*> threads;
@@ -310,6 +335,7 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
     // h=in->height();
     // w=in->width();
     task t1(0,-1,0);
+    
     for(int l=0;l<in->height();l++){
         for(int c=0;c<in->width();c++){
             double p = in->getpoint(c,l)[0];
@@ -334,6 +360,7 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
         threads.push_back(new std::thread(maxtree_worker,tid,bag,m,&end,processing));
     }
     for(auto th: threads){
+        std::cout << th->get_id() << " join\n";
         th->join();
     }
 
