@@ -14,6 +14,9 @@
 #include <queue>
 #include <limits>
 #include <stdexcept>
+#include <mutex>
+
+#include <semaphore.h> // using semaphore.h for older versions of c++ compatibility
 
 #include <cmath>
 #include <cstdlib>
@@ -134,21 +137,42 @@ template <class Task>
 class bag_of_tasks{
     private:
         std::vector<Task> *tasks;
+        bool race_condition;
+        std::mutex *lock;
+        sem_t *semaphore;
+        
     public:
-        bag_of_tasks(){
+        bag_of_tasks(bool race_condition = false){
             this->tasks = new std::vector<Task>();
+            this->race_condition = race_condition;
+            if(this->race_condition){
+                this->lock = new std::mutex();
+
+                this->semaphore = new sem_t();
+                sem_init(this->semaphore, 0, 0);
+            }
+
         }
         ~bag_of_tasks(){
             delete this->tasks;
+            if(this->race_condition){
+                delete this->lock;
+                delete this->semaphore;
+            }
         }
-        void insert_task(Task t, bool race_condition = false){
-            tasks->push_back(t);
+        void insert_task(Task t){
+            if(!this->race_condition){
+                tasks->push_back(t);
+            }
+
         }
-        Task get_task(bool race_condition = false){
-            std::swap(tasks->front(), tasks->back());
-            Task r = tasks->back();
-            tasks->pop_back();
-            return r;
+        Task get_task(){
+            if(!this->race_condition){
+                std::swap(tasks->front(), tasks->back());
+                Task r = tasks->back();
+                tasks->pop_back();
+                return r;
+            }
         }
         bool empty(){
             return this->tasks->size() == 0;
@@ -222,8 +246,6 @@ std::map<std::string, std::string> *parse_config(char arg[]){
     }
     return ret;
 }
-
-
 
 int grow_region(maxtree *m, int idx_ini, task *t, task *new_task){
     int cont=0;
