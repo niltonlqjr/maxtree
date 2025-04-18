@@ -25,6 +25,7 @@
 
 #include "maxtree_node.hpp"
 #include "maxtree.hpp"
+#include "heap.hpp"
 #include "utils.hpp"
 
 using namespace vips;
@@ -95,6 +96,10 @@ class task{
         delete self->visited;
     }
     
+    int weight(){
+        return this->size;
+    }
+
     void add_pixel(int p_idx){
         this->size += 1;
         this->pixels_index->push_back(p_idx);
@@ -161,18 +166,23 @@ class bag_of_tasks{
             }
         }
         void insert_task(Task t){
-            if(!this->race_condition){
-                tasks->push_back(t);
+            if(this->race_condition){
+                this->lock->lock();
             }
 
+            if(this->race_condition){
+                this->lock->unlock();
+            }
         }
-        Task get_task(){
+        Task get_task(int priority = -1){
             if(!this->race_condition){
                 std::swap(tasks->front(), tasks->back());
-                Task r = tasks->back();
                 tasks->pop_back();
-                return r;
+             
             }
+            Task r = tasks->back();
+            return r;
+            
         }
         bool empty(){
             return this->tasks->size() == 0;
@@ -408,6 +418,13 @@ Buscar colocar um tamnho minimo de crescimento para cada tarefa.
 int main(int argc, char **argv){
     VImage *in;
     maxtree *t;
+
+    //std::vector<int> ini = {4,1,3,2,16,9,10,14,8,7};
+    max_heap<int> mh = max_heap<int>();
+    mh.print();
+    
+
+    return 0;
     if(argc < 3){
         std::cout << "usage:\n" << argv[0] << " <image file> <config file>\n";
         std::cout << "example:\n" << argv[0] << " input.png configs/config_test.txt\n";
