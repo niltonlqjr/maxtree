@@ -79,6 +79,18 @@ class task{
         int size;
         double threshold;
 
+    bool operator<(const task &r){
+        return this->size < r.size;
+    }
+
+    bool operator>(const task &r){
+        return this->size > r.size;
+    }
+
+    bool operator==(const task &r){
+        return this->size == r.size;
+    }
+
     task(int threshold, int parent_thread, int parent_pixel){
 
         this->parent_pixel = parent_pixel;
@@ -87,6 +99,18 @@ class task{
         this->threshold = threshold;
         this->visited = new std::map<int, bool>();
         this->pixels_index = new std::vector<int>();
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const task& t){
+        os  << "parent pixel: " << t.parent_pixel << " ";
+        os  << "parent thread: " << t.parent_thread << " ";
+        os << "size: " << t.size << " ";
+        os << "threshold: " << t.threshold << " ";
+        os << "task pixels: ";
+        for(auto p: *t.pixels_index){
+            os << p << " ";
+        }
+        return os;
     }
 
     void operator delete(void *ptr){
@@ -116,10 +140,10 @@ class task{
     void print(){
         std::cout << "===============\n";
 
-        std::cout << "parent pixel: " << this->parent_pixel << "\n";
-        std::cout << "parent thread: " << this->parent_thread << "\n";
-        std::cout << "size: " << this->size << "\n";
-        std::cout << "threshold: " << this-> threshold << "\n";
+        std::cout << "parent pixel: " << this->parent_pixel << " ";
+        std::cout << "parent thread: " << this->parent_thread << " ";
+        std::cout << "size: " << this->size << " ";
+        std::cout << "threshold: " << this-> threshold << " ";
         std::cout << "task pixels: ";
         for(auto p: *this->pixels_index){
             std::cout << p << " ";
@@ -133,7 +157,7 @@ class task{
         // }catch (const std::out_of_range &e){
         //     std::cerr << "invalid task index " << idx << " \n" << e.what() << "\n";
         // }
-        int ret = pixels_index->at(idx);
+        int ret = this->pixels_index->at(idx);
         return ret;
     }
 };
@@ -141,23 +165,23 @@ class task{
 template <class Task>
 class bag_of_tasks{
     private:
-        std::vector<Task> *tasks;
+        max_heap<Task> *tasks;
         bool race_condition;
         std::mutex *lock;
         sem_t *semaphore;
         
     public:
         bag_of_tasks(bool race_condition = false){
-            this->tasks = new std::vector<Task>();
+            this->tasks = new max_heap<Task>();
             this->race_condition = race_condition;
             if(this->race_condition){
                 this->lock = new std::mutex();
-
                 this->semaphore = new sem_t();
                 sem_init(this->semaphore, 0, 0);
             }
 
         }
+
         ~bag_of_tasks(){
             delete this->tasks;
             if(this->race_condition){
@@ -165,25 +189,61 @@ class bag_of_tasks{
                 delete this->semaphore;
             }
         }
+
         void insert_task(Task t){
             if(this->race_condition){
                 this->lock->lock();
             }
-
+            this->tasks->insert(t);
             if(this->race_condition){
                 this->lock->unlock();
             }
         }
-        Task get_task(int priority = -1){
-            if(!this->race_condition){
-                std::swap(tasks->front(), tasks->back());
-                tasks->pop_back();
-             
-            }
-            Task r = tasks->back();
-            return r;
-            
+        
+        int position_of(int priority){
+            //elaborar uma formula para obter a posição dada uma prioridade
+            //pensar numa forma de limitar as prioridades;
+            return priority;
         }
+        
+        int remove_task(int priority = -1){
+            int pos;
+            if(this->race_condition){
+                this->lock->lock();
+            }
+            if(priority == -1){
+                pos = 0;
+            }else{
+                pos = this->position_of(priority);
+            }
+            this->tasks->remove_at(pos);
+            if(this->race_condition){
+                this->lock->unlock();
+            }
+            return pos;
+        }
+
+        Task get_task(int priority = -1){
+            int pos;
+            if(this->race_condition){
+                this->lock->lock();
+            }
+            if(priority == -1){
+                pos = 0;
+            }else{
+                pos = this->position_of(priority);
+            }
+            Task ret = this->tasks->at(pos);
+            if(this->race_condition){
+                this->lock->unlock();
+            }
+            return ret;
+        }
+
+        void print(){
+            this->tasks->print();
+        }
+
         bool empty(){
             return this->tasks->size() == 0;
         }
@@ -287,43 +347,41 @@ int grow_region(maxtree *m, int idx_ini, task *t, task *new_task){
             }
         }
     }
-    if(cont>1){
+/*     if(cont>1){
         std::cout << "region: ";
         for(auto idx: *(new_task->get_all_pixels_ids())){
             auto pos = m->lin_col(idx);
             std::cout << "(" <<std::get<0>(pos)<< "," << std::get<1>(pos) <<") ";
         }
         std::cout<<"\n";
-    }
+    } */
     return cont;
 }
 
 void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m, bool *end, std::vector<bool> *processing){
     task *new_task;
     task *t;
+    std::map<int, bool> *visited;
     int idx_pixel, i;
     bool create_new_task;
     double next_threshold;
     //while(!*end){
     bool repeat = true;
     int num_visited;
-
     while(is_running(processing)){
         
         if(!(bag->empty())){
-            
             processing->at(id) = true;
             task aux_t = bag->get_task();
+            bag->remove_task();
             t = new task(aux_t);
             i = 0;
             num_visited = 0;
             next_threshold = t->threshold+1;
             while(i < t->size){
                 create_new_task=false;
-                // std::cout<<" task size:" << t->size << "\n";
                 try{
                     idx_pixel = t->get_task_pixel(i);
-                    // std::cout << "pixel index" << idx_pixel << " \n";
                     if(m->at_pos(idx_pixel)->gval >= next_threshold){
                         create_new_task=true;
                     }
@@ -332,12 +390,16 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m, bool *
                     break;
                 }
                 if(create_new_task){
-                    // std::cout << "new task: next threshold: " << next_threshold << " idx: " << idx_pixel << "\n";
                     auto p = m->at_pos(idx_pixel);
-                    new_task = new task(next_threshold, id, idx_pixel);
+                    new_task = new task(next_threshold, id, idx_pixel);// ver como fazer para o pixel pai ficar certo
                     num_visited = grow_region(m,idx_pixel,t,new_task);
                     if(num_visited > 0){
-                        new_task->print();
+                        if(new_task->size == t->size){
+                            new_task->parent_pixel = t->parent_pixel;
+                        }
+                        if(new_task->size != t->size){
+                            new_task->print();
+                        }
                         bag->insert_task(*new_task);
                     }else{
                         delete new_task;
@@ -347,6 +409,7 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m, bool *
             }
         }else{
             processing->at(id) = false;
+            
             repeat=false;
         }     
     }
@@ -362,26 +425,25 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
     int x=0;
     // h=in->height();
     // w=in->width();
-    task t1(0,-1,0);
+    task t0 = task(0,-1,0);
     
     for(int l=0;l<in->height();l++){
         for(int c=0;c<in->width();c++){
             double p = in->getpoint(c,l)[0];
             (*data)[x] = new maxtree_node(p,x);
             //std::cout << data->at(x)->idx << " ";
-            t1.add_pixel(x);
+            t0.add_pixel(x);
             x++;
         }
     }
-    std::cout << "\n";
+    t0.print();
     maxtree *m = new maxtree(data, in->height(), in->width());
     std::map<int, bool> *visited = new std::map<int, bool>();
     std::vector<bool> *processing = new std::vector<bool>();
     threads = std::vector<std::thread*>();
     int tid;
     bool end=false;
-    std::cout<<"+++++++++++++"<< __LINE__ <<"++++++++++++\n";
-    bag->insert_task(t1);
+    bag->insert_task(t0);
     for(tid = 0; tid<nth; tid++){
         processing->push_back(true);
         //maxtree_worker(tid, bag, m, &end, processing);
@@ -419,12 +481,17 @@ int main(int argc, char **argv){
     VImage *in;
     maxtree *t;
 
-    //std::vector<int> ini = {4,1,3,2,16,9,10,14,8,7};
-    max_heap<int> mh = max_heap<int>();
-    mh.print();
+    /* std::vector<int> ini = {4,1,3,2,16,9,10,14,8,7};
+    max_heap<int> mh = max_heap<int>(ini);
+    mh.print(); 
     
+    for(auto x: {12, 30, 1, -2}){
+        mh.insert(x);
+    }
+    mh.print(); 
 
-    return 0;
+    return 0; */
+    
     if(argc < 3){
         std::cout << "usage:\n" << argv[0] << " <image file> <config file>\n";
         std::cout << "example:\n" << argv[0] << " input.png configs/config_test.txt\n";

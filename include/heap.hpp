@@ -3,7 +3,8 @@
 #ifndef __HEAP_HPP__
 #define __HEAP_HPP__
 
-template <typename T>
+// template<typename T, class Compare = std::less<T>>
+template<typename T>
 class max_heap{
     private:
         std::vector<T> data;
@@ -16,13 +17,13 @@ class max_heap{
 
     public:
         
-        max_heap(std::vector<T> ini = std::vector<int>());
+        max_heap(std::vector<T> ini = std::vector<T>());
         ~max_heap();
         void insert(T value);
-        T first();
         T at(int idx);
         void remove_at(int idx);
         void print();
+        int size();
 };
 
 #include "heap.tpp"
