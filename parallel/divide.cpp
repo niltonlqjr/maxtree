@@ -337,13 +337,17 @@ int grow_region(maxtree *m, int idx_ini, task *t, task *new_task){
         q.pop();
         auto neighbours=m->get_neighbours(f->idx);
         for(auto n:neighbours){
+            // std::cout << "pixel: " << n->idx << " gval: " << n->gval << " threshold: " << threshold  
+                    //   << " parent:" << m->at_pos(new_task->parent_pixel)->gval << "\n";
             if(n->gval >= threshold){
                 if(!visited->at(n->idx)){
                     visited->at(n->idx) = true;
                     q.push(n);
                     cont++;
-                }
-                
+                }  
+            }else if(n->gval > m->at_pos(new_task->parent_pixel)->gval){
+                    // std::cout << "new parent: "<< n->idx <<"\n";
+                    new_task->parent_pixel = n->idx;
             }
         }
     }
@@ -390,13 +394,13 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m, bool *
                     break;
                 }
                 if(create_new_task){
-                    auto p = m->at_pos(idx_pixel);
-                    new_task = new task(next_threshold, id, idx_pixel);// ver como fazer para o pixel pai ficar certo
+                    // auto p = m->at_pos(idx_pixel);
+                    new_task = new task(next_threshold, id, t->parent_pixel);// ver como fazer para o pixel pai ficar certo
                     num_visited = grow_region(m,idx_pixel,t,new_task);
-                    if(num_visited > 0){
+                    if(num_visited > 0){/* 
                         if(new_task->size == t->size){
                             new_task->parent_pixel = t->parent_pixel;
-                        }
+                        } */
                         if(new_task->size != t->size){
                             new_task->print();
                         }
