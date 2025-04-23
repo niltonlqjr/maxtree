@@ -15,8 +15,9 @@
 #include <limits>
 #include <stdexcept>
 #include <mutex>
+#include <condition_variable>
 
-#include <semaphore.h> // using semaphore.h for older versions of c++ compatibility
+
 
 #include <cmath>
 #include <cstdlib>
@@ -166,38 +167,28 @@ template <class Task>
 class bag_of_tasks{
     private:
         max_heap<Task> *tasks;
-        bool race_condition;
-        std::mutex *lock;
-        sem_t *semaphore;
+        std::mutex lock;
+        std::condition_variable cv;
+        int num_task;
         
     public:
         bag_of_tasks(bool race_condition = false){
             this->tasks = new max_heap<Task>();
-            this->race_condition = race_condition;
-            if(this->race_condition){
-                this->lock = new std::mutex();
-                this->semaphore = new sem_t();
-                sem_init(this->semaphore, 0, 0);
-            }
-
+            this->num_task = 0;
         }
 
         ~bag_of_tasks(){
             delete this->tasks;
-            if(this->race_condition){
-                delete this->lock;
-                delete this->semaphore;
-            }
         }
 
         void insert_task(Task t){
-            if(this->race_condition){
-                this->lock->lock();
-            }
+            auto *lck = new std::unique_lock<std::mutex>(this->lock);
+            // }
             this->tasks->insert(t);
-            if(this->race_condition){
-                this->lock->unlock();
-            }
+            this->num_task++;
+            delete lck;
+            this->cv.notify_one();
+            
         }
         
         int position_of(int priority){
@@ -206,37 +197,41 @@ class bag_of_tasks{
             return priority;
         }
         
-        int remove_task(int priority = -1){
+/*         int remove_task(int priority = -1){
             int pos;
-            if(this->race_condition){
-                this->lock->lock();
-            }
+            auto *lck = new std::unique_lock<std::mutex>(this->lock);
             if(priority == -1){
                 pos = 0;
             }else{
                 pos = this->position_of(priority);
             }
-            this->tasks->remove_at(pos);
-            if(this->race_condition){
-                this->lock->unlock();
+            
+            while(this->num_task == 0){
+                this->cv.wait(*lck);
             }
+            this->tasks->remove_at(pos);
+            this->num_task--;
+
             return pos;
-        }
+        } */
 
         Task get_task(int priority = -1){
             int pos;
-            if(this->race_condition){
-                this->lock->lock();
-            }
+            auto *lck = new std::unique_lock<std::mutex>(this->lock);
+            
             if(priority == -1){
                 pos = 0;
             }else{
                 pos = this->position_of(priority);
             }
-            Task ret = this->tasks->at(pos);
-            if(this->race_condition){
-                this->lock->unlock();
+            
+            while(this->num_task == 0){
+                this->cv.wait(*lck);
             }
+            Task ret = this->tasks->at(pos);
+            this->tasks->remove_at(pos);
+            this->num_task--;
+            delete lck;
             return ret;
         }
 
@@ -351,18 +346,11 @@ int grow_region(maxtree *m, int idx_ini, task *t, task *new_task){
             }
         }
     }
-/*     if(cont>1){
-        std::cout << "region: ";
-        for(auto idx: *(new_task->get_all_pixels_ids())){
-            auto pos = m->lin_col(idx);
-            std::cout << "(" <<std::get<0>(pos)<< "," << std::get<1>(pos) <<") ";
-        }
-        std::cout<<"\n";
-    } */
     return cont;
 }
 
-void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m, bool *end, std::vector<bool> *processing){
+void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m, bool *end, 
+                    std::vector<bool> *processing){
     task *new_task;
     task *t;
     std::map<int, bool> *visited;
@@ -377,7 +365,7 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m, bool *
         if(!(bag->empty())){
             processing->at(id) = true;
             task aux_t = bag->get_task();
-            bag->remove_task();
+            
             t = new task(aux_t);
             i = 0;
             num_visited = 0;
@@ -403,6 +391,7 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m, bool *
                         } */
                         if(new_task->size != t->size){
                             new_task->print();
+                            
                         }
                         bag->insert_task(*new_task);
                     }else{
@@ -421,7 +410,7 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m, bool *
 
 
 
-maxtree *maxtree_main(VImage *in, int nth = 1){
+maxtree *maxtree_main(VImage *in, int nth = 4){
     std::vector<std::thread*> threads;
     bag_of_tasks<task> *bag = new bag_of_tasks<task>();
     std::map<int, maxtree_node*> *data = new std::map<int, maxtree_node*>();
@@ -442,6 +431,7 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
     }
     t0.print();
     maxtree *m = new maxtree(data, in->height(), in->width());
+    bag_of_tasks<task> *components = new bag_of_tasks<task>(true);
     std::map<int, bool> *visited = new std::map<int, bool>();
     std::vector<bool> *processing = new std::vector<bool>();
     threads = std::vector<std::thread*>();
@@ -454,7 +444,7 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
         threads.push_back(new std::thread(maxtree_worker,tid,bag,m,&end,processing));
     }
     for(auto th: threads){
-        std::cout << th->get_id() << " join\n";
+        //std::cout << th->get_id() << " join\n";
         th->join();
     }
 
