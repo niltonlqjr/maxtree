@@ -16,7 +16,8 @@
 #include <stdexcept>
 #include <mutex>
 #include <condition_variable>
-
+#include <stdexcept>
+	
 
 
 #include <cmath>
@@ -92,7 +93,7 @@ class task{
         return this->size == r.size;
     }
 
-    task(int threshold, int parent_thread, int parent_pixel){
+    task(int threshold = 0, int parent_thread = 0, int parent_pixel = 0){
 
         this->parent_pixel = parent_pixel;
         this->parent_thread = parent_thread;
@@ -170,11 +171,16 @@ class bag_of_tasks{
         std::mutex lock;
         std::condition_variable cv;
         int num_task;
+        bool running;
         
+
     public:
-        bag_of_tasks(bool race_condition = false){
+        int waiting;
+        bag_of_tasks(){
             this->tasks = new max_heap<Task>();
             this->num_task = 0;
+            this->running = true;
+            this->waiting = 0;
         }
 
         ~bag_of_tasks(){
@@ -182,13 +188,9 @@ class bag_of_tasks{
         }
 
         void insert_task(Task t){
-            auto *lck = new std::unique_lock<std::mutex>(this->lock);
-            // }
+            std::unique_lock<std::mutex> l(this->lock);
             this->tasks->insert(t);
             this->num_task++;
-            delete lck;
-            this->cv.notify_one();
-            
         }
         
         int position_of(int priority){
@@ -215,26 +217,39 @@ class bag_of_tasks{
             return pos;
         } */
 
-        Task get_task(int priority = -1){
+        bool get_task(Task &ret, int priority = -1){
             int pos;
-            auto *lck = new std::unique_lock<std::mutex>(this->lock);
-            
             if(priority == -1){
                 pos = 0;
             }else{
                 pos = this->position_of(priority);
             }
-            
-            while(this->num_task == 0){
-                this->cv.wait(*lck);
+            std::unique_lock<std::mutex> l(this->lock);
+            while(num_task == 0 && running){
+                this->waiting++;
+                this->cv.wait(l);
             }
-            Task ret = this->tasks->at(pos);
-            this->tasks->remove_at(pos);
-            this->num_task--;
-            delete lck;
-            return ret;
+            if(!running){
+                return false;
+            }else{
+                ret = this->tasks->at(pos);
+                this->tasks->remove_at(pos);
+                this->num_task--;
+                return true;
+            }
+            
         }
 
+        void wakeup_workers(){
+            std::unique_lock<std::mutex> l(this->lock);
+            this->waiting=0;
+            this->cv.notify_all();
+        }
+
+        void notify_end(){
+            this->running = false;
+        }
+        
         void print(){
             this->tasks->print();
         }
@@ -349,68 +364,57 @@ int grow_region(maxtree *m, int idx_ini, task *t, task *new_task){
     return cont;
 }
 
-void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m, bool *end, 
-                    std::vector<bool> *processing){
+void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m, 
+                    bool *end, std::vector<bool> *processing){
     task *new_task;
-    task *t;
+    task *t = new task();
     std::map<int, bool> *visited;
-    int idx_pixel, i;
-    bool create_new_task;
+    int idx_pixel, i, num_visited;
+    bool create_new_task, has_task;
     double next_threshold;
-    //while(!*end){
-    bool repeat = true;
-    int num_visited;
-    while(is_running(processing)){
-        
-        if(!(bag->empty())){
-            processing->at(id) = true;
-            task aux_t = bag->get_task();
-            
-            t = new task(aux_t);
-            i = 0;
-            num_visited = 0;
-            next_threshold = t->threshold+1;
-            while(i < t->size){
-                create_new_task=false;
-                try{
-                    idx_pixel = t->get_task_pixel(i);
-                    if(m->at_pos(idx_pixel)->gval >= next_threshold){
-                        create_new_task=true;
-                    }
-                }catch(std::out_of_range &e){
-                    std::cout << e.what() << "\n";
-                    break;
+    
+    while(true){
+        has_task = bag->get_task(*t);
+        if(!has_task){
+            break;
+        }
+        i = 0;
+        num_visited = 0;
+        next_threshold = t->threshold+1;
+        while(i < t->size){
+            create_new_task=false;
+            try{
+                idx_pixel = t->get_task_pixel(i);
+                if(m->at_pos(idx_pixel)->gval >= next_threshold){
+                    create_new_task=true;
                 }
-                if(create_new_task){
-                    // auto p = m->at_pos(idx_pixel);
-                    new_task = new task(next_threshold, id, t->parent_pixel);// ver como fazer para o pixel pai ficar certo
-                    num_visited = grow_region(m,idx_pixel,t,new_task);
-                    if(num_visited > 0){/* 
-                        if(new_task->size == t->size){
-                            new_task->parent_pixel = t->parent_pixel;
-                        } */
-                        if(new_task->size != t->size){
-                            new_task->print();
-                            
-                        }
-                        bag->insert_task(*new_task);
-                    }else{
-                        delete new_task;
-                    }
-                }
-                i++;
+            }catch(std::out_of_range &e){
+                std::cout << e.what() << "\n";
+                break;
             }
-        }else{
-            processing->at(id) = false;
-            
-            repeat=false;
-        }     
+            if(create_new_task){
+                // auto p = m->at_pos(idx_pixel);
+                new_task = new task(next_threshold, id, t->parent_pixel);// ver como fazer para o pixel pai ficar certo
+                num_visited = grow_region(m,idx_pixel,t,new_task);
+                if(num_visited > 0){ 
+                    if(new_task->size != t->size){
+                        new_task->print();
+                    }
+                    bag->insert_task(*new_task);
+                }else{
+                    delete new_task;
+                }
+            }
+            i++;
+        }
     }
+    processing->at(id) = false;
 }
 
 
 
-maxtree *maxtree_main(VImage *in, int nth = 4){
+
+maxtree *maxtree_main(VImage *in, int nth = 1){
     std::vector<std::thread*> threads;
     bag_of_tasks<task> *bag = new bag_of_tasks<task>();
     std::map<int, maxtree_node*> *data = new std::map<int, maxtree_node*>();
@@ -431,7 +435,7 @@ maxtree *maxtree_main(VImage *in, int nth = 4){
     }
     t0.print();
     maxtree *m = new maxtree(data, in->height(), in->width());
-    bag_of_tasks<task> *components = new bag_of_tasks<task>(true);
+    bag_of_tasks<task> *components = new bag_of_tasks<task>();
     std::map<int, bool> *visited = new std::map<int, bool>();
     std::vector<bool> *processing = new std::vector<bool>();
     threads = std::vector<std::thread*>();
@@ -443,9 +447,11 @@ maxtree *maxtree_main(VImage *in, int nth = 4){
         //maxtree_worker(tid, bag, m, &end, processing);
         threads.push_back(new std::thread(maxtree_worker,tid,bag,m,&end,processing));
     }
-    for(auto th: threads){
-        //std::cout << th->get_id() << " join\n";
-        th->join();
+    
+    while(is_running(processing)){
+        if(bag->waiting == nth && bag->empty()){
+            bag->notify_end();
+        }
     }
 
     return NULL;
@@ -501,19 +507,24 @@ int main(int argc, char **argv){
 
     
     configs = parse_config(argv[2]);
-    test_workers();
+    /* test_workers();
     std::cout<<"+++++++++++++"<< __LINE__ <<"++++++++++++\n";
     print_map(configs);
-        std::cout<<"+++++++++++++"<< __LINE__ <<"++++++++++++\n";
+        std::cout<<"+++++++++++++"<< __LINE__ <<"++++++++++++\n"; */
     int h,w,nth;
+
+    
     nth = std::stoi(configs->at("threads"));
+
+    if(argc == 4) nth = std::stoi(argv[3]);
+    
     std::cout << "nth:" << nth << "\n";
     h=in->height();
     w=in->width();
     print_VImage_band(in);
-
+    
     std::cout<<"+++++++++++++"<< __LINE__ <<"++++++++++++\n";
-    t=maxtree_main(in);
+    t=maxtree_main(in,nth);
     //print_matrix(t, h, w);
     //label_components(t);
     //print_labels(t, h, w);
