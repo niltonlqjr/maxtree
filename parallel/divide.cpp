@@ -248,6 +248,7 @@ class bag_of_tasks{
 
         void notify_end(){
             this->running = false;
+            this->wakeup_workers();
         }
         
         void print(){
