@@ -377,8 +377,8 @@ int grow_region(maxtree *m, int idx_ini, task *t, task *new_task){
     return cont;
 }
 
-void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m, 
-                    bool *end){ //, std::vector<std::mutex> *processing){
+void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m) {
+                    // bool *end){ //, std::vector<std::mutex> *processing){
     task *new_task;
     task *t = new task();
     std::map<int, bool> *visited;
