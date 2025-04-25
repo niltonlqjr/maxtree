@@ -17,7 +17,8 @@
 #include <mutex>
 #include <condition_variable>
 #include <stdexcept>
-	
+
+#include <semaphore.h>
 
 
 #include <cmath>
@@ -169,13 +170,13 @@ class bag_of_tasks{
     private:
         max_heap<Task> *tasks;
         std::mutex lock;
-        std::condition_variable cv;
+        std::condition_variable has_task, no_task;
         int num_task;
         bool running;
-        
+        int waiting;
 
     public:
-        int waiting;
+        
         bag_of_tasks(){
             this->tasks = new max_heap<Task>();
             this->num_task = 0;
@@ -225,25 +226,33 @@ class bag_of_tasks{
                 pos = this->position_of(priority);
             }
             std::unique_lock<std::mutex> l(this->lock);
-            while(num_task == 0 && running){
+            while(this->num_task == 0 && this->running){
                 this->waiting++;
-                this->cv.wait(l);
+                this->has_task.wait(l);
             }
-            if(!running){
+            if(!this->running){
                 return false;
             }else{
                 ret = this->tasks->at(pos);
                 this->tasks->remove_at(pos);
                 this->num_task--;
+                this->no_task.notify_all();
                 return true;
             }
             
         }
 
+        void wait_empty(){
+            std::unique_lock<std::mutex> l(this->lock);
+            while(this->num_task > 0){
+                this->no_task.wait(l);
+            }
+        }
+
         void wakeup_workers(){
             std::unique_lock<std::mutex> l(this->lock);
             this->waiting=0;
-            this->cv.notify_all();
+            this->has_task.notify_all();
         }
 
         void notify_end(){
@@ -251,6 +260,10 @@ class bag_of_tasks{
             this->wakeup_workers();
         }
         
+        int num_waiting(){
+            return this->waiting;
+        }
+
         void print(){
             this->tasks->print();
         }
@@ -260,11 +273,10 @@ class bag_of_tasks{
         }
 };
 
-bool is_running(std::vector<bool>*v){
-    for(auto x: *v){
-        if(x == true){
-            return true;
-        }
+bool is_running(std::vector<std::mutex> *v){
+    
+    for(std::vector<std::mutex>::iterator  x=v->begin(); x != v->end(); x++){
+        
     }
     return false;
 }
@@ -366,7 +378,7 @@ int grow_region(maxtree *m, int idx_ini, task *t, task *new_task){
 }
 
 void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m, 
-                    bool *end, std::vector<bool> *processing){
+                    bool *end){ //, std::vector<std::mutex> *processing){
     task *new_task;
     task *t = new task();
     std::map<int, bool> *visited;
@@ -377,8 +389,10 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m,
     while(true){
         has_task = bag->get_task(*t);
         if(!has_task){
+            // processing->at(id)->unlock();
             break;
         }
+        // processing->at(id)->lock();
         i = 0;
         num_visited = 0;
         next_threshold = t->threshold+1;
@@ -409,7 +423,7 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m,
             i++;
         }
     }
-    processing->at(id) = false;
+    // processing->at(id)->unlock();
 }
 
 
@@ -438,20 +452,26 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
     maxtree *m = new maxtree(data, in->height(), in->width());
     bag_of_tasks<task> *components = new bag_of_tasks<task>();
     std::map<int, bool> *visited = new std::map<int, bool>();
-    std::vector<bool> *processing = new std::vector<bool>();
+    // std::vector<std::mutex> *processing = new std::vector<std::mutex>();
+    
+    bool running;
+    
     threads = std::vector<std::thread*>();
     int tid;
     bool end=false;
     bag->insert_task(t0);
+    // std::mutex m();
     for(tid = 0; tid<nth; tid++){
-        processing->push_back(true);
+        // processing->push_back(m);
         //maxtree_worker(tid, bag, m, &end, processing);
-        threads.push_back(new std::thread(maxtree_worker,tid,bag,m,&end,processing));
+        threads.push_back(new std::thread(maxtree_worker,tid,bag,m,&end));
     }
     
-    while(is_running(processing)){
-        if(bag->waiting == nth && bag->empty()){
+    while(true){
+        bag->wait_empty();
+        if(bag->num_waiting() == nth && bag->empty()){
             bag->notify_end();
+            break;
         }
     }
 
