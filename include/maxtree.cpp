@@ -21,6 +21,10 @@ maxtree_node *maxtree::at_pos(int index){
     return this->data->at(index);
 }
 
+void maxtree::insert_component(std::vector<int> component){
+    //todo;
+}
+
 std::vector<maxtree_node*> maxtree::get_neighbours(int pixel){
     std::vector<maxtree_node*> v;
     int idx, pl, pc;

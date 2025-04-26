@@ -378,7 +378,6 @@ int grow_region(maxtree *m, int idx_ini, task *t, task *new_task){
 }
 
 void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m) {
-                    // bool *end){ //, std::vector<std::mutex> *processing){
     task *new_task;
     task *t = new task();
     std::map<int, bool> *visited;
@@ -389,10 +388,8 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m) {
     while(true){
         has_task = bag->get_task(*t);
         if(!has_task){
-            // processing->at(id)->unlock();
             break;
         }
-        // processing->at(id)->lock();
         i = 0;
         num_visited = 0;
         next_threshold = t->threshold+1;
@@ -408,12 +405,12 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m) {
                 break;
             }
             if(create_new_task){
-                // auto p = m->at_pos(idx_pixel);
                 new_task = new task(next_threshold, id, t->parent_pixel);// ver como fazer para o pixel pai ficar certo
                 num_visited = grow_region(m,idx_pixel,t,new_task);
                 if(num_visited > 0){ 
                     if(new_task->size != t->size){
                         new_task->print();
+                        m->insert_component(*(new_task->get_all_pixels_ids()));
                     }
                     bag->insert_task(*new_task);
                 }else{
@@ -423,7 +420,6 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m) {
             i++;
         }
     }
-    // processing->at(id)->unlock();
 }
 
 
@@ -464,7 +460,7 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
     for(tid = 0; tid<nth; tid++){
         // processing->push_back(m);
         //maxtree_worker(tid, bag, m, &end, processing);
-        threads.push_back(new std::thread(maxtree_worker,tid,bag,m,&end));
+        threads.push_back(new std::thread(maxtree_worker,tid,bag,m));
     }
     
     while(true){
