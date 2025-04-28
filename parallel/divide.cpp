@@ -6,7 +6,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <map>
+#include <unordered_map>
 #include <vips/vips8>
 #include <vector>
 #include <algorithm>
@@ -75,7 +75,7 @@ class worker_status{
 class task{
     private:
         std::vector<int> *pixels_index;
-        std::map<int, bool> *visited;
+        std::unordered_map<int, bool> *visited;
     public:
         int parent_thread;
         int parent_pixel;
@@ -100,7 +100,7 @@ class task{
         this->parent_thread = parent_thread;
         this->size = 0;
         this->threshold = threshold;
-        this->visited = new std::map<int, bool>();
+        this->visited = new std::unordered_map<int, bool>();
         this->pixels_index = new std::vector<int>();
     }
 
@@ -137,7 +137,7 @@ class task{
         return this->pixels_index;
     }
 
-    std::map<int, bool> *get_visited(){
+    std::unordered_map<int, bool> *get_visited(){
         return this->visited;
     }
     void print(){
@@ -308,7 +308,7 @@ void test_workers(){
     std::cout << "\n=========\n";
 }
 
-void print_map(std::map<std::string, std::string> *m){
+void print_unordered_map(std::unordered_map<std::string, std::string> *m){
     for(auto x: *m){
         std::cout << x.first << "=>" << x.second << "\n";
     }
@@ -323,10 +323,10 @@ bool is_blank(std::string s){
     }
     return true;
 }
-std::map<std::string, std::string> *parse_config(char arg[]){
+std::unordered_map<std::string, std::string> *parse_config(char arg[]){
     std::ifstream f(arg);
     std::string l;
-    std::map<std::string, std::string> *ret = new std::map<std::string, std::string>();
+    std::unordered_map<std::string, std::string> *ret = new std::unordered_map<std::string, std::string>();
     while (!f.eof()){
         std::getline(f, l);
         bool blank = is_blank(l);
@@ -340,12 +340,11 @@ std::map<std::string, std::string> *parse_config(char arg[]){
     return ret;
 }
 
-int grow_region(maxtree *m, int idx_ini, task *t, task *new_task){
+int grow_region(maxtree *m, int idx_ini, task *t, task *new_task, double threshold){
     int cont=0;
     maxtree_node *f, *ini;
     std::queue< maxtree_node*> q;
-    double threshold = new_task->threshold;
-    std::map<int, bool> *visited = t->get_visited();
+    std::unordered_map<int, bool> *visited = t->get_visited();
     std::vector<int> region;
     ini = m->at_pos(idx_ini);
 
@@ -380,7 +379,7 @@ int grow_region(maxtree *m, int idx_ini, task *t, task *new_task){
 void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m) {
     task *new_task;
     task *t = new task();
-    std::map<int, bool> *visited;
+    std::unordered_map<int, bool> *visited;
     int idx_pixel, i, num_visited;
     bool create_new_task, has_task;
     double next_threshold;
@@ -406,11 +405,11 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m) {
             }
             if(create_new_task){
                 new_task = new task(next_threshold, id, t->parent_pixel);// ver como fazer para o pixel pai ficar certo
-                num_visited = grow_region(m,idx_pixel,t,new_task);
+                num_visited = grow_region(m,idx_pixel,t,new_task,next_threshold);
                 if(num_visited > 0){ 
                     if(new_task->size != t->size){
                         new_task->print();
-                        m->insert_component(*(new_task->get_all_pixels_ids()));
+                        m->insert_component(*(new_task->get_all_pixels_ids()),next_threshold);
                     }
                     bag->insert_task(*new_task);
                 }else{
@@ -428,7 +427,7 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m) {
 maxtree *maxtree_main(VImage *in, int nth = 1){
     std::vector<std::thread*> threads;
     bag_of_tasks<task> *bag = new bag_of_tasks<task>();
-    std::map<int, maxtree_node*> *data = new std::map<int, maxtree_node*>();
+    std::unordered_map<int, maxtree_node*> *data = new std::unordered_map<int, maxtree_node*>();
 
     int x=0;
     // h=in->height();
@@ -447,7 +446,7 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
     t0.print();
     maxtree *m = new maxtree(data, in->height(), in->width());
     bag_of_tasks<task> *components = new bag_of_tasks<task>();
-    std::map<int, bool> *visited = new std::map<int, bool>();
+    std::unordered_map<int, bool> *visited = new std::unordered_map<int, bool>();
     // std::vector<std::mutex> *processing = new std::vector<std::mutex>();
     
     bool running;
@@ -519,14 +518,14 @@ int main(int argc, char **argv){
 
     in = new VImage(VImage::new_from_file(argv[1],NULL));
 
-    std::map<std::string, std::string> *configs;
+    std::unordered_map<std::string, std::string> *configs;
 
 
     
     configs = parse_config(argv[2]);
     /* test_workers();
     std::cout<<"+++++++++++++"<< __LINE__ <<"++++++++++++\n";
-    print_map(configs);
+    print_unordered_map(configs);
         std::cout<<"+++++++++++++"<< __LINE__ <<"++++++++++++\n"; */
     int h,w,nth;
 

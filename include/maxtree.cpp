@@ -1,11 +1,17 @@
 #include "maxtree.hpp"
 
+component::component(std::vector<int> p, int attr){
+    this->pixels = p;
+    this->attribute = attr;
+}
+
+
 maxtree::maxtree(int h, int w){
     this->h = h;
     this->w = w;
 }
 
-maxtree::maxtree(std::map<int, maxtree_node*> *data, int h, int w){
+maxtree::maxtree(std::unordered_map<int, maxtree_node*> *data, int h, int w){
     this->data = data;
     this->h=h;
     this->w=w;
@@ -21,8 +27,12 @@ maxtree_node *maxtree::at_pos(int index){
     return this->data->at(index);
 }
 
-void maxtree::insert_component(std::vector<int> component){
-    //todo;
+void maxtree::insert_component(std::vector<int> comp, double threshold){
+    auto comps = this->components.find(threshold);
+    if(comps == this->components.end()){
+        this->components[threshold] = std::vector<component>();
+    }
+    this->components[threshold].push_back(comp);
 }
 
 std::vector<maxtree_node*> maxtree::get_neighbours(int pixel){
