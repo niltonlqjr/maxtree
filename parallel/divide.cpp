@@ -470,7 +470,7 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
         }
     }
 
-    return NULL;
+    return m;
 }
 
 
@@ -541,6 +541,15 @@ int main(int argc, char **argv){
     
     std::cout<<"+++++++++++++"<< __LINE__ <<"++++++++++++\n";
     t=maxtree_main(in,nth);
+
+    for(auto thold: t->all_thresholds()){
+        std::vector<component> comps = t->components_at(thold);
+        std::cout << "threshold: " << thold << "\n";
+        for(int i=0;i<comps.size(); i++){
+            std::cout << comps[i].to_string() << "\n===================\n";
+        }
+    }
+
     //print_matrix(t, h, w);
     //label_components(t);
     //print_labels(t, h, w);

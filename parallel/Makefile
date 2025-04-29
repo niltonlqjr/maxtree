@@ -18,7 +18,8 @@ dest_divide = exec/${divide_name}
 
 all: divide
 
-divide: maxtree_node.o maxtree.o utils.o 
+divide: maxtree_node.o maxtree.o utils.o
+	mkdir -p exec
 	g++ -g -pthread ${source_divide} ${utils_dir}/utils.o \
 	 	${maxtree_node_dir}/maxtree_node.o \
 		${maxtree_dir}/maxtree.o \

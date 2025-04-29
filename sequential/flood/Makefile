@@ -15,6 +15,7 @@ dest_rec = exec/${rec_name}
 all: non_rec rec wilkinson
 
 non_rec: maxtree_node.o utils.o
+	mkdir -p exec
 	g++ -g -Wall $(source_non_rec) ${utils_dir}/utils.o ${maxtree_node_dir}/maxtree_node.o \
         -I${maxtree_node_dir}  $(vips_args) -o $(dest_nonrec)
 

@@ -1,5 +1,5 @@
 #include <unordered_map>
-#include <unordered_map>
+#include <string>
 #include <tuple>
 #include "utils.hpp"
 #include "maxtree_node.hpp"
@@ -14,6 +14,8 @@ class component{
         int attribute;
     public:
         component(std::vector<int> p = std::vector<int>(), int attribute=0);
+        std::string to_string();
+            
         //compare with component
 /* 
         bool operator>(const component &r);
@@ -32,7 +34,7 @@ class maxtree{
     private:
         std::unordered_map<int, maxtree_node*> *data;
         int index_of(int l, int c);
-        std::unordered_map<int, std::vector<component>> components;
+        std::unordered_map<double, std::vector<component>> components;
         
     public:
         int h;
@@ -41,7 +43,9 @@ class maxtree{
         maxtree(std::unordered_map<int, maxtree_node*> *data, int h, int w);
         
         void insert_component(std::vector<int> component, double threshold);
-        
+        std::vector<component> components_at(double threshold);
+        std::vector<double> all_thresholds();
+
         maxtree_node *at_pos(int h, int w);
         maxtree_node *at_pos(int index);
         std::vector<maxtree_node*> get_neighbours(int pixel);

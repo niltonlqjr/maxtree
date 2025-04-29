@@ -5,6 +5,14 @@ component::component(std::vector<int> p, int attr){
     this->attribute = attr;
 }
 
+std::string component::to_string(){
+    std::string s;
+    for(auto p: this->pixels){
+        s += std::to_string(p) + " ";
+    }
+    return s;
+}
+
 
 maxtree::maxtree(int h, int w){
     this->h = h;
@@ -34,6 +42,19 @@ void maxtree::insert_component(std::vector<int> comp, double threshold){
     }
     this->components[threshold].push_back(comp);
 }
+
+std::vector<component> maxtree::components_at(double threshold){
+    return this->components[threshold];
+}
+std::vector<double> maxtree::all_thresholds(){
+    std::vector<double> ret;
+    for(auto t: this->components){
+        ret.push_back(t.first);
+    }
+    return ret;
+}
+
+
 
 std::vector<maxtree_node*> maxtree::get_neighbours(int pixel){
     std::vector<maxtree_node*> v;
