@@ -359,8 +359,8 @@ int grow_region(maxtree *m, int idx_ini, task *t, task *new_task, double thresho
         q.pop();
         auto neighbours=m->get_neighbours(f->idx);
         for(auto n:neighbours){
-            // std::cout << "pixel: " << n->idx << " gval: " << n->gval << " threshold: " << threshold  
-                    //   << " parent:" << m->at_pos(new_task->parent_pixel)->gval << "\n";
+            
+            
             if(n->gval >= threshold){
                 if(!visited->at(n->idx)){
                     visited->at(n->idx) = true;
@@ -368,7 +368,7 @@ int grow_region(maxtree *m, int idx_ini, task *t, task *new_task, double thresho
                     cont++;
                 }  
             }else if(n->gval > m->at_pos(new_task->parent_pixel)->gval){
-                    // std::cout << "new parent: "<< n->idx <<"\n";
+            
                     new_task->parent_pixel = n->idx;
             }
         }
