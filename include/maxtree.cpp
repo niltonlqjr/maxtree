@@ -1,12 +1,14 @@
 #include "maxtree.hpp"
 
-component::component(std::vector<int> p, int attr){
+component::component(std::vector<int> p, int parent, int attr){
     this->pixels = p;
+    this->parent = parent;
     this->attribute = attr;
 }
 
 std::string component::to_string(){
     std::string s;
+    s+= "parent: "+ std::to_string(this->parent) + " pixels: ";
     for(auto p: this->pixels){
         s += std::to_string(p) + " ";
     }
@@ -35,12 +37,28 @@ maxtree_node *maxtree::at_pos(int index){
     return this->data->at(index);
 }
 
-void maxtree::insert_component(std::vector<int> comp, double threshold){
+void maxtree::insert_component(std::vector<int> comp, int parent, double threshold){
     auto comps = this->components.find(threshold);
     if(comps == this->components.end()){
         this->components[threshold] = std::vector<component>();
     }
-    this->components[threshold].push_back(comp);
+    this->threshold_locks[threshold].lock();
+    component new_comp = component(comp, parent);
+    this->components[threshold].push_back(new_comp);
+    this->threshold_locks[threshold].unlock();
+
+}
+
+
+std::string maxtree::to_string(){
+    std::string r;
+    for(int i=0; i < this->h; i++){
+        for(int j=0; j < this->w; j++){
+            r += fill(std::to_string(this->data->at(this->index_of(i,j))->parent), 4) + " " ;
+        }
+        r += "\n";
+    }
+    return r;
 }
 
 std::vector<component> maxtree::components_at(double threshold){

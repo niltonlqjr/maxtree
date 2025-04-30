@@ -32,6 +32,8 @@ void print_matrix(std::vector<maxtree_node*> *m, int  h, int w, bool metadata=fa
 
 void print_stack(std::stack<maxtree_node*> s);
 
+std::string fill(std::string s, int size);
+
 std::vector<maxtree_node*> get_neighbours(maxtree_node *pixel, 
     std::vector<maxtree_node *> *t,
     unsigned int h, unsigned int w);

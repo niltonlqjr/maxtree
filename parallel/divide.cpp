@@ -409,7 +409,7 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m) {
                 if(num_visited > 0){ 
                     if(new_task->size != t->size){
                         new_task->print();
-                        m->insert_component(*(new_task->get_all_pixels_ids()),next_threshold);
+                        m->insert_component(*(new_task->get_all_pixels_ids()),new_task->parent_pixel,next_threshold);
                     }
                     bag->insert_task(*new_task);
                 }else{
@@ -445,7 +445,7 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
     }
     t0.print();
     maxtree *m = new maxtree(data, in->height(), in->width());
-    bag_of_tasks<task> *components = new bag_of_tasks<task>();
+    
     std::unordered_map<int, bool> *visited = new std::unordered_map<int, bool>();
     // std::vector<std::mutex> *processing = new std::vector<std::mutex>();
     
@@ -454,6 +454,7 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
     threads = std::vector<std::thread*>();
     int tid;
     bool end=false;
+    m->insert_component(*(t0.get_all_pixels_ids()), 0, t0.threshold);
     bag->insert_task(t0);
     // std::mutex m();
     for(tid = 0; tid<nth; tid++){
@@ -542,6 +543,8 @@ int main(int argc, char **argv){
     std::cout<<"+++++++++++++"<< __LINE__ <<"++++++++++++\n";
     t=maxtree_main(in,nth);
 
+    std::cout<<"+++++++++++++"<< __LINE__ <<"++++++++++++\n";
+
     for(auto thold: t->all_thresholds()){
         std::vector<component> comps = t->components_at(thold);
         std::cout << "threshold: " << thold << "\n";
@@ -549,6 +552,8 @@ int main(int argc, char **argv){
             std::cout << comps[i].to_string() << "\n===================\n";
         }
     }
+
+    std::cout << t->to_string();
 
     //print_matrix(t, h, w);
     //label_components(t);

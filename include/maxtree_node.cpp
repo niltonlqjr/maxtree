@@ -2,10 +2,10 @@
 #include <string>
 
 
-maxtree_node::maxtree_node(double g, unsigned int i, double v){
-    this->parent = -1;
+maxtree_node::maxtree_node(double g, unsigned int i){
+    this->parent = 0;
     this->idx = i;
-    this->label = -1;
+    this->label = 0;
     this->gval = g;
 }
 

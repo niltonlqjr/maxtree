@@ -50,6 +50,21 @@ void print_VImage_band(vips::VImage *in, int band){
     return;
 }
 
+std::string fill(std::string s, int size){
+    if(size <= s.length()){
+        return s;
+    }
+    
+    std::string r;
+    int missing = size - s.length();
+
+    for(int i=0;i<missing; i++){
+        r+=" ";
+    }
+    r+=s;
+    return r;
+}
+
 void print_labels(std::vector<maxtree_node*> *m, int  h, int w, bool metadata){
     std::cout << h << ", " << w << "\n";
     std::cout << m->size()<<"\n";

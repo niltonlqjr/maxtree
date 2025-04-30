@@ -6,11 +6,11 @@
 class maxtree_node{
     public:
         int parent;
-        int label;
+         int label;
         unsigned int idx;
         double gval;
 
-    maxtree_node(double g, unsigned int i, double v = 0);
+    maxtree_node(double g, unsigned int i);
     
 
     bool operator>(const maxtree_node &r);
