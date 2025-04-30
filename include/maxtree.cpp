@@ -47,6 +47,22 @@ void maxtree::insert_component(std::vector<int> comp, int parent, double thresho
     this->components[threshold].push_back(new_comp);
     this->threshold_locks[threshold].unlock();
 
+    int lower_idx = comp[0];
+    for(int pidx:comp){
+        if( this->data->at(pidx)->gval < this->data->at(lower_idx)->gval){
+            lower_idx = pidx;
+        }
+    }
+    //if needed try to speedup putting one lock per node;
+    this->data_lock.lock();
+    for(int pidx: comp){
+        this->data->at(pidx)->parent = lower_idx;
+    }
+
+    this->data->at(lower_idx)->parent = parent;
+
+    this->data_lock.unlock();
+
 }
 
 

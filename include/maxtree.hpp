@@ -38,6 +38,7 @@ class maxtree{
         int index_of(int l, int c);
         std::unordered_map<double, std::vector<component>> components;
         std::unordered_map<double, std::mutex> threshold_locks;
+        std::mutex data_lock;
         
     public:
         int h;

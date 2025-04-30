@@ -6,19 +6,19 @@
 class maxtree_node{
     public:
         int parent;
-         int label;
+        int label;
         unsigned int idx;
         double gval;
 
-    maxtree_node(double g, unsigned int i);
+        maxtree_node(double g, unsigned int i);
     
 
-    bool operator>(const maxtree_node &r);
-    bool operator>=(const maxtree_node &r);
-    bool operator<(const maxtree_node &r);
-    bool operator<=(const maxtree_node &r);
-    bool operator==(const maxtree_node &r);
-    bool operator!=(const maxtree_node &r);
+        bool operator>(const maxtree_node &r);
+        bool operator>=(const maxtree_node &r);
+        bool operator<(const maxtree_node &r);
+        bool operator<=(const maxtree_node &r);
+        bool operator==(const maxtree_node &r);
+        bool operator!=(const maxtree_node &r);
 };
 
 #endif
