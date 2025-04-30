@@ -53,29 +53,67 @@ void maxtree::insert_component(std::vector<int> comp, int parent, double thresho
             lower_idx = pidx;
         }
     }
-    //if needed try to speedup putting one lock per node;
+    //try to speedup putting one lock per node, if necessary;
     this->data_lock.lock();
     for(int pidx: comp){
-        this->data->at(pidx)->parent = lower_idx;
+        
+        int lbl_atu = this->data->at(pidx)->label;
+        if(this->data->at(lbl_atu)->gval < this->data->at(lower_idx)->gval){
+            this->data->at(pidx)->label = lower_idx;
+        }
     }
 
     this->data->at(lower_idx)->parent = parent;
+    for(int pidx: comp){
+        int par_atu = this->data->at(pidx)->parent;
+        if(this->data->at(par_atu)->gval < this->data->at(lower_idx)->gval && pidx != lower_idx){
+            this->data->at(pidx)->parent = lower_idx;
+        } 
+    }
 
+    
+    
     this->data_lock.unlock();
 
 }
 
 
-std::string maxtree::to_string(){
+std::string maxtree::to_string(enum maxtee_node_field field, int spaces){
     std::string r;
-    for(int i=0; i < this->h; i++){
-        for(int j=0; j < this->w; j++){
-            r += fill(std::to_string(this->data->at(this->index_of(i,j))->parent), 4) + " " ;
+    //a lot of ifs with same for code inside to avoid branches inside for
+    if(field == PARENT){
+        for(int i=0; i < this->h; i++){
+            for(int j=0; j < this->w; j++){
+                r += fill(std::to_string(this->data->at(this->index_of(i,j))->parent), spaces) + " " ;
+            }
+            r += "\n";
         }
-        r += "\n";
+    }else if(field == LABEL){
+        for(int i=0; i < this->h; i++){
+            for(int j=0; j < this->w; j++){
+                r += fill(std::to_string(this->data->at(this->index_of(i,j))->label), spaces) + " " ;
+            }
+            r += "\n";
+        }
+    }else if(field == IDX){
+        for(int i=0; i < this->h; i++){
+            for(int j=0; j < this->w; j++){
+                r += fill(std::to_string(this->data->at(this->index_of(i,j))->idx), spaces) + " " ;
+            }
+            r += "\n";
+        }
+    }else if (field == GVAL){
+        for(int i=0; i < this->h; i++){
+            for(int j=0; j < this->w; j++){
+                r += fill(std::to_string(this->data->at(this->index_of(i,j))->gval), spaces) + " " ;
+            }
+            r += "\n";
+        }
     }
     return r;
 }
+
+
 
 std::vector<component> maxtree::components_at(double threshold){
     return this->components[threshold];

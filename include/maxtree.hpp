@@ -50,7 +50,7 @@ class maxtree{
         std::vector<component> components_at(double threshold);
         std::vector<double> all_thresholds();
 
-        std::string to_string();
+        std::string to_string(enum maxtee_node_field field = PARENT, int spaces = 4);
 
         maxtree_node *at_pos(int h, int w);
         maxtree_node *at_pos(int index);
