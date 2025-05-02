@@ -2,11 +2,17 @@ import skimage as sk
 import numpy as np
 import argparse
 
-
+def bool_to_int(v):
+    if(v==True):
+        return 1
+    else:
+        return 0
 
 def apply_threshold(img, th):
     new = img >= th
-    int_vec = np.vectorize(int)
+    print(th)
+    print(new)
+    int_vec = np.vectorize(bool_to_int)
     return np.array(int_vec(new), dtype=np.uint8)
 
 
@@ -22,6 +28,10 @@ out_ext = args.ext
 
 img = sk.io.imread(args.file)
 
+#img = img*255
+
+img = img.astype(np.uint8)
+
 print(img)
 
 dec={}
@@ -33,7 +43,6 @@ for i in range(1,256):
     new = apply_threshold(img, i)
     d = new != old
     if len(np.extract(d, d)) > 0:
-        
         dec[i] = new
         old = new
 

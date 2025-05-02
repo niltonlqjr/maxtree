@@ -309,17 +309,20 @@ int grow_region(maxtree *m, int idx_ini, task *t, task *new_task, double thresho
         q.pop();
         auto neighbours=m->get_neighbours(f->idx);
         for(auto n:neighbours){
-            
-            
-            if(n->gval >= threshold){
+            if(n->gval >= threshold){// the neighbor is in the region
                 if(!visited->at(n->idx)){
                     visited->at(n->idx) = true;
                     q.push(n);
                     cont++;
                 }  
-            }else if(n->gval > m->at_pos(new_task->parent_pixel)->gval){
-            
+            }else{// the neighbor isn't in the region, so it can be the region parent
+                if(new_task->parent_pixel == -1){//no parent for the region was assigned yet
                     new_task->parent_pixel = n->idx;
+                }
+                if(n->gval > m->at_pos(new_task->parent_pixel)->gval){
+                    //we have a father, its component is in a higher level than this neighbour
+                    new_task->parent_pixel = n->idx;
+                }
             }
         }
     }
@@ -356,7 +359,7 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m) {
                 break;
             }
             if(create_new_task){
-                new_task = new task(next_threshold, id, t->parent_pixel);
+                new_task = new task(next_threshold, id, -1);
                 num_visited = grow_region(m,idx_pixel,t,new_task,next_threshold);
                 if(num_visited > 0){ 
                     if(new_task->size != t->size){
@@ -384,6 +387,7 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
     int x=0;
     task t0 = task(0,-1,0);
     
+    
     for(int l=0;l<in->height();l++){
         for(int c=0;c<in->width();c++){
             double p = in->getpoint(c,l)[0];
@@ -393,7 +397,6 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
             x++;
         }
     }
-    
     maxtree *m = new maxtree(data, in->height(), in->width());
     
     std::unordered_map<int, bool> *visited = new std::unordered_map<int, bool>();

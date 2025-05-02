@@ -6,8 +6,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('file', help = 'filename')
 parser.add_argument('--output', '-o', dest='output', default='fig.png', help='output file')
 parser.add_argument('--show-values', '-s', dest='show_values', action='store_true', help='print values and columns length')
-args = parser.parse_args()
 
+args = parser.parse_args()
 
 arr=[]
 
@@ -21,5 +21,9 @@ with open(args.file) as f:
 
 
 img = np.array(arr,dtype=np.uint8)
+
+if args.show_values:
+    print(img)
+
 
 sk.io.imsave(args.output,img)
