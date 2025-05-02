@@ -47,6 +47,9 @@ void maxtree::insert_component(std::vector<int> comp, int parent, double thresho
     this->components[threshold].push_back(new_comp);
     this->threshold_locks[threshold].unlock();
 
+
+    //the logic for compoenet insertion on matrix is wrong.
+
     int lower_idx = comp[0];
     for(int pidx:comp){
         if( this->data->at(pidx)->gval < this->data->at(lower_idx)->gval){

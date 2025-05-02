@@ -351,8 +351,8 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m) {
                     create_new_task=true;
                 }
             }catch(std::out_of_range &e){
-                std::cout <<" exception " << e.what() << " idx_pixel:" << idx_pixel << " i:" << i << "\n";
-                t->print();
+                std::cout <<" exception " << e.what() << " idx_pixel:" << idx_pixel << " i:" << i << "LINE: "<< __LINE__<<"\n";
+                //t->print();
                 break;
             }
             if(create_new_task){
