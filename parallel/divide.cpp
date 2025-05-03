@@ -503,10 +503,14 @@ int main(int argc, char **argv){
             std::cout << comps[i].to_string() << "\n===================\n";
         }
     }
+    std::cout << "=====================labels=====================\n";
 
     std::cout << t->to_string(LABEL) << "\n================================\n";
     
-    std::cout << t->to_string() << "\n================================\n";
+    
+    
+    std::cout << "=====================parents=====================\n";
+    std::cout << t->to_string();
 
     vips_shutdown();
     return 0;
