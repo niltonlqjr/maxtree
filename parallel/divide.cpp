@@ -74,13 +74,21 @@ class worker_status{
 
 class task{
     private:
-        std::vector<int> *pixels_index;
-        std::unordered_map<int, bool> *visited;
+        std::vector<int> pixels_index;
+        std::unordered_map<int, bool> visited;
     public:
         int parent_thread;
         int parent_pixel;
         int size;
         double threshold;
+
+    void visit(int idx){
+        this->visited.at(idx) = true;
+    }
+
+    bool visited_at(int idx){
+        return this->visited.at(idx);
+    }
 
     bool operator<(const task &r){
         return this->size < r.size;
@@ -100,8 +108,8 @@ class task{
         this->parent_thread = parent_thread;
         this->size = 0;
         this->threshold = threshold;
-        this->visited = new std::unordered_map<int, bool>();
-        this->pixels_index = new std::vector<int>();
+        //this->visited = new std::unordered_map<int, bool>();
+        //this->pixels_index = new std::vector<int>();
     }
 
     friend std::ostream& operator<<(std::ostream& os, const task& t){
@@ -110,18 +118,18 @@ class task{
         os << "size: " << t.size << " ";
         os << "threshold: " << t.threshold << " ";
         os << "task pixels: ";
-        for(auto p: *t.pixels_index){
+        for(auto p: t.pixels_index){
             os << p << " ";
         }
         return os;
     }
 
-    void operator delete(void *ptr){
+   /*  void operator delete(void *ptr){
         
         task *self = (task*)ptr;
         delete self->pixels_index;
         delete self->visited;
-    }
+    } */
     
     int weight(){
         return this->size;
@@ -129,17 +137,17 @@ class task{
 
     void add_pixel(int p_idx){
         this->size += 1;
-        this->pixels_index->push_back(p_idx);
-        this->visited->emplace(p_idx,false);
+        this->pixels_index.push_back(p_idx);
+        this->visited.emplace(p_idx,false);
     }
 
-    std::vector<int> *get_all_pixels_ids(){
+    std::vector<int> get_all_pixels_ids(){
         return this->pixels_index;
     }
 
-    std::unordered_map<int, bool> *get_visited(){
+/*     std::unordered_map<int, bool> get_visited(){
         return this->visited;
-    }
+    } */
     void print(){
         std::cout << "===============\n";
 
@@ -148,14 +156,14 @@ class task{
         std::cout << "size: " << this->size << " ";
         std::cout << "threshold: " << this-> threshold << " ";
         std::cout << "task pixels: ";
-        for(auto p: *this->pixels_index){
+        for(auto p: this->pixels_index){
             std::cout << p << " ";
         }
 
         std::cout << "\n===============\n";
     }
     int get_task_pixel(int idx){
-        int ret = this->pixels_index->at(idx);
+        int ret = this->pixels_index.at(idx);
         return ret;
     }
 };
@@ -201,13 +209,13 @@ class bag_of_tasks{
         }
 
         bool get_task(Task &ret, int priority = -1){
+            std::unique_lock<std::mutex> l(this->lock);
             int pos;
             if(priority == -1){
                 pos = 0;
             }else{
                 pos = this->position_of(priority);
             }
-            std::unique_lock<std::mutex> l(this->lock);
             while(this->num_task == 0 && this->running){
                 this->waiting++;
                 this->has_task.wait(l);
@@ -240,6 +248,7 @@ class bag_of_tasks{
         }
 
         void notify_end(){
+            this->num_task = 0;
             this->running = false;
             this->wakeup_workers();
         }
@@ -253,6 +262,7 @@ class bag_of_tasks{
         }
 
         bool empty(){
+            std::unique_lock<std::mutex> l(this->lock);
             return this->tasks->size() == 0;
         }
 };
@@ -294,12 +304,12 @@ int grow_region(maxtree *m, int idx_ini, task *t, task *new_task, double thresho
     int cont=0;
     maxtree_node *f, *ini;
     std::queue< maxtree_node*> q;
-    std::unordered_map<int, bool> *visited = t->get_visited();
+    //std::unordered_map<int, bool> *visited = t->get_visited();
     std::vector<int> region;
     ini = m->at_pos(idx_ini);
 
-    if(!visited->at(idx_ini)){
-        visited->at(idx_ini) = true;
+    if(!t->visited_at(idx_ini)){
+        t->visit(idx_ini);
         q.push(ini);
         cont++;
     }
@@ -310,8 +320,8 @@ int grow_region(maxtree *m, int idx_ini, task *t, task *new_task, double thresho
         auto neighbours=m->get_neighbours(f->idx);
         for(auto n:neighbours){
             if(n->gval >= threshold){// the neighbor is in the region
-                if(!visited->at(n->idx)){
-                    visited->at(n->idx) = true;
+                if(!t->visited_at(n->idx)){
+                    t->visit(n->idx);
                     q.push(n);
                     cont++;
                 }  
@@ -345,7 +355,7 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m) {
         i = 0;
         num_visited = 0;
         next_threshold = t->threshold+1;
-
+        t->print();
         while(i < t->size){
             create_new_task=false;
             idx_pixel = t->get_task_pixel(i);
@@ -353,8 +363,8 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m) {
                 if(m->at_pos(idx_pixel)->gval >= next_threshold){
                     create_new_task=true;
                 }
-            }catch(std::out_of_range &e){
-                std::cout <<" exception " << e.what() << " idx_pixel:" << idx_pixel << " i:" << i << "LINE: "<< __LINE__<<"\n";
+            }catch(...){
+                std::cout << " idx_pixel:" << idx_pixel << " i:" << i << "LINE: "<< __LINE__<<"\n";
                 //t->print();
                 break;
             }
@@ -363,8 +373,9 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m) {
                 num_visited = grow_region(m,idx_pixel,t,new_task,next_threshold);
                 if(num_visited > 0){ 
                     if(new_task->size != t->size){
-                        
-                        m->insert_component(*(new_task->get_all_pixels_ids()),new_task->parent_pixel,next_threshold);
+                        //new_task->print();
+                        m->insert_component(new_task->get_all_pixels_ids(),new_task->parent_pixel,next_threshold);
+                        std::cout << "task inserted\n";
                     }
                     bag->insert_task(*new_task);
                 }else{
@@ -407,19 +418,28 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
     threads = std::vector<std::thread*>();
     int tid;
     bool end=false;
-    m->insert_component(*(t0.get_all_pixels_ids()), 0, t0.threshold);
+    m->insert_component(t0.get_all_pixels_ids(), 0, t0.threshold);
     bag->insert_task(t0);
     
     for(tid = 0; tid<nth; tid++){
         threads.push_back(new std::thread(maxtree_worker,tid,bag,m));
     }
-    
+    // std::cout << "workers created " << __LINE__ << "\n" ;
+    int iter=0;
     while(true){
         bag->wait_empty();
         if(bag->num_waiting() == nth && bag->empty()){
+            std::cout << "end detected" << " line: " << __LINE__ << "\n";
             bag->notify_end();
+            std::cout << "end notified: " << " line: " << __LINE__ << "\n";
             break;
         }
+        // std::cout << "while true iter: " << iter++ << " line: " << __LINE__ << "\n" ;
+    }
+     std::cout << "while true finished " << __LINE__ << "\n" ;
+
+    for(auto th: threads){
+        th->join();
     }
 
     return m;
