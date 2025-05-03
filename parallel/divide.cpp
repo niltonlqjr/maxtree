@@ -373,7 +373,7 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m) {
                 num_visited = grow_region(m,idx_pixel,t,new_task,next_threshold);
                 if(num_visited > 0){ 
                     if(new_task->size != t->size){
-                        //new_task->print();
+                        new_task->print();
                         m->insert_component(new_task->get_all_pixels_ids(),new_task->parent_pixel,next_threshold);
                         std::cout << "task inserted\n";
                     }
@@ -397,8 +397,8 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
 
     int x=0;
     task t0 = task(0,-1,0);
-    
-    
+    // look at a faster way to read image with vips
+    std::cout << "creating first task\n";
     for(int l=0;l<in->height();l++){
         for(int c=0;c<in->width();c++){
             double p = in->getpoint(c,l)[0];
@@ -408,13 +408,9 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
             x++;
         }
     }
+    std::cout << "first task created\n";
+
     maxtree *m = new maxtree(data, in->height(), in->width());
-    
-    std::unordered_map<int, bool> *visited = new std::unordered_map<int, bool>();
-    
-    
-    bool running;
-    
     threads = std::vector<std::thread*>();
     int tid;
     bool end=false;
@@ -429,14 +425,14 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
     while(true){
         bag->wait_empty();
         if(bag->num_waiting() == nth && bag->empty()){
-            std::cout << "end detected" << " line: " << __LINE__ << "\n";
+            // std::cout << "end detected" << " line: " << __LINE__ << "\n";
             bag->notify_end();
-            std::cout << "end notified: " << " line: " << __LINE__ << "\n";
+            // std::cout << "end notified: " << " line: " << __LINE__ << "\n";
             break;
         }
         // std::cout << "while true iter: " << iter++ << " line: " << __LINE__ << "\n" ;
     }
-     std::cout << "while true finished " << __LINE__ << "\n" ;
+    // std::cout << "while true finished " << __LINE__ << "\n" ;
 
     for(auto th: threads){
         th->join();
@@ -500,21 +496,30 @@ int main(int argc, char **argv){
     print_unordered_map(configs);
         std::cout<<"+++++++++++++"<< __LINE__ <<"++++++++++++\n"; */
     int h,w,nth;
+    bool verbose = false;
 
-    
     nth = std::stoi(configs->at("threads"));
+    auto conf_verbose = configs->find("verbose");
+    if(conf_verbose != configs->end()){
+        if(conf_verbose->second == "true"){
+            verbose = true;
+        }
+    }
 
     if(argc == 4) nth = std::stoi(argv[3]);
     
     std::cout << "nth:" << nth << "\n";
     h=in->height();
     w=in->width();
-    print_VImage_band(in);
+    if(verbose){
+        print_VImage_band(in);
+    }
     
     std::cout<<"+++++++++++++"<< __LINE__ <<"++++++++++++\n";
+    
     t=maxtree_main(in,nth);
 
-    std::cout<<"+++++++++++++"<< __LINE__ <<"++++++++++++\n";
+    if(verbose) std::cout<<"+++++++++++++"<< __LINE__ <<"++++++++++++\n";
 
     for(auto thold: t->all_thresholds()){
         std::vector<component> comps = t->components_at(thold);
@@ -523,15 +528,12 @@ int main(int argc, char **argv){
             std::cout << comps[i].to_string() << "\n===================\n";
         }
     }
-    std::cout << "=====================labels=====================\n";
-
-    std::cout << t->to_string(LABEL) << "\n================================\n";
-    
-    
-    
-    std::cout << "=====================parents=====================\n";
-    std::cout << t->to_string();
-
+    if(verbose){ 
+        std::cout << "=====================labels=====================\n";
+        std::cout << t->to_string(LABEL) << "\n================================\n";
+        std::cout << "=====================parents=====================\n";
+        std::cout << t->to_string();
+    }
     vips_shutdown();
     return 0;
 }
