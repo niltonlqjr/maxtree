@@ -1,7 +1,7 @@
 # Maxtree parallel implementations
 
 ## Prerequisites
-    * [libvips](https://www.libvips.org/)
+    * _[libvips](https://www.libvips.org/)
     * C++11 Compiler (tested on g++ 13.3.0)
 
 ## Docker ready to use
