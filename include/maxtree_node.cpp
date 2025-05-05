@@ -2,7 +2,7 @@
 #include <string>
 
 
-maxtree_node::maxtree_node(double g, unsigned int i){
+maxtree_node::maxtree_node(double g, unsigned long long int i){
     this->parent = 0;
     this->idx = i;
     this->label = 0;

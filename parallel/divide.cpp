@@ -268,37 +268,6 @@ class bag_of_tasks{
 };
 
 
-void print_unordered_map(std::unordered_map<std::string, std::string> *m){
-    for(auto x: *m){
-        std::cout << x.first << "=>" << x.second << "\n";
-    }
-}
-
-bool is_blank(std::string s){
-    std::vector<char> b = {' ', '\t', '\n', '\r'};
-    for(int i=0; i<s.size(); i++){
-        if(std::find(b.begin(), b.end(), s[i]) == b.end()){
-            return false;
-        }
-    }
-    return true;
-}
-std::unordered_map<std::string, std::string> *parse_config(char arg[]){
-    std::ifstream f(arg);
-    std::string l;
-    std::unordered_map<std::string, std::string> *ret = new std::unordered_map<std::string, std::string>();
-    while (!f.eof()){
-        std::getline(f, l);
-        bool blank = is_blank(l);
-        if(!blank && l.front() != '#'){
-            size_t spl_pos = l.find("=");
-            std::string k = l.substr(0,spl_pos);
-            std::string v = l.substr(spl_pos+1);
-            (*ret)[k] = v;
-        }
-    }
-    return ret;
-}
 
 int grow_region(maxtree *m, int idx_ini, task *t, task *new_task, double threshold){
     int cont=0;
@@ -355,7 +324,7 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m) {
         i = 0;
         num_visited = 0;
         next_threshold = t->threshold+1;
-        t->print();
+        //t->print();
         while(i < t->size){
             create_new_task=false;
             idx_pixel = t->get_task_pixel(i);
@@ -373,9 +342,9 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m) {
                 num_visited = grow_region(m,idx_pixel,t,new_task,next_threshold);
                 if(num_visited > 0){ 
                     if(new_task->size != t->size){
-                        new_task->print();
+                        //new_task->print();
                         m->insert_component(new_task->get_all_pixels_ids(),new_task->parent_pixel,next_threshold);
-                        std::cout << "task inserted\n";
+                        //std::cout << "task inserted\n";
                     }
                     bag->insert_task(*new_task);
                 }else{
@@ -394,22 +363,27 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
     std::vector<std::thread*> threads;
     bag_of_tasks<task> *bag = new bag_of_tasks<task>();
     std::unordered_map<int, maxtree_node*> *data = new std::unordered_map<int, maxtree_node*>();
-
     int x=0;
+    double p;
+    VImage *del = in;
     task t0 = task(0,-1,0);
+
+
+    VipsPel *vpel;
+    VipsImage *v = in->get_image();
+    VImage img = in->copy_memory();//vips_image_copy_memory(v);
     // look at a faster way to read image with vips
     std::cout << "creating first task\n";
-    for(int l=0;l<in->height();l++){
-        for(int c=0;c<in->width();c++){
-            double p = in->getpoint(c,l)[0];
-            (*data)[x] = new maxtree_node(p,x);
-            
+    for(int l=0;l<img.height();l++){
+        for(int c=0;c<img.width();c++){
+            vpel = VIPS_IMAGE_ADDR(img.get_image(), c, l);// get point is too slow
+            (*data)[x] = new maxtree_node((int) *vpel,x);
             t0.add_pixel(x);
             x++;
         }
     }
     std::cout << "first task created\n";
-
+    //exit(0);
     maxtree *m = new maxtree(data, in->height(), in->width());
     threads = std::vector<std::thread*>();
     int tid;
@@ -508,7 +482,7 @@ int main(int argc, char **argv){
 
     if(argc == 4) nth = std::stoi(argv[3]);
     
-    std::cout << "nth:" << nth << "\n";
+    print_unordered_map(configs);
     h=in->height();
     w=in->width();
     if(verbose){
@@ -519,13 +493,15 @@ int main(int argc, char **argv){
     
     t=maxtree_main(in,nth);
 
-    if(verbose) std::cout<<"+++++++++++++"<< __LINE__ <<"++++++++++++\n";
+    if(verbose){    
+        std::cout<<"+++++++++++++"<< __LINE__ <<"++++++++++++\n";
 
-    for(auto thold: t->all_thresholds()){
-        std::vector<component> comps = t->components_at(thold);
-        std::cout << "threshold: " << thold << "\n";
-        for(int i=0;i<comps.size(); i++){
-            std::cout << comps[i].to_string() << "\n===================\n";
+        for(auto thold: t->all_thresholds()){
+            std::vector<component> comps = t->components_at(thold);
+            std::cout << "threshold: " << thold << "\n";
+            for(int i=0;i<comps.size(); i++){
+                std::cout << comps[i].to_string() << "\n===================\n";
+            }
         }
     }
     if(verbose){ 

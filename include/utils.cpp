@@ -50,6 +50,30 @@ void print_VImage_band(vips::VImage *in, int band){
     return;
 }
 
+
+std::string ltrim(std::string s, const std::string b){
+    s.erase(0, s.find_first_not_of(b));
+    return s;
+}
+
+std::string rtrim(std::string s, const std::string b){
+    s.erase(s.find_last_not_of(b)+1);
+    return s;
+}
+
+
+bool is_blank(std::string s, std::vector<char> b){
+    for(int i=0; i<s.size(); i++){
+        if(std::find(b.begin(), b.end(), s[i]) == b.end()){
+            return false;
+        }
+    }
+    return true;
+}
+
+
+
+
 std::string fill(std::string s, int size){
     if(size <= s.length()){
         return s;
@@ -89,12 +113,39 @@ void print_matrix(std::vector<maxtree_node*> *m, int  h, int w, bool metadata){
         if(metadata) std::cout << l << ":";
         for(c=0;c<w; c++){
             if(metadata) std::cout << "("<< l << "," << c <<")";
-            std::cout.width(4);
+            //std::cout.width(4);
             std::cout << m->at(index_of(l,c,h,w))->parent << " ";
         }
         std::cout << "\n";
     }
 }
+
+std::unordered_map<std::string, std::string> *parse_config(char arg[]){
+    std::ifstream f(arg);
+    std::string l;
+    std::unordered_map<std::string, std::string> *ret = new std::unordered_map<std::string, std::string>();
+    while (!f.eof()){
+        std::getline(f, l);
+        bool blank = is_blank(l);
+        
+        if(!blank && l.front() != '#'){
+            size_t spl_pos = l.find("=");
+            std::string k = ltrim(rtrim(l.substr(0,spl_pos)));
+            std::string v = ltrim(rtrim(l.substr(spl_pos+1)));
+            (*ret)[k] = v;
+        }
+    }
+    return ret;
+}
+
+void print_unordered_map(std::unordered_map<std::string, std::string> *m){
+    for(auto x: *m){
+        std::cout << x.first << "=>" << x.second << "\n";
+    }
+}
+
+
+
 
 std::vector<maxtree_node*> get_neighbours(maxtree_node *pixel, 
                                           std::vector<maxtree_node *> *t,

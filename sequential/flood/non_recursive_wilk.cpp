@@ -51,27 +51,31 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
     data = new std::vector<maxtree_node*>;
     int h=in->height();
     int w=in->width();
-    std::vector<bool> *visited = new std::vector<bool>;
-    //custom_priority_queue<maxtree_node*,cmp_maxtree_nodes> pixel_pq;
+    //std::vector<bool> *visited = new std::vector<bool>;
+    
     std::priority_queue<maxtree_node*, std::vector<maxtree_node*> ,cmp_maxtree_nodes> pixel_pq;
     std::stack<maxtree_node*> pixel_stack;
     maxtree_node *xm, *nextpix, *p;
 
-    unsigned int idx=0;
+    unsigned long long int idx=0;
+    VImage img = in->copy_memory();
+    VipsImage *pointer_image = img.get_image();
+    VipsPel *vpel;
     for(int l=0; l<h; l++){
         for(int c=0;c<w;c++){
-            double pval = in->getpoint(c,l)[band];
-            data->push_back(new maxtree_node(pval, idx));
-            visited->push_back(false);
+            vpel = VIPS_IMAGE_ADDR(pointer_image,c,l);
+            // std::cout << (int)*vpel << "\n";
+            data->push_back(new maxtree_node((int) (*vpel), idx));
             idx++;
         }
     }
+    std::cout << "fim leitura\n";
 
     xm= min_gval(data);
     pixel_pq.push(xm);
     pixel_stack.push(xm);
     nextpix = xm;
-    int iter = 0;
+
     do{
         p = nextpix;
         /* std::cout << "----------------------" << ++iter << "----------------------\n";
@@ -129,8 +133,8 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
     maxtree_node *root = pixel_stack.top();
     root->parent = root->idx;
     std::cout << "-----------------END---------------\n";
-    print_pq(pixel_pq);
-    print_stack(pixel_stack);
+    //print_pq(pixel_pq);
+    //print_stack(pixel_stack);
     std::cout <<"____________________________________\n";
     return data;
 }

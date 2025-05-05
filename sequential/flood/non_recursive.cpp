@@ -70,16 +70,22 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
     std::map<double, int> in_stack;
     maxtree_node *q, *p, *r;
 
-    unsigned int idx=0;
+
+    unsigned long long int idx=0;
+    VImage img = in->copy_memory();
+    VipsImage *pointer_image = img.get_image();
+    VipsPel *vpel;
     for(int l=0; l<h; l++){
         for(int c=0;c<w;c++){
-            double pval = in->getpoint(c,l)[band];
-            data->push_back(new maxtree_node(pval, idx));
+            vpel = VIPS_IMAGE_ADDR(pointer_image,c,l);
+            // std::cout << (int)*vpel << "\n";
+            data->push_back(new maxtree_node((int) (*vpel), idx));
             idx++;
         }
     }
+    std::cout << "fim leitura\n";
 
-    print_matrix(data,h,w);
+    //print_matrix(data,h,w);
 
     //maxtree_node *base_pilha = new maxtree_node(-10,-1,-10);
 
@@ -94,7 +100,7 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
 
     //int visited = 0;
     bool subir, descer;
-    int iter =0;
+
     while(!pixel_pq.empty()){
         
 /*         std::cout << "--------------- " << ++iter << " ---------------\n";
@@ -155,7 +161,7 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
 }
 /* 
 void label_components(std::vector<maxtree_node*> *mt){
-    for(auto p: *mt){
+    for(auto p: *mt){print_labels
         if(p->gval == mt->at(p->parent)->gval){
             p->label = p->parent;
         }else{
