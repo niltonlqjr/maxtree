@@ -1,5 +1,6 @@
 #include "maxtree.hpp"
 
+
 component::component(std::vector<int> p, int parent, int attr){
     this->pixels = p;
     this->parent = parent;

@@ -1,21 +1,46 @@
-sources = quadratic.c
-args = `pkg-config vips --cflags --libs`
 
+quadratic=quadratic
 
+OBJ_CPP_FLAGS= -g -c
 test_files=../../testes/fig.png ../../testes/example.png ../../testes/high_border.png
 
-dest = exec/quadratic
+maxtree_node_dir=../../include
+utils_dir=../../include
+maxtree_dir=../../include
 
-all:
-	@mkdir -p exec
-	gcc ${sources} ${args} -o ${dest}
+src_quadratic = ${quadratic}.cpp
+
+
+vips_args = `pkg-config vips-cpp --cflags --libs`
+
+MKDIR=@mkdir
+RM=rm -rf
+
+
+dest_quadratic = exec/${quadratic}
+
+
+all: quadratic
+
+quadratic: maxtree_node.o utils.o maxtree.o
+	${MKDIR} -p exec
+	g++ -g -Wall ${src_quadratic} ${utils_dir}/utils.o ${maxtree_node_dir}/maxtree_node.o ${maxtree_dir}/maxtree.o \
+        -I${maxtree_node_dir}  -I${maxtree_dir} -I${utils_dir} ${vips_args} -o ${dest_quadratic}
+
+maxtree.o:
+	g++ ${OBJ_CPP_FLAGS} ${maxtree_dir}/maxtree.cpp -I${maxtree_dir} ${vips_args} -o ${maxtree_dir}/maxtree.o
+
+maxtree_node.o: 
+	g++ ${OBJ_CPP_FLAGS} ${maxtree_node_dir}/maxtree_node.cpp -I${maxtree_node_dir} -I${utils_dir} ${vips_args} -o ${maxtree_node_dir}/maxtree_node.o
+
+utils.o:
+	g++ ${OBJ_CPP_FLAGS} ${utils_dir}/utils.cpp ${vips_args} -I${utils_dir} -o ${utils_dir}/utils.o
+
 
 clean:
-	rm -rf ${dest}
+	${RM} exec/${dest_quadratic} ${utils_dir}/*.o ${maxtree_node_dir}/*.o
 
 tests: all
 	for input_test in ${test_files} ; do \
-		./${dest_nonrec_wilk} $$input_test ; \
-		./${dest_nonrec} $$input_test ; \
-		./${dest_rec} $$input_test ; \
+		./${dest_quadratic} $$input_test ; \
 	done
