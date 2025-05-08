@@ -34,17 +34,15 @@ std::tuple<unsigned int, unsigned int> lin_col(int index, int h, int w){
 }
 
 void print_VImage_band(vips::VImage *in, int band){
-    VipsPel *p;
+    double p;
     int h=in->height();
     int w=in->width();
-    vips::VImage img = in->copy_memory();
-    VipsImage *pointer = img.get_image();
+
     for(int l=0; l < h; l++){
         for(int c=0; c < w; c++){
-            // p = in->getpoint(c,l)[band];
-            p = VIPS_IMAGE_ADDR(pointer,c,l);
+            p = in->getpoint(c,l)[band];
             std::cout.width(4);
-            std::cout << (int)(*p);
+            std::cout << p;
         }
         std::cout << "\n";
     }
