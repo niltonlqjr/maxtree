@@ -17,9 +17,11 @@ std::string component::to_string(){
 }
 
 
+
 maxtree::maxtree(int h, int w){
     this->h = h;
     this->w = w;
+    this->data = new std::unordered_map<int, maxtree_node*>();
 }
 
 maxtree::maxtree(std::unordered_map<int, maxtree_node*> *data, int h, int w){
@@ -33,6 +35,18 @@ maxtree_node *maxtree::at_pos(int l, int c){
     return this->data->at(idx);
 }
 
+void maxtree::fill_from_VImage(vips::VImage img){
+    this->h = img.height();
+    this->w = img.width();
+
+    for(int l = 0; l < this->h; l++){
+        for(int c = 0; c < this->w; c++){
+            int x = this->index_of(l,c);
+            VipsPel *vpel = VIPS_IMAGE_ADDR(img.get_image(), c, l);
+            (*this->data)[x] = new maxtree_node((double) *vpel, x);
+        }
+    }
+}
 
 maxtree_node *maxtree::at_pos(int index){
     return this->data->at(index);
@@ -88,28 +102,28 @@ std::string maxtree::to_string(enum maxtee_node_field field, int spaces){
     if(field == PARENT){
         for(int i=0; i < this->h; i++){
             for(int j=0; j < this->w; j++){
-                r += fill(std::to_string(this->data->at(this->index_of(i,j))->parent), spaces) + " " ;
+                r += fill(std::to_string(this->data->at(this->index_of(i,j))->parent), spaces-1) + " " ;
             }
             r += "\n";
         }
     }else if(field == LABEL){
         for(int i=0; i < this->h; i++){
             for(int j=0; j < this->w; j++){
-                r += fill(std::to_string(this->data->at(this->index_of(i,j))->label), spaces) + " " ;
+                r += fill(std::to_string(this->data->at(this->index_of(i,j))->label), spaces-1) + " " ;
             }
             r += "\n";
         }
     }else if(field == IDX){
         for(int i=0; i < this->h; i++){
             for(int j=0; j < this->w; j++){
-                r += fill(std::to_string(this->data->at(this->index_of(i,j))->idx), spaces) + " " ;
+                r += fill(std::to_string(this->data->at(this->index_of(i,j))->idx), spaces-1) + " " ;
             }
             r += "\n";
         }
     }else if (field == GVAL){
         for(int i=0; i < this->h; i++){
             for(int j=0; j < this->w; j++){
-                r += fill(std::to_string(this->data->at(this->index_of(i,j))->gval), spaces) + " " ;
+                r += fill(std::to_string((int)this->data->at(this->index_of(i,j))->gval), spaces-1) + " " ;
             }
             r += "\n";
         }

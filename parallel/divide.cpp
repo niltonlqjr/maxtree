@@ -370,7 +370,7 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
 
 
     VipsPel *vpel;
-    VipsImage *v = in->get_image();
+    
     VImage img = in->copy_memory();//vips_image_copy_memory(v);
     // look at a faster way to read image with vips
     std::cout << "creating first task\n";
