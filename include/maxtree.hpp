@@ -46,13 +46,15 @@ class maxtree{
         maxtree(int h, int w);
         maxtree(std::unordered_map<int, maxtree_node*> *data, int h, int w);
         
-        void fill_from_VImage(vips::VImage img);
+        void fill_from_VImage(vips::VImage &img);
         void insert_component(std::vector<int> component, int parent, double threshold);
         std::vector<component> components_at(double threshold);
         std::vector<double> all_thresholds();
-
+        
         std::string to_string(enum maxtee_node_field field = PARENT, int spaces = 5);
 
+        unsigned long long int get_size();
+        
         maxtree_node *at_pos(int h, int w);
         maxtree_node *at_pos(int index);
         std::vector<maxtree_node*> get_neighbours(int pixel);

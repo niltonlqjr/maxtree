@@ -1,8 +1,18 @@
+#Flags on comand line:
+#	OPT flag to describe the optimization flags (e.g make OPT=-O3)
+#	TYPE flag to describe if you want to compile for (D)ebug or (R)elease, default is Debug (e.g. make TYPE=R)
 
 quadratic=quadratic
 
-OBJ_CPP_FLAGS= -g -c
+ifeq (${TYPE},R)
+	OBJ_CPP_FLAGS=-c 
+else 
+	OBJ_CPP_FLAGS=-g -c
+endif
+
+
 test_files=../../testes/fig.png ../../testes/example.png ../../testes/high_border.png
+
 
 maxtree_node_dir=../../include
 utils_dir=../../include
@@ -24,7 +34,7 @@ all: quadratic
 
 quadratic: maxtree_node.o utils.o maxtree.o
 	${MKDIR} -p exec
-	g++ -g -Wall ${src_quadratic} ${utils_dir}/utils.o ${maxtree_node_dir}/maxtree_node.o ${maxtree_dir}/maxtree.o \
+	g++ ${OPT} ${src_quadratic} ${utils_dir}/utils.o ${maxtree_node_dir}/maxtree_node.o ${maxtree_dir}/maxtree.o \
         -I${maxtree_node_dir}  -I${maxtree_dir} -I${utils_dir} ${vips_args} -o ${dest_quadratic}
 
 maxtree.o:
