@@ -5,7 +5,7 @@
 #include "maxtree.hpp"
 #include "maxtree_node.hpp"
 
-void canonicalize_tree(maxtree *t, std::vector<maxtree_node *> r){
+void canonicalize_tree(maxtree *t, std::vector<maxtree_node *> &r){
 	for(auto p: r){
 		maxtree_node *q = t->at_pos(p->parent);
 		if(q->gval == t->at_pos(q->parent)->gval){
@@ -14,7 +14,7 @@ void canonicalize_tree(maxtree *t, std::vector<maxtree_node *> r){
 	}
 }
 
-maxtree_node *find_root(maxtree_node *x, std::unordered_map<int, maxtree_node*> zpar){
+maxtree_node *find_root(maxtree_node *x, std::unordered_map<int, maxtree_node*> &zpar){
 	if(zpar.at(x->idx)->idx == x->idx){
 		return x;
 	}else{
