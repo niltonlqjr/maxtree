@@ -14,6 +14,7 @@ void canonicalize_tree(maxtree *t, std::vector<maxtree_node *> &r){
 	}
 }
 
+
 maxtree_node *find_root(maxtree_node *x, std::unordered_map<int, maxtree_node*> &zpar){
 	if(zpar.at(x->idx)->idx == x->idx){
 		return x;
@@ -24,40 +25,23 @@ maxtree_node *find_root(maxtree_node *x, std::unordered_map<int, maxtree_node*> 
 }
 
 void compute_maxtree(maxtree *t){
-	std::unordered_map<int, maxtree_node*> zpar;
-	std::vector<maxtree_node *> r;
+    std::unordered_map<int, maxtree_node*> zpar;
+	std::vector<maxtree_node *> s;
 	for(int l=0;l<t->h; l++){
 		for(int c=0;c<t->w; c++){
 			maxtree_node *p = t->at_pos(l,c);
 			p->parent=-1;
-			r.push_back(p);
+			s.push_back(p);
 			zpar[p->idx] = p;
 		}
 	}
-
-	std::sort(r.begin(),r.end(), cmp_maxtree_nodes());
-
-	for(int i=r.size()-1; i>=0; i--){
-		maxtree_node *p = r.at(i);
-		p->parent = p->idx;
-		zpar[p->idx] = p;
-		for(auto n: t->get_neighbours(p->idx)){
-			if(zpar.find(n->idx) != zpar.end()){
-				maxtree_node *r=find_root(n,zpar);
-				if(r->idx != p->idx){
-					r->parent = p->idx;
-					zpar.at(r->idx) = p;
-				}
-			}
-		}
-	}
-	
-	canonicalize_tree(t, r);
-
-
-	std::cout << "\n";
+    std::sort(s.begin(),s.end(), cmp_maxtree_nodes());
+    for (int i=s.size()-1; i>=0; i--){
+        maxtree_node *p = s.at(i);
+        p->parent = p->idx;
+        zpar[p->idx] = p;
+    }
 }
-
 
 int main(int argc, char *argv[]){
 	vips::VImage *in;

@@ -3,7 +3,7 @@
 #	TYPE flag to describe if you want to compile for (D)ebug or (R)elease, default is Debug (e.g. make TYPE=R)
 
 quadratic=quadratic
-
+union_rank=union_by_rank
 ifeq (${TYPE},R)
 	OBJ_CPP_FLAGS=-c 
 else 
@@ -19,23 +19,28 @@ utils_dir=../../include
 maxtree_dir=../../include
 
 src_quadratic = ${quadratic}.cpp
-
+src_rank = ${union_rank}.cpp
 
 vips_args = `pkg-config vips-cpp --cflags --libs`
 
 MKDIR=@mkdir
 RM=rm -rf
 
-
+dest_rank = exec/${union_rank}
 dest_quadratic = exec/${quadratic}
 
 
-all: quadratic
+all: quadratic rank
 
 quadratic: maxtree_node.o utils.o maxtree.o
 	${MKDIR} -p exec
 	g++ ${OPT} ${src_quadratic} ${utils_dir}/utils.o ${maxtree_node_dir}/maxtree_node.o ${maxtree_dir}/maxtree.o \
         -I${maxtree_node_dir}  -I${maxtree_dir} -I${utils_dir} ${vips_args} -o ${dest_quadratic}
+
+rank: maxtree_node.o utils.o maxtree.o 
+	${MKDIR} -p exec
+	g++ ${OPT} ${src_rank} ${utils_dir}/utils.o ${maxtree_node_dir}/maxtree_node.o ${maxtree_dir}/maxtree.o \
+        -I${maxtree_node_dir}  -I${maxtree_dir} -I${utils_dir} ${vips_args} -o ${dest_rank}
 
 maxtree.o:
 	g++ ${OBJ_CPP_FLAGS} ${maxtree_dir}/maxtree.cpp -I${maxtree_dir} ${vips_args} -o ${maxtree_dir}/maxtree.o
