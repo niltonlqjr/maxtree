@@ -4,6 +4,7 @@
 
 quadratic=quadratic
 union_rank=union_by_rank
+UbR_level_compression=level_compression
 ifeq (${TYPE},R)
 	OBJ_CPP_FLAGS=-c 
 else 
@@ -20,6 +21,7 @@ maxtree_dir=../../include
 
 src_quadratic = ${quadratic}.cpp
 src_rank = ${union_rank}.cpp
+src_level_comp = ${UbR_level_compression}.cpp
 
 vips_args = `pkg-config vips-cpp --cflags --libs`
 
@@ -28,7 +30,7 @@ RM=rm -rf
 
 dest_rank = exec/${union_rank}
 dest_quadratic = exec/${quadratic}
-
+dest_level_comp = exec/${UbR_level_compression}
 
 all: quadratic rank
 
@@ -41,6 +43,11 @@ rank: maxtree_node.o utils.o maxtree.o
 	${MKDIR} -p exec
 	g++ ${OPT} ${src_rank} ${utils_dir}/utils.o ${maxtree_node_dir}/maxtree_node.o ${maxtree_dir}/maxtree.o \
         -I${maxtree_node_dir}  -I${maxtree_dir} -I${utils_dir} ${vips_args} -o ${dest_rank}
+
+level_compression: maxtree_node.o utils.o maxtree.o
+	${MKDIR} -p exec
+	g++ ${OPT} ${src_level_comp} ${utils_dir}/utils.o ${maxtree_node_dir}/maxtree_node.o ${maxtree_dir}/maxtree.o \
+        -I${maxtree_node_dir}  -I${maxtree_dir} -I${utils_dir} ${vips_args} -o ${dest_level_comp}
 
 maxtree.o:
 	g++ ${OBJ_CPP_FLAGS} ${maxtree_dir}/maxtree.cpp -I${maxtree_dir} ${vips_args} -o ${maxtree_dir}/maxtree.o
