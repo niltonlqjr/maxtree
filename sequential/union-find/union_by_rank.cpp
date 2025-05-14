@@ -24,7 +24,8 @@ maxtree_node *find_root(maxtree_node *x, std::unordered_map<int, maxtree_node*> 
 }
 
 void compute_maxtree(maxtree *t){
-    std::unordered_map<int, maxtree_node*> zpar;
+    std::unordered_map<int, maxtree_node*> zpar, repr;
+	std::unordered_map<int, int> rank;
 	std::vector<maxtree_node *> s;
 	for(int l=0;l<t->h; l++){
 		for(int c=0;c<t->w; c++){
@@ -39,12 +40,24 @@ void compute_maxtree(maxtree *t){
         maxtree_node *p = s.at(i);
         p->parent = p->idx;
         zpar[p->idx] = p;
+		rank[p->idx] = 0;
+		repr[p->idx] = p;
+		maxtree_node *zp = p;
 		for(auto n: t->get_neighbours(p->idx)){
 			if(t->at_pos(n->idx)->idx != -1){
-				maxtree_node *r = find_root(n, zpar);
-				if(r->idx != p->idx){
-					zpar[r->idx] = p;
-					r->parent = p->idx;
+				maxtree_node *zn = find_root(n, zpar);
+				if(zn->idx != zp->idx){
+					repr[zn->idx]->parent = p->idx;
+					if(rank[zp->idx] < rank[zn->idx]){
+						auto aux = zp;
+						zp = zn;
+						zn = aux;
+					}
+					zpar[zn->idx] = zp;
+					repr[zp->idx] = p;
+					if (rank[zp->idx] == rank[zn->idx]){
+						rank[zp->idx]++;
+					}
 				}
 			}
 		}
