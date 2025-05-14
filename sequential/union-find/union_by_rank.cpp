@@ -33,18 +33,19 @@ void compute_maxtree(maxtree *t){
 			p->parent=-1;
 			s.push_back(p);
 			zpar[p->idx] = p;
+
 		}
 	}
     std::sort(s.begin(),s.end(), cmp_maxtree_nodes());
     for (int i=s.size()-1; i>=0; i--){
         maxtree_node *p = s.at(i);
-        p->parent = p->idx;
+		p->parent = p->idx;
         zpar[p->idx] = p;
 		rank[p->idx] = 0;
 		repr[p->idx] = p;
 		maxtree_node *zp = p;
 		for(auto n: t->get_neighbours(p->idx)){
-			if(t->at_pos(n->idx)->idx != -1){
+			if(t->at_pos(n->idx)->parent != -1){
 				maxtree_node *zn = find_root(n, zpar);
 				if(zn->idx != zp->idx){
 					repr[zn->idx]->parent = p->idx;
