@@ -9,9 +9,13 @@
 #include <deque>
 
 #include "maxtree_node.hpp"
+#include "maxtree.hpp"
 #include "utils.hpp"
 
 #define INQUEUE -2
+
+bool verbose;
+
 
 using namespace vips;
 template<typename T, typename cmp>
@@ -105,8 +109,7 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0, int gl = 256){
     int h=in->height();
     int w=in->width();
     int lmin;
-    //std::vector<bool> *visited = new std::vector<bool>(h*w, false);
-    //std::cout << visited->size() << " <--- visited size\n"; 
+    
     std::vector<maxtree_node*> *levroot = new std::vector<maxtree_node*>(gl, NULL);
     std::vector<std::deque<maxtree_node*>> *hqueue = 
         new std::vector<std::deque<maxtree_node*>>(gl);
@@ -119,7 +122,7 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0, int gl = 256){
     for(int l=0; l<h; l++){
         for(int c=0;c<w;c++){
             vpel = VIPS_IMAGE_ADDR(pointer_image,c,l);
-            // std::cout << (int)*vpel << "\n";
+            if(verbose) std::cout << (int)*vpel << "\n";
             data->push_back(new maxtree_node((int) (*vpel), idx));
             idx++;
         }
@@ -153,11 +156,40 @@ int main(int argc, char **argv){
     int h,w;
     h=in->height();
     w=in->width();
-    print_VImage_band(in);
+
+    for(int i=0;i<argc;i++){
+		std::cout << argv[i] << " ";
+	}
+	std::cout << "\n";
+
+
+	if(argc < 2){
+		std::cout << "usage: " << argv[0] << " input_image config_file\n";
+		exit(0);
+	}
+
+	if (VIPS_INIT (argv[0])) {
+        vips_error_exit (NULL);
+	}
+    bool verbose=false;
+    in = new vips::VImage(vips::VImage::new_from_file(argv[1],NULL));
+
+
+	if(argc > 2){	
+		auto configs = parse_config(argv[2]);
+		if (configs->find("verbose") != configs->end()){
+			if(configs->at("verbose") == "true"){
+				verbose=true;
+			}
+		}
+	}
+
+    vips::VImage cp = in->copy_memory();
+    if(verbose) print_VImage_band(&cp);
     t=maxtree(in);
-    print_matrix(t, h, w);
+    if(verbose) print_matrix(t, h, w);
     label_components(t);
-    print_labels(t, h, w);
+    if(verbose) print_labels(t, h, w);
     vips_shutdown();
     return 0;
 }

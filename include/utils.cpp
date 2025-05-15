@@ -40,9 +40,10 @@ void print_VImage_band(vips::VImage *in, int band){
 
     for(int l=0; l < h; l++){
         for(int c=0; c < w; c++){
-            p = in->getpoint(c,l)[band];
+            //p = in->getpoint(c,l)[band];
+            VipsPel *vpel = VIPS_IMAGE_ADDR(in->get_image(), c, l);
             std::cout.width(4);
-            std::cout << p;
+            std::cout << (double) *vpel;
         }
         std::cout << "\n";
     }

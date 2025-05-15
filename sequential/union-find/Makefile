@@ -32,7 +32,7 @@ dest_rank = exec/${union_rank}
 dest_quadratic = exec/${quadratic}
 dest_level_comp = exec/${UbR_level_compression}
 
-all: quadratic rank
+all: quadratic rank level_compression
 
 quadratic: maxtree_node.o utils.o maxtree.o
 	${MKDIR} -p exec

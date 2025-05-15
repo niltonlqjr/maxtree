@@ -37,11 +37,11 @@ void compute_maxtree(maxtree *t){
 		}
 	}
     std::sort(s.begin(),s.end(), cmp_maxtree_nodes());
-    int j = s.size();
+    int j = s.size()-1;
     for (int i=s.size()-1; i>=0; i--){
         auto p=t->at_pos(i);
-        p->parent = p;
-        zpar[p] = p;
+        p->parent = p->idx;
+        zpar[p->idx] = p;
         auto zp=p;
         for(auto n: t->get_neighbours(p->idx)){
             auto zn = find_root(n,zpar);
@@ -51,14 +51,14 @@ void compute_maxtree(maxtree *t){
                     zp=zn;
                     zn=aux;
                 }
-                zpar[zn]=zp;
-                zn->parent = zp;
+                zpar[zn->idx]=zp;
+                zn->parent = zp->idx;
                 s.at(j)=zn;
                 j--;
             }
         }
     }
-    s.at[0] = s.at(0)->parent;
+    s.at(0) = t->at_pos(s.at(0)->parent);
     canonicalize_tree(t,s);
 }
 
@@ -99,7 +99,6 @@ int main(int argc, char *argv[]){
     int h,w;
     h=in->height();
     w=in->width();
-    if(verbose){ print_VImage_band(in);}
 	t = new maxtree(h,w);
 	vips::VImage cp = in->copy_memory();
 	t->fill_from_VImage(cp);

@@ -104,7 +104,6 @@ int main(int argc, char *argv[]){
     int h,w;
     h=in->height();
     w=in->width();
-    if(verbose){ print_VImage_band(in);}
 	t = new maxtree(h,w);
 	vips::VImage cp = in->copy_memory();
 	t->fill_from_VImage(cp);
