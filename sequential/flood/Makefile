@@ -2,7 +2,7 @@
 #	OPT flag to describe the optimization flags (e.g make OPT=-O3)
 #	TYPE flag to describe if you want to compile for (D)ebug or (R)elease, default is Debug (e.g. make TYPE=R)
 
-non_rec_wilk_name=non_rec_wilk
+non_rec_wilk_name=non_recursive_wilk
 non_rec_name=non_recursive
 rec_name=recursive
 
@@ -38,17 +38,17 @@ all: non_rec rec wilkinson
 
 non_rec: maxtree_node.o utils.o maxtree.o
 	${MKDIR} -p exec
-	g++ ${OPT} ${source_non_rec} ${utils_dir}/utils.o ${maxtree_node_dir}/maxtree_node.o \
+	g++ ${OPT} ${source_non_rec} ${utils_dir}/utils.o ${maxtree_node_dir}/maxtree_node.o ${maxtree_dir}/maxtree.o \
         -I${maxtree_node_dir}  -I${maxtree_dir} -I${utils_dir}  ${vips_args} -o ${dest_nonrec}
 
 rec: maxtree_node.o utils.o maxtree.o
 	${MKDIR} -p exec
-	g++ ${OPT} ${source_rec} ${utils_dir}/utils.o ${maxtree_node_dir}/maxtree_node.o \
+	g++ ${OPT} ${source_rec} ${utils_dir}/utils.o ${maxtree_node_dir}/maxtree_node.o ${maxtree_dir}/maxtree.o \
         -I${maxtree_node_dir}  -I${maxtree_dir} -I${utils_dir} ${vips_args} -o ${dest_rec}
 
 wilkinson: maxtree_node.o utils.o maxtree.o
 	${MKDIR} -p exec
-	g++ ${OPT} non_recursive_wilk.cpp ${utils_dir}/utils.o ${maxtree_node_dir}/maxtree_node.o \
+	g++ ${OPT} ${source_non_rec_wilk} ${utils_dir}/utils.o ${maxtree_node_dir}/maxtree_node.o ${maxtree_dir}/maxtree.o \
     -I${maxtree_node_dir}  -I${maxtree_dir} -I${utils_dir} -I${vips_args} -o ${dest_nonrec_wilk}
 
 maxtree_node.o: #${maxtree_node_dir}/maxtree_node.cpp ${maxtree_node_dir}/maxtree_node.hpp 

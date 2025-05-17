@@ -7,7 +7,6 @@
 #include <string>
 #include <ostream>
 
-#include "maxtree.hpp"
 #include "maxtree_node.hpp"
 #include "utils.hpp"
 
@@ -30,21 +29,62 @@ void print_pq(std::priority_queue<maxtree_node*, std::vector<maxtree_node*> ,cmp
 }
 
 
-void compute_maxtree(maxtree *t){
+void process_stack(maxtree_node *r, maxtree_node *q, 
+                   std::vector<maxtree_node*> *data,
+                   std::stack<maxtree_node*> &pixel_stack){
+    auto lambda = q->gval;
+    pixel_stack.pop();
+    while(!pixel_stack.empty() && lambda < pixel_stack.top()->gval){
+        auto stack_top = pixel_stack.top();
+        pixel_stack.pop();
+        r->parent = stack_top->idx;
+        r = data->at(r->parent);
+    }
+    if(pixel_stack.empty() || pixel_stack.top()->gval != lambda){
+        pixel_stack.push(q);
+    }
+    r->parent = pixel_stack.top()->idx;
+}
+
+std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
+    std::vector<maxtree_node*> *data;
+    data = new std::vector<maxtree_node*>;
+    int h=in->height();
+    int w=in->width();
+    //std::vector<bool> *visited = new std::vector<bool>;
+    
     std::priority_queue<maxtree_node*, std::vector<maxtree_node*> ,cmp_maxtree_nodes> pixel_pq;
     std::stack<maxtree_node*> pixel_stack;
     maxtree_node *xm, *nextpix, *p;
-    unsigned long long int idx=0;
-    
 
-    xm = min_gval(t->get_data());
+    unsigned long long int idx=0;
+    VImage img = in->copy_memory();
+    VipsImage *pointer_image = img.get_image();
+    VipsPel *vpel;
+    for(int l=0; l<h; l++){
+        for(int c=0;c<w;c++){
+            vpel = VIPS_IMAGE_ADDR(pointer_image,c,l);
+            // std::cout << (int)*vpel << "\n";
+            data->push_back(new maxtree_node((int) (*vpel), idx));
+            idx++;
+        }
+    }
+    std::cout << "fim leitura\n";
+
+    xm= min_gval(data);
     pixel_pq.push(xm);
     pixel_stack.push(xm);
     nextpix = xm;
 
     do{
         p = nextpix;
-        auto N = t->get_neighbours(p->idx);
+        /* std::cout << "----------------------" << ++iter << "----------------------\n";
+        std::cout<< *p <<"\n";
+        print_pq(pixel_pq);
+        print_stack(pixel_stack);
+
+        std::cout<<"_________________________________________________\n"; */
+        auto N = get_neighbours(p, data, h, w);
         for(auto q: N){
             if(q->parent == -1){/* if q not visited */
                 q->parent = INQUEUE;
@@ -59,6 +99,10 @@ void compute_maxtree(maxtree *t){
         if(nextpix->gval > p->gval){
             pixel_stack.push(nextpix);
         }else{
+/*             if(p == pixel_pq.top()){
+                std::cout << "removendo topo na iteracao:" << ++iter << " " << *p << "\n";
+            } */
+            //pixel_pq.remove(p);
             pixel_pq.pop();
             if(p!=pixel_stack.top()){
                 p->parent = pixel_stack.top()->idx;
@@ -92,14 +136,23 @@ void compute_maxtree(maxtree *t){
     //print_pq(pixel_pq);
     //print_stack(pixel_stack);
     std::cout <<"____________________________________\n";
+    return data;
 }
 
 
-int main(int argc, char *argv[]){
-	vips::VImage *in;
-    maxtree *t;
-	std::cout << "argc: " << argc << " argv:" ;
-	for(int i=0;i<argc;i++){
+
+int main(int argc, char **argv){
+    VImage *in;
+    std::vector<maxtree_node*> *t;
+    if (VIPS_INIT (argv[0])) 
+        vips_error_exit (NULL);
+
+    in = new VImage(VImage::new_from_file(argv[1],NULL));
+    int h,w;
+    h=in->height();
+    w=in->width();
+
+    for(int i=0;i<argc;i++){
 		std::cout << argv[i] << " ";
 	}
 	std::cout << "\n";
@@ -113,8 +166,7 @@ int main(int argc, char *argv[]){
 	if (VIPS_INIT (argv[0])) {
         vips_error_exit (NULL);
 	}
-
-	bool verbose=false;
+    bool verbose=false;
     in = new vips::VImage(vips::VImage::new_from_file(argv[1],NULL));
 
 
@@ -127,22 +179,12 @@ int main(int argc, char *argv[]){
 		}
 	}
 
-	std::cout << "start\n";
-	
-    int h,w;
-    h=in->height();
-    w=in->width();
-	t = new maxtree(h,w);
-	vips::VImage cp = in->copy_memory();
-	t->fill_from_VImage(cp);
-    compute_maxtree(t);
-	if(verbose){
-		std::cout<<"__________________GVAL________________\n";
-		std::cout << t->to_string(GVAL,5);
-		std::cout<<"__________________PARENT________________\n";
-		std::cout << t->to_string();
-	}
-    
-    
+    vips::VImage cp = in->copy_memory();
+    if(verbose) print_VImage_band(&cp);
+    t=maxtree(in);
+    if(verbose) print_matrix(t, h, w);
+    label_components(t);
+    if(verbose) print_labels(t, h, w);
+    vips_shutdown();
     return 0;
 }
