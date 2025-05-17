@@ -3,7 +3,7 @@
 
 
 maxtree_node::maxtree_node(double g, unsigned long long int i){
-    this->parent = 0;
+    this->parent = -1;
     this->idx = i;
     this->label = 0;
     this->gval = g;

@@ -186,6 +186,18 @@ maxtree_node *min_gval(std::vector<maxtree_node*> *t){
     return min;
 }
 
+maxtree_node *min_gval(std::unordered_map<int, maxtree_node*> *t){
+    unsigned int i; 
+    maxtree_node *min = t->begin()->second;
+    for(auto p: *t){
+        if (p.second->gval < min->gval){
+            min = p.second;
+        }
+    }
+    return min;
+}
+
+
 
 void print_pq(std::priority_queue<maxtree_node*> pq){
     std::cout <<"===========QUEUE=============\n";

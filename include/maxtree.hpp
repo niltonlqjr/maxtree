@@ -57,6 +57,7 @@ class maxtree{
         
         maxtree_node *at_pos(int h, int w);
         maxtree_node *at_pos(int index);
+        std::unordered_map<int, maxtree_node*> *get_data();
         std::vector<maxtree_node*> get_neighbours(int pixel);
         std::vector<maxtree_node*> get_neighbours(int l, int c);
         std::tuple<int,int> lin_col(int index);

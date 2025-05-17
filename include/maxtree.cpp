@@ -35,6 +35,10 @@ maxtree_node *maxtree::at_pos(int l, int c){
     return this->data->at(idx);
 }
 
+std::unordered_map<int, maxtree_node*> *maxtree::get_data(){
+    return this->data;
+}
+
 unsigned long long int maxtree::get_size(){
     return this->data->size();
 }

@@ -56,6 +56,8 @@ std::vector<maxtree_node*> get_neighbours(maxtree_node *pixel,
 
 maxtree_node *min_gval(std::vector<maxtree_node*> *t);
 
+maxtree_node *min_gval(std::unordered_map<int, maxtree_node*> *t);
+
 void print_pq(std::priority_queue<maxtree_node*> pq);
 
 #endif
