@@ -324,7 +324,7 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m) {
         i = 0;
         num_visited = 0;
         next_threshold = t->threshold+1;
-        //t->print();
+        // t->print();
         while(i < t->size){
             create_new_task=false;
             idx_pixel = t->get_task_pixel(i);
@@ -362,7 +362,7 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m) {
 maxtree *maxtree_main(VImage *in, int nth = 1){
     std::vector<std::thread*> threads;
     bag_of_tasks<task> *bag = new bag_of_tasks<task>();
-    std::unordered_map<int, maxtree_node*> *data = new std::unordered_map<int, maxtree_node*>();
+    std::vector<maxtree_node*> *data = new std::vector<maxtree_node*>();
     int x=0;
     double p;
     VImage *del = in;
@@ -377,7 +377,7 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
     for(int l=0;l<img.height();l++){
         for(int c=0;c<img.width();c++){
             vpel = VIPS_IMAGE_ADDR(img.get_image(), c, l);// get point is too slow
-            (*data)[x] = new maxtree_node((int) *vpel,x);
+            data->push_back(new maxtree_node((int) *vpel,x));
             t0.add_pixel(x);
             x++;
         }
@@ -388,7 +388,8 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
     threads = std::vector<std::thread*>();
     int tid;
     bool end=false;
-    m->insert_component(t0.get_all_pixels_ids(), 0, t0.threshold);
+    auto pix_ids=t0.get_all_pixels_ids();
+    m->insert_component(pix_ids, 0, t0.threshold);
     bag->insert_task(t0);
     
     for(tid = 0; tid<nth; tid++){
