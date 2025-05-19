@@ -36,6 +36,9 @@ dest_rec = exec/${rec_name}
 
 all: non_rec rec wilkinson
 
+all+bkp: non_rec rec wilkinson wilkinson_old
+
+
 non_rec: maxtree_node.o utils.o maxtree.o
 	${MKDIR} -p exec
 	g++ ${OPT} ${source_non_rec} ${utils_dir}/utils.o ${maxtree_node_dir}/maxtree_node.o ${maxtree_dir}/maxtree.o \
@@ -49,7 +52,7 @@ rec: maxtree_node.o utils.o maxtree.o
 wilkinson: maxtree_node.o utils.o maxtree.o
 	${MKDIR} -p exec
 	g++ ${OPT} ${source_non_rec_wilk} ${utils_dir}/utils.o ${maxtree_node_dir}/maxtree_node.o ${maxtree_dir}/maxtree.o \
-    -I${maxtree_node_dir}  -I${maxtree_dir} -I${utils_dir} -I${vips_args} -o ${dest_nonrec_wilk}
+    -I${maxtree_node_dir}  -I${maxtree_dir} -I${utils_dir} ${vips_args} -o ${dest_nonrec_wilk}
 
 maxtree_node.o: #${maxtree_node_dir}/maxtree_node.cpp ${maxtree_node_dir}/maxtree_node.hpp 
 	g++ ${OBJ_CPP_FLAGS} ${maxtree_node_dir}/maxtree_node.cpp -I${maxtree_node_dir} -o ${maxtree_node_dir}/maxtree_node.o
@@ -59,6 +62,10 @@ maxtree.o:
 
 utils.o:
 	g++ ${OBJ_CPP_FLAGS} ${utils_dir}/utils.cpp ${vips_args} -I${utils_dir} -o ${utils_dir}/utils.o
+
+wilkinson_old: maxtree_node.o utils.o maxtree.o
+	g++ ${OPT} wilk_bkp.cpp ${utils_dir}/utils.o ${maxtree_node_dir}/maxtree_node.o \
+    -I ${maxtree_node_dir} ${vips_args} -o exec/wilk_bkp
 
 
 clean:
