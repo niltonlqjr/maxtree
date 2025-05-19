@@ -33,6 +33,8 @@
 
 using namespace vips;
 
+bool verbose;
+
 class worker_status{
     public:
         double mem_size;
@@ -123,14 +125,7 @@ class task{
         }
         return os;
     }
-
-   /*  void operator delete(void *ptr){
-        
-        task *self = (task*)ptr;
-        delete self->pixels_index;
-        delete self->visited;
-    } */
-    
+   
     int weight(){
         return this->size;
     }
@@ -145,7 +140,7 @@ class task{
         return this->pixels_index;
     }
 
-/*     std::unordered_map<int, bool> get_visited(){
+    /*  std::unordered_map<int, bool> get_visited(){
         return this->visited;
     } */
     void print(){
@@ -267,13 +262,11 @@ class bag_of_tasks{
         }
 };
 
-
-
 int grow_region(maxtree *m, int idx_ini, task *t, task *new_task, double threshold){
     int cont=0;
     maxtree_node *f, *ini;
     std::queue< maxtree_node*> q;
-    //std::unordered_map<int, bool> *visited = t->get_visited();
+    
     std::vector<int> region;
     ini = m->at_pos(idx_ini);
 
@@ -324,7 +317,7 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m) {
         i = 0;
         num_visited = 0;
         next_threshold = t->threshold+1;
-        // t->print();
+        if(verbose) t->print();
         while(i < t->size){
             create_new_task=false;
             idx_pixel = t->get_task_pixel(i);
@@ -356,9 +349,6 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m) {
     }
 }
 
-
-
-
 maxtree *maxtree_main(VImage *in, int nth = 1){
     std::vector<std::thread*> threads;
     bag_of_tasks<task> *bag = new bag_of_tasks<task>();
@@ -368,22 +358,22 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
     VImage *del = in;
     task t0 = task(0,-1,0);
 
-
     VipsPel *vpel;
     
-    VImage img = in->copy_memory();//vips_image_copy_memory(v);
-    // look at a faster way to read image with vips
+    VImage img = in->copy_memory();
+    
     std::cout << "creating first task\n";
+    auto pel_img = img.get_image();
     for(int l=0;l<img.height();l++){
         for(int c=0;c<img.width();c++){
-            vpel = VIPS_IMAGE_ADDR(img.get_image(), c, l);// get point is too slow
+            vpel = VIPS_IMAGE_ADDR(pel_img, c, l);// get point is too slow
             data->push_back(new maxtree_node((int) *vpel,x));
             t0.add_pixel(x);
             x++;
         }
     }
     std::cout << "first task created\n";
-    //exit(0);
+    
     maxtree *m = new maxtree(data, in->height(), in->width());
     threads = std::vector<std::thread*>();
     int tid;
@@ -396,13 +386,13 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
         threads.push_back(new std::thread(maxtree_worker,tid,bag,m));
     }
     // std::cout << "workers created " << __LINE__ << "\n" ;
-    int iter=0;
+    // int iter=0;
     while(true){
         bag->wait_empty();
         if(bag->num_waiting() == nth && bag->empty()){
-            // std::cout << "end detected" << " line: " << __LINE__ << "\n";
+            if(verbose) std::cout << "end detected" << " line: " << __LINE__ << "\n";
             bag->notify_end();
-            // std::cout << "end notified: " << " line: " << __LINE__ << "\n";
+            if(verbose) std::cout << "end notified: " << " line: " << __LINE__ << "\n";
             break;
         }
         // std::cout << "while true iter: " << iter++ << " line: " << __LINE__ << "\n" ;
@@ -439,17 +429,6 @@ Buscar colocar um tamnho minimo de crescimento para cada tarefa.
 int main(int argc, char **argv){
     VImage *in;
     maxtree *t;
-
-    /* std::vector<int> ini = {4,1,3,2,16,9,10,14,8,7};
-    max_heap<int> mh = max_heap<int>(ini);
-    mh.print(); 
-    
-    for(auto x: {12, 30, 1, -2}){
-        mh.insert(x);
-    }
-    mh.print(); 
-
-    return 0; */
     
     if(argc < 3){
         std::cout << "usage:\n" << argv[0] << " <image file> <config file>\n";
@@ -466,12 +445,9 @@ int main(int argc, char **argv){
 
     
     configs = parse_config(argv[2]);
-    /* test_workers();
-    std::cout<<"+++++++++++++"<< __LINE__ <<"++++++++++++\n";
-    print_unordered_map(configs);
-        std::cout<<"+++++++++++++"<< __LINE__ <<"++++++++++++\n"; */
+
     int h,w,nth;
-    bool verbose = false;
+    verbose = false;
 
     nth = std::stoi(configs->at("threads"));
     auto conf_verbose = configs->find("verbose");
