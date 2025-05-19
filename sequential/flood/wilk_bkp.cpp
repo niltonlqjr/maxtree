@@ -70,7 +70,7 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
         }
     }
     std::cout << "fim leitura\n";
-
+    
     xm= min_gval(data);
     pixel_pq.push(xm);
     pixel_stack.push(xm);

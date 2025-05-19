@@ -34,7 +34,8 @@ class component{
 
 class maxtree{
     private:
-        std::unordered_map<int, maxtree_node*> *data;
+        // std::unordered_map<int, maxtree_node*> *data;
+        std::vector<maxtree_node *> *data;
         int index_of(int l, int c);
         std::unordered_map<double, std::vector<component>> components;
         std::unordered_map<double, std::mutex> threshold_locks;
@@ -44,7 +45,9 @@ class maxtree{
         int h;
         int w;
         maxtree(int h, int w);
-        maxtree(std::unordered_map<int, maxtree_node*> *data, int h, int w);
+        // maxtree(std::unordered_map<int, maxtree_node*> *data, int h, int w);
+
+        maxtree(std::vector<maxtree_node*> *data, int h, int w);
         
         void fill_from_VImage(vips::VImage &img);
         void insert_component(std::vector<int> component, int parent, double threshold);
@@ -57,7 +60,10 @@ class maxtree{
         
         maxtree_node *at_pos(int h, int w);
         maxtree_node *at_pos(int index);
-        std::unordered_map<int, maxtree_node*> *get_data();
+        // std::unordered_map<int, maxtree_node*> *get_data();
+
+        std::vector<maxtree_node*> *get_data();
+
         std::vector<maxtree_node*> get_neighbours(int pixel);
         std::vector<maxtree_node*> get_neighbours(int l, int c);
         std::tuple<int,int> lin_col(int index);

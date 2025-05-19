@@ -21,10 +21,12 @@ std::string component::to_string(){
 maxtree::maxtree(int h, int w){
     this->h = h;
     this->w = w;
-    this->data = new std::unordered_map<int, maxtree_node*>();
+    // this->data = new std::unordered_map<int, maxtree_node*>();
+    this->data = new std::vector<maxtree_node*>();
 }
 
-maxtree::maxtree(std::unordered_map<int, maxtree_node*> *data, int h, int w){
+// maxtree::maxtree(std::unordered_map<int, maxtree_node*> *data, int h, int w){
+maxtree::maxtree(std::vector<maxtree_node*> *data, int h, int w){
     this->data = data;
     this->h=h;
     this->w=w;
@@ -35,7 +37,8 @@ maxtree_node *maxtree::at_pos(int l, int c){
     return this->data->at(idx);
 }
 
-std::unordered_map<int, maxtree_node*> *maxtree::get_data(){
+// std::unordered_map<int, maxtree_node*> *maxtree::get_data(){
+std::vector<maxtree_node*> *maxtree::get_data(){
     return this->data;
 }
 
@@ -46,12 +49,14 @@ unsigned long long int maxtree::get_size(){
 void maxtree::fill_from_VImage(vips::VImage &img){
     this->h = img.height();
     this->w = img.width();
-
+    auto img_pels = img.get_image();
     for(int l = 0; l < this->h; l++){
         for(int c = 0; c < this->w; c++){
             int x = this->index_of(l,c);
-            VipsPel *vpel = VIPS_IMAGE_ADDR(img.get_image(), c, l);
-            (*this->data)[x] = new maxtree_node((double) *vpel, x);
+            VipsPel *vpel = VIPS_IMAGE_ADDR(img_pels, c, l);
+            // (*this->data)[x] = new maxtree_node((int) *vpel, x);
+            // this->data->emplace(std::make_pair(x,new maxtree_node((int)(*vpel),x)));
+            this->data->push_back(new maxtree_node((int)(*vpel),x));
         }
     }
 }
