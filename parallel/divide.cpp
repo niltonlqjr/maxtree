@@ -335,9 +335,9 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m) {
                 num_visited = grow_region(m,idx_pixel,t,new_task,next_threshold);
                 if(num_visited > 0){ 
                     if(new_task->size != t->size){
-                        //new_task->print();
+                        if(verbose) new_task->print();
                         m->insert_component(new_task->get_all_pixels_ids(),new_task->parent_pixel,next_threshold);
-                        //std::cout << "task inserted\n";
+                        if(verbose) std::cout << "task inserted\n";
                     }
                     bag->insert_task(*new_task);
                 }else{
