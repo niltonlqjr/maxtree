@@ -19,18 +19,34 @@ else
 endif
 
 divide_name=divide
+merge_name=merge
+source_merge=${merge_name}.cpp
 source_divide=${divide_name}.cpp
 dest_divide = exec/${divide_name}
 
+dest_merge = exec/${merge_name}
+
 all: divide
 
-divide: maxtree_node.o maxtree.o utils.o
+divide: base
 	mkdir -p exec
 	g++ ${OPT} ${EXE_CPP_FLAGS} ${source_divide} ${utils_dir}/utils.o \
 	 	${maxtree_node_dir}/maxtree_node.o \
 		${maxtree_dir}/maxtree.o \
 		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} -I${heap_dir} \
 		${vips_args} -o ${dest_divide}
+
+merge: base
+	mkdir -p exec
+	g++ ${OPT} ${EXE_CPP_FLAGS} ${source_merge} ${utils_dir}/utils.o \
+	 	${maxtree_node_dir}/maxtree_node.o \
+		${maxtree_dir}/maxtree.o \
+		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} -I${heap_dir} \
+		${vips_args} -o ${dest_divide}
+
+
+
+base: maxtree_node.o maxtree.o utils.o
 
 maxtree.o:
 	g++ ${OBJ_CPP_FLAGS} ${maxtree_dir}/maxtree.cpp -I${maxtree_dir} ${vips_args} -o ${maxtree_dir}/maxtree.o

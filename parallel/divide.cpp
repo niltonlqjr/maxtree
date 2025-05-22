@@ -30,6 +30,7 @@
 #include "maxtree.hpp"
 #include "heap.hpp"
 #include "utils.hpp"
+#include "bag_of_task.hpp"
 
 using namespace vips;
 
@@ -163,104 +164,6 @@ class task{
     }
 };
 
-template <class Task>
-class bag_of_tasks{
-    private:
-        max_heap<Task> *tasks;
-        std::mutex lock;
-        std::condition_variable has_task, no_task;
-        int num_task;
-        bool running;
-        int waiting;
-
-    public:
-        
-        bag_of_tasks(){
-            this->tasks = new max_heap<Task>();
-            this->num_task = 0;
-            this->running = true;
-            this->waiting = 0;
-        }
-
-        ~bag_of_tasks(){
-            delete this->tasks;
-        }
-
-        void insert_task(Task t){
-            std::unique_lock<std::mutex> l(this->lock);
-            this->tasks->insert(t);
-            this->num_task++;
-            this->wakeup_workers(false);
-        }
-        
-        int position_of(int priority){
-            /*elaborar uma formula para obter a posição dada uma prioridade
-            pensar numa forma de limitar as prioridades;*/
-            return priority;
-        }
-
-        bool is_running(){
-            return this->running;
-        }
-
-        bool get_task(Task &ret, int priority = -1){
-            std::unique_lock<std::mutex> l(this->lock);
-            int pos;
-            if(priority == -1){
-                pos = 0;
-            }else{
-                pos = this->position_of(priority);
-            }
-            while(this->num_task == 0 && this->running){
-                this->waiting++;
-                this->has_task.wait(l);
-            }
-            if(!this->running){
-                return false;
-            }else{
-                ret = this->tasks->at(pos);
-                this->tasks->remove_at(pos);
-                this->num_task--;
-                this->no_task.notify_all();
-                return true;
-            }
-            
-        }
-
-        void wait_empty(){
-            std::unique_lock<std::mutex> l(this->lock);
-            while(this->num_task > 0){
-                this->no_task.wait(l);
-            }
-        }
-
-        void wakeup_workers(bool lock = true){
-            if(lock){
-                std::unique_lock<std::mutex> l(this->lock);
-            }
-            this->waiting=0;
-            this->has_task.notify_all();
-        }
-
-        void notify_end(){
-            this->num_task = 0;
-            this->running = false;
-            this->wakeup_workers();
-        }
-        
-        int num_waiting(){
-            return this->waiting;
-        }
-
-        void print(){
-            this->tasks->print();
-        }
-
-        bool empty(){
-            std::unique_lock<std::mutex> l(this->lock);
-            return this->tasks->size() == 0;
-        }
-};
 
 int grow_region(maxtree *m, int idx_ini, task *t, task *new_task, double threshold){
     int cont=0;

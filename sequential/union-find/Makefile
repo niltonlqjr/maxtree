@@ -52,7 +52,7 @@ level_compression: maxtree_node.o utils.o maxtree.o
 maxtree.o:
 	g++ ${OBJ_CPP_FLAGS} ${maxtree_dir}/maxtree.cpp -I${maxtree_dir} ${vips_args} -o ${maxtree_dir}/maxtree.o
 
-maxtree_node.o: 
+maxtree_node.o:
 	g++ ${OBJ_CPP_FLAGS} ${maxtree_node_dir}/maxtree_node.cpp -I${maxtree_node_dir} -I${utils_dir} ${vips_args} -o ${maxtree_node_dir}/maxtree_node.o
 
 utils.o:
