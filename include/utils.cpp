@@ -1,5 +1,15 @@
 #include "utils.hpp"
 
+std::string terminal_color_string(int color){
+    if(color == RESET)
+        return COLORS[RESET];
+    if(color >= 0)
+        return COLORS[color];
+    return COLORS[BLACK];
+}
+
+
+
 void label_components(std::vector<maxtree_node*> *mt){
     for(auto p: *mt){
         if(p->gval == mt->at(p->parent)->gval){
@@ -37,13 +47,18 @@ void print_VImage_band(vips::VImage *in, int band){
     double p;
     int h=in->height();
     int w=in->width();
+    vips::VImage img = in->copy_memory();
 
     for(int l=0; l < h; l++){
         for(int c=0; c < w; c++){
             //p = in->getpoint(c,l)[band];
-            VipsPel *vpel = VIPS_IMAGE_ADDR(in->get_image(), c, l);
+            VipsPel *vpel = VIPS_IMAGE_ADDR(img.get_image(), c, l);
+            double val = (int) *vpel;
+            int color = (int) val / 31;
+            std::cout << terminal_color_string(color);
             std::cout.width(4);
-            std::cout << (double) *vpel;
+            std::cout << val ;
+            std::cout << terminal_color_string(RESET);
         }
         std::cout << "\n";
     }

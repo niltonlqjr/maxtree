@@ -107,38 +107,52 @@ void maxtree::insert_component(std::vector<int> comp, int parent, double thresho
 }
 
 
-std::string maxtree::to_string(enum maxtee_node_field field, int spaces){
+std::string maxtree::to_string(enum maxtee_node_field field, bool colored, int spaces ){
     std::string r;
     //a lot of ifs with same for code inside to avoid branches inside for
     if(field == PARENT){
         for(int i=0; i < this->h; i++){
             for(int j=0; j < this->w; j++){
-                r += fill(std::to_string(this->data->at(this->index_of(i,j))->parent), spaces-1) + " " ;
+                auto point = this->data->at(this->index_of(i,j))->parent;
+                if(colored)
+                    r+=terminal_color_string(point % 8);
+                r += fill(std::to_string(point), spaces-1) + " " ;
             }
             r += "\n";
         }
     }else if(field == LABEL){
         for(int i=0; i < this->h; i++){
             for(int j=0; j < this->w; j++){
-                r += fill(std::to_string(this->data->at(this->index_of(i,j))->label), spaces-1) + " " ;
+                auto point = this->data->at(this->index_of(i,j))->parent;
+                if(colored)
+                    r+=terminal_color_string(point % 8);
+                r += fill(std::to_string(point), spaces-1) + " " ;
             }
             r += "\n";
         }
     }else if(field == IDX){
         for(int i=0; i < this->h; i++){
             for(int j=0; j < this->w; j++){
-                r += fill(std::to_string(this->data->at(this->index_of(i,j))->idx), spaces-1) + " " ;
+                auto point = this->data->at(this->index_of(i,j))->idx;
+                if(colored)
+                    r+=terminal_color_string(point % 8);
+                r += fill(std::to_string(point), spaces-1) + " " ;
             }
             r += "\n";
         }
     }else if (field == GVAL){
         for(int i=0; i < this->h; i++){
             for(int j=0; j < this->w; j++){
-                r += fill(std::to_string((int)this->data->at(this->index_of(i,j))->gval), spaces-1) + " " ;
+                auto dpoint = this->data->at(this->index_of(i,j))->gval;
+                int point = dpoint;
+                if(colored)
+                    r+=terminal_color_string(point / 31);
+                r += fill(std::to_string((int) point), spaces-1) + " " ;
             }
             r += "\n";
         }
     }
+    r+=terminal_color_string(RESET);
     return r;
 }
 

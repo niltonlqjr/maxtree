@@ -14,6 +14,22 @@
 #ifndef __UTILS_HPP__
 #define __UTILS_HPP__
 
+
+#define COLOR_BLACK	  "\033[0;30m"
+#define	COLOR_RED     "\033[0;31m"	
+#define	COLOR_GREEN   "\033[0;32m"	
+#define	COLOR_YELLOW  "\033[0;33m"	
+#define	COLOR_BLUE    "\033[0;34m"	
+#define	COLOR_MAGENTA "\033[0;35m"
+#define	COLOR_CYAN    "\033[0;36m"	
+#define	COLOR_WHITE   "\033[0;37m"	
+#define COLOR_RESET   "\033[0m"
+
+const std::string COLORS[] = {COLOR_BLACK,COLOR_RED,COLOR_GREEN,COLOR_YELLOW,COLOR_BLUE,COLOR_MAGENTA,COLOR_CYAN,COLOR_WHITE,COLOR_RESET};
+enum terminal_colors {BLACK,RED,GREEN,YELLOW,BLUE,MAGENTA,CYAN,WHITE,RESET};
+
+std::string terminal_color_string(int color);
+
 void label_components(std::vector<maxtree_node*> *mt);
 
 struct cmp_maxtree_nodes{

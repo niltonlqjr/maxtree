@@ -17,7 +17,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <stdexcept>
-
+#include <limits>
 
 
 
@@ -165,15 +165,22 @@ class task{
 };
 
 
-int grow_region(maxtree *m, int idx_ini, task *t, task *new_task, double threshold){
+int grow_region(maxtree *m, int idx_ini, task *t, task *new_task, double &threshold){
     int cont=0;
     maxtree_node *f, *ini;
     std::queue< maxtree_node*> q;
+    double min_threshold;
     
     std::vector<int> region;
     ini = m->at_pos(idx_ini);
 
+
     if(!t->visited_at(idx_ini)){
+        if(ini->gval > threshold){
+            min_threshold = ini->gval;
+        }else{
+            min_threshold = std::numeric_limits<double>::infinity();
+        }
         t->visit(idx_ini);
         q.push(ini);
         cont++;
@@ -184,7 +191,10 @@ int grow_region(maxtree *m, int idx_ini, task *t, task *new_task, double thresho
         q.pop();
         auto neighbours=m->get_neighbours(f->idx);
         for(auto n:neighbours){
-            if(n->gval >= threshold){// the neighbor is in the region
+            if(n->gval > threshold){// the neighbor is in the region
+                if(n->gval < min_threshold){
+                    min_threshold = n->gval;
+                }
                 if(!t->visited_at(n->idx)){
                     t->visit(n->idx);
                     q.push(n);
@@ -201,6 +211,7 @@ int grow_region(maxtree *m, int idx_ini, task *t, task *new_task, double thresho
             }
         }
     }
+    threshold=min_threshold;
     return cont;
 }
 
@@ -219,13 +230,13 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m) {
         }
         i = 0;
         num_visited = 0;
-        next_threshold = t->threshold+1;
+        next_threshold = t->threshold;
         if(verbose) t->print();
         while(i < t->size){
             create_new_task=false;
             idx_pixel = t->get_task_pixel(i);
             try{
-                if(m->at_pos(idx_pixel)->gval >= next_threshold){
+                if(m->at_pos(idx_pixel)->gval > t->threshold){
                     create_new_task=true;
                 }
             }catch(...){
@@ -236,6 +247,8 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m) {
             if(create_new_task){
                 new_task = new task(next_threshold, id, -1);
                 num_visited = grow_region(m,idx_pixel,t,new_task,next_threshold);
+                new_task->threshold = next_threshold;
+                //std::cout << next_threshold << "\n";
                 if(num_visited > 0){ 
                     if(new_task->size != t->size){
                         if(verbose) new_task->print();
@@ -246,6 +259,7 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m) {
                 }else{
                     delete new_task;
                 }
+                next_threshold = t->threshold;
             }
             i++;
         }
@@ -265,16 +279,22 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
     
     VImage img = in->copy_memory();
     
+    double min_threshold = std::numeric_limits<double>::infinity();
+
     std::cout << "creating first task\n";
     auto pel_img = img.get_image();
     for(int l=0;l<img.height();l++){
         for(int c=0;c<img.width();c++){
             vpel = VIPS_IMAGE_ADDR(pel_img, c, l);// get point is too slow
+            if((int) *vpel < min_threshold){
+                min_threshold = (int)*vpel;
+            }
             data->push_back(new maxtree_node((int) *vpel,x));
             t0.add_pixel(x);
             x++;
         }
     }
+    t0.threshold = min_threshold;
     std::cout << "first task created\n";
     
     maxtree *m = new maxtree(data, in->height(), in->width());
@@ -385,6 +405,7 @@ int main(int argc, char **argv){
         }
     }
     if(verbose){ 
+        print_VImage_band(in);
         std::cout << "=====================labels=====================\n";
         std::cout << t->to_string(LABEL) << "\n================================\n";
         std::cout << "=====================parents=====================\n";
@@ -393,3 +414,5 @@ int main(int argc, char **argv){
     vips_shutdown();
     return 0;
 }
+
+
