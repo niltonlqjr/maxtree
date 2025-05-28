@@ -3,11 +3,12 @@
 
 
 maxtree_node::maxtree_node(double g, unsigned long long int i, Tattribute a){
-    this->parent = -1;
     this->idx = i;
-    this->label = 0;
     this->gval = g;
     this->a = a;
+    this->label = 0;
+    this->parent = -1;
+    this->visited=false;
 }
 
 /* std::string maxtree_node::to_str(){

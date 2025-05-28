@@ -17,6 +17,7 @@ class maxtree_node{
         unsigned long long int idx;
         Tattribute a;
         double gval;
+        bool visited;
 
         maxtree_node(double g, unsigned long long int i, Tattribute a = Tattr_default);
     

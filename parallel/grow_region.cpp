@@ -27,7 +27,7 @@ using namespace vips;
 
 class task{
     private:
-        //std::vector<int> pixels_index;
+        std::vector<int> pixels_index;
         std::unordered_map<int, bool> visited;
     public:
         int parent_thread;
@@ -98,39 +98,59 @@ class task{
 };
 
 
-component *grow_region(maxtree *m, task *t, double region_gval){
+component *grow_region(maxtree *m, uint64_t idx_ini){
     std::queue<maxtree_node *>q;
     component *ret = new component();
-    auto ini_idx = t->ini_idx;
-    if(!t->visited_at(idx_ini)){
+    
+    double region_gval = m->at_pos(idx_ini)->gval;
+    
+    std::cout << "ini:" << idx_ini <<" gval:" << region_gval<< "\n";
+
+
+    if(!(m->at_pos(idx_ini)->visited)){
+        m->at_pos(idx_ini)->visited = true;
+        
         q.push(m->at_pos(idx_ini));
     }
     
     while(!q.empty()){
         maxtree_node *p = q.front();
         q.pop();
+        // std::cout << "p->gval:" << p->gval << " " << region_gval << "\n";
         if(p->gval == region_gval){
             ret->insert_pixel(p->idx);
             auto nb = m->get_neighbours(p->idx);
             for(auto n: nb){
-                if(n->gval == region_gval && !t->visited_at(n->idx)){
-                    t->visit(n->idx);
-                    q.push(n);
+                if(!n->visited){
+                    if(n->gval == region_gval){
+                        n->visited = true;
+                        q.push(n);
+                    }
                 }
             }
         }
 
     }
-    return 
-
-
-
+    std::cout << "\n";
+    return ret;
 }
 
 maxtree *maxtree_main(VImage *in, int nth = 1){
     maxtree *m = new maxtree(in->height(), in->width());
-    VImage img = in->copy_memory();
-
+    m->fill_from_VImage(*in);
+    
+    component *c;
+    for(int i=0; i<m->h; i++){
+        for(int j=0; j<m->w;j++){
+            if(!m->at_pos(i,j)->visited){
+                
+                c = grow_region(m, m->index_of(i,j));
+                m->insert_component(*c, m->at_pos(i,j)->gval);
+                //std::cout << c->to_string() << "\n";
+                delete c;
+            }
+        }
+    }
     return m;
 }
 

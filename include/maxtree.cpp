@@ -48,23 +48,38 @@ unsigned long long int maxtree::get_size(){
     return this->data->size();
 }
 
-void maxtree::fill_from_VImage(vips::VImage &img){
-    this->h = img.height();
-    this->w = img.width();
+void maxtree::fill_from_VImage(vips::VImage &img_in){
+    this->h = img_in.height();
+    this->w = img_in.width();
+    vips::VImage img = img_in.copy_memory();
     auto img_pels = img.get_image();
+    
+    char aux_enum_c[][50] = {"VIPS_FORMAT_UCHAR", "VIPS_FORMAT_CHAR", "VIPS_FORMAT_USHORT","VIPS_FORMAT_SHORT",
+         "VIPS_FORMAT_UINT"," VIPS_FORMAT_INT"," VIPS_FORMAT_FLOAT"," VIPS_FORMAT_COMPLEX"," VIPS_FORMAT_DOUBLE",
+         "VIPS_FORMAT_DPCOMPLEX","VIPS_FORMAT_LAST"};
+    if (img_pels->BandFmt > 0){
+        std::cout << aux_enum_c[img_pels->BandFmt];
+    }else {
+        std::cout << "VIPS_FORMAT_NOTSET";
+    }
+    std::cout << "\n";
+    
     for(int l = 0; l < this->h; l++){
         for(int c = 0; c < this->w; c++){
             int x = this->index_of(l,c);
             VipsPel *vpel = VIPS_IMAGE_ADDR(img_pels, c, l);
-            // (*this->data)[x] = new maxtree_node((int) *vpel, x);
-            // this->data->emplace(std::make_pair(x,new maxtree_node((int)(*vpel),x)));
-            this->data->push_back(new maxtree_node((int)(*vpel),x));
+            this->data->push_back(new maxtree_node((*vpel),x));
         }
     }
 }
 
 maxtree_node *maxtree::at_pos(int index){
     return this->data->at(index);
+}
+
+void maxtree::insert_component(component c, double gval){
+        this->components[gval].push_back(c);
+
 }
 
 void maxtree::insert_component(std::vector<int> comp, int parent, double threshold){
@@ -146,10 +161,9 @@ std::string maxtree::to_string(enum maxtee_node_field field, bool colored, int s
         for(int i=0; i < this->h; i++){
             for(int j=0; j < this->w; j++){
                 auto dpoint = this->data->at(this->index_of(i,j))->gval;
-                int point = dpoint;
                 if(colored)
-                    r+=terminal_color_string(point / 31);
-                r += fill(std::to_string((int) point), spaces-1) + " " ;
+                    r+=terminal_color_string(dpoint / 31);
+                r += fill(std::to_string(dpoint), spaces+5) + " " ;
             }
             r += "\n";
         }

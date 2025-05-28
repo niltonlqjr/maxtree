@@ -426,7 +426,7 @@ int main(int argc, char **argv){
         }
     }
     if(verbose){ 
-        print_VImage_band(in);
+        std::cout << t->to_string(GVAL);
         std::cout << "=====================labels=====================\n";
         std::cout << t->to_string(LABEL) << "\n================================\n";
         std::cout << "=====================parents=====================\n";

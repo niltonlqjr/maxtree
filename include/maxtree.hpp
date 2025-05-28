@@ -36,12 +36,12 @@ class maxtree{
     private:
         // std::unordered_map<int, maxtree_node*> *data;
         std::vector<maxtree_node *> *data;
-        int index_of(int l, int c);
         std::unordered_map<double, std::vector<component>> components;
         std::unordered_map<double, std::mutex> threshold_locks;
         std::mutex data_lock;
         
     public:
+        
         int h;
         int w;
         maxtree(int h, int w);
@@ -49,8 +49,10 @@ class maxtree{
 
         maxtree(std::vector<maxtree_node*> *data, int h, int w);
         
+        int index_of(int i, int j);
         void fill_from_VImage(vips::VImage &img);
         void insert_component(std::vector<int> component, int parent, double threshold);
+        void insert_component(component c, double threshold);
         std::vector<component> components_at(double threshold);
         std::vector<double> all_thresholds();
         
