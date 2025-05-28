@@ -223,3 +223,7 @@ int maxtree::index_of(int l, int c){
 std::tuple<int,int> maxtree::lin_col(int index){
     return std::make_tuple(index / this->w, index % this->w);
 }
+
+void maxtree::filter(Tattribute a){
+    //todo
+}
