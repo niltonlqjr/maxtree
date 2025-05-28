@@ -268,7 +268,9 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m, unsign
             }
             i++;
         }
-        delete t;
+       /*  if(has_task){
+            delete t;
+        } */
     }
     if(thread_num_task != NULL){
         *thread_num_task = local_num_task;
@@ -283,7 +285,7 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
     int x=0;
     double p;
     VImage *del = in;
-    task t0 = task(0,-1,0);
+    task *t0 = new task(0,-1,0);
 
     VipsPel *vpel;
     
@@ -300,20 +302,20 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
                 min_threshold = (int)*vpel;
             }
             data->push_back(new maxtree_node((int) *vpel,x));
-            t0.add_pixel(x);
+            t0->add_pixel(x);
             x++;
         }
     }
-    t0.threshold = min_threshold;
+    t0->threshold = min_threshold;
     std::cout << "first task created\n";
     
     maxtree *m = new maxtree(data, in->height(), in->width());
     threads = std::vector<std::thread*>();
     int tid;
     bool end=false;
-    auto pix_ids=t0.get_all_pixels_ids();
-    m->insert_component(pix_ids, 0, t0.threshold);
-    bag->insert_task(t0);
+    auto pix_ids=t0->get_all_pixels_ids();
+    m->insert_component(pix_ids, 0, t0->threshold);
+    bag->insert_task(*t0);
     std::vector<unsigned long long int> create_tasks;
     for(tid = 0; tid<nth; tid++){
         create_tasks.push_back(0);

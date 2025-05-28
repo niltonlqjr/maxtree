@@ -16,7 +16,9 @@ std::string component::to_string(){
     return s;
 }
 
-
+void component::insert_pixel(int p){
+    this->pixels.push_back(p);
+}
 
 maxtree::maxtree(int h, int w){
     this->h = h;

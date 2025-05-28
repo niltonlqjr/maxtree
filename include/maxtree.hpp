@@ -17,7 +17,7 @@ class component{
     public:
         component(std::vector<int> p = std::vector<int>(), int parent = -1, int attribute=0);
         std::string to_string();
-            
+        void insert_pixel(int p);
         //compare with component
 /* 
         bool operator>(const component &r);
