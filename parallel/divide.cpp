@@ -16,10 +16,6 @@
 #include <stdexcept>
 #include <mutex>
 #include <condition_variable>
-#include <stdexcept>
-#include <limits>
-
-
 
 #include <cmath>
 #include <cstdlib>
@@ -31,6 +27,8 @@
 #include "heap.hpp"
 #include "utils.hpp"
 #include "bag_of_task.hpp"
+
+/*========================= Source code ===============================*/
 
 using namespace vips;
 
