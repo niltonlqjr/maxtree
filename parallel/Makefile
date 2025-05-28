@@ -20,17 +20,22 @@ endif
 
 divide_name=divide
 merge_name=merge
+grow_name=grow_region
+
+source_grow=${grow_name}.cpp
 source_merge=${merge_name}.cpp
 source_divide=${divide_name}.cpp
-dest_divide = exec/${divide_name}
 
+dest_grow=exec/${grow_name}
+dest_divide = exec/${divide_name}
 dest_merge = exec/${merge_name}
 
 all: divide
 
 divide: base
 	mkdir -p exec
-	g++ ${OPT} ${EXE_CPP_FLAGS} ${source_divide} ${utils_dir}/utils.o \
+	g++ ${OPT} ${EXE_CPP_FLAGS} ${source_divide} \
+		${utils_dir}/utils.o \
 	 	${maxtree_node_dir}/maxtree_node.o \
 		${maxtree_dir}/maxtree.o \
 		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} -I${heap_dir} \
@@ -38,13 +43,21 @@ divide: base
 
 merge: base
 	mkdir -p exec
-	g++ ${OPT} ${EXE_CPP_FLAGS} ${source_merge} ${utils_dir}/utils.o \
+	g++ ${OPT} ${EXE_CPP_FLAGS} ${source_merge} \
+		${utils_dir}/utils.o \
 	 	${maxtree_node_dir}/maxtree_node.o \
 		${maxtree_dir}/maxtree.o \
 		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} -I${heap_dir} \
-		${vips_args} -o ${dest_divide}
+		${vips_args} -o ${dest_merge}
 
-
+grow: base
+	mkdir -p exec
+	g++ ${OPT} ${EXE_CPP_FLAGS} ${source_grow} \
+		${utils_dir}/utils.o \
+	 	${maxtree_node_dir}/maxtree_node.o \
+		${maxtree_dir}/maxtree.o \
+		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} -I${heap_dir} \
+		${vips_args} -o ${dest_grow}
 
 base: maxtree_node.o maxtree.o utils.o
 

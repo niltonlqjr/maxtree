@@ -20,6 +20,14 @@
 #include "utils.hpp"
 #include "bag_of_task.hpp"
 
+bool verbose;
+
+using namespace vips;
+
+maxtree *maxtree_main(VImage *in, int nth = 1){
+    maxtree *m = new maxtree(in->height(), in->width());
+    return m;
+}
 
 int main(int argc, char **argv){
     VImage *in;
@@ -37,8 +45,6 @@ int main(int argc, char **argv){
 
     std::unordered_map<std::string, std::string> *configs;
 
-
-    
     configs = parse_config(argv[2]);
 
     int h,w,nth;
