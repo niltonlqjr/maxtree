@@ -13,6 +13,7 @@
 #include <limits>
 #include <mutex>
 #include <condition_variable>
+#include <queue>
 
 #include "maxtree_node.hpp"
 #include "maxtree.hpp"
@@ -24,8 +25,112 @@ bool verbose;
 
 using namespace vips;
 
+class task{
+    private:
+        //std::vector<int> pixels_index;
+        std::unordered_map<int, bool> visited;
+    public:
+        int parent_thread;
+        int size;
+        double gval;
+        unsigned long long int ini_idx;
+
+    task(unsigned long long int ini_idx, double gval = 0, int parent_thread = 0){
+        this->gval = gval;
+        this->ini_idx = ini_idx;
+        this->parent_thread = parent_thread;
+        this->size = 0;
+    }
+
+    void visit(int idx){
+        this->visited.at(idx) = true;
+    }
+
+    bool visited_at(int idx){
+        return this->visited.at(idx);
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const task& t){
+        os << "parent thread: " << t.parent_thread << " ";
+        os << "size: " << t.size << " ";
+        os << "threshold: " << t.gval << " ";
+        os << "task pixels: ";
+        for(auto p: t.pixels_index){
+            os << p << " ";
+        }
+        return os;
+    }
+   
+    int weight(){
+        return this->size;
+    }
+
+    void add_pixel(int p_idx){
+        this->size += 1;
+        this->pixels_index.push_back(p_idx);
+        this->visited.emplace(p_idx,false);
+    }
+
+    std::vector<int> get_all_pixels_ids(){
+        return this->pixels_index;
+    }
+
+    /*  std::unordered_map<int, bool> get_visited(){
+        return this->visited;
+    } */
+    int get_task_pixel(int idx){
+        int ret = this->pixels_index.at(idx);
+        return ret;
+    }
+
+    bool operator<(const task &r){
+        return this->size < r.size;
+    }
+
+    bool operator>(const task &r){
+        return this->size > r.size;
+    }
+
+    bool operator==(const task &r){
+        return this->size == r.size;
+    }
+
+};
+
+
+component *grow_region(maxtree *m, task *t, double region_gval){
+    std::queue<maxtree_node *>q;
+    component *ret = new component();
+    auto ini_idx = t->ini_idx;
+    if(!t->visited_at(idx_ini)){
+        q.push(m->at_pos(idx_ini));
+    }
+    
+    while(!q.empty()){
+        maxtree_node *p = q.front();
+        q.pop();
+        if(p->gval == region_gval){
+            ret->insert_pixel(p->idx);
+            auto nb = m->get_neighbours(p->idx);
+            for(auto n: nb){
+                if(n->gval == region_gval && !t->visited_at(n->idx)){
+                    t->visit(n->idx);
+                    q.push(n);
+                }
+            }
+        }
+
+    }
+    return 
+
+
+
+}
+
 maxtree *maxtree_main(VImage *in, int nth = 1){
     maxtree *m = new maxtree(in->height(), in->width());
+    VImage img = in->copy_memory();
+
     return m;
 }
 
