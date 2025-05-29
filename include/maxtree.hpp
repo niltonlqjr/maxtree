@@ -14,6 +14,8 @@ class component{
         std::vector<int> pixels;
         int parent;
         int attribute;
+        std::vector<double> adjacents;
+
     public:
         component(std::vector<int> p = std::vector<int>(), int parent = -1, int attribute=0);
         std::string to_string();

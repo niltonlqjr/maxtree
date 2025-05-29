@@ -104,7 +104,7 @@ component *grow_region(maxtree *m, uint64_t idx_ini){
     
     double region_gval = m->at_pos(idx_ini)->gval;
     
-    std::cout << "ini:" << idx_ini <<" gval:" << region_gval<< "\n";
+    //std::cout << "ini:" << idx_ini <<" gval:" << region_gval<< "\n";
 
 
     if(!(m->at_pos(idx_ini)->visited)){
@@ -131,7 +131,7 @@ component *grow_region(maxtree *m, uint64_t idx_ini){
         }
 
     }
-    std::cout << "\n";
+    //std::cout << "\n";
     return ret;
 }
 
