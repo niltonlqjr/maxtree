@@ -135,6 +135,13 @@ component *grow_region(maxtree *m, uint64_t idx_ini){
     return ret;
 }
 
+
+/*
+Ideia geral:
+    Duas regioes r e s são do mesmo componente se existe
+    caminho de r ate s e todos os tons de cinza no caminho sao
+    menores ou iguais ao tom de cinza de r
+*/
 maxtree *maxtree_main(VImage *in, int nth = 1){
     maxtree *m = new maxtree(in->height(), in->width());
     m->fill_from_VImage(*in);
@@ -147,6 +154,7 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
                 c = grow_region(m, m->index_of(i,j));
                 m->insert_component(*c, m->at_pos(i,j)->gval);
                 //std::cout << c->to_string() << "\n";
+                
                 delete c;
             }
         }
@@ -157,7 +165,7 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
 int main(int argc, char **argv){
     VImage *in;
     maxtree *t;
-    
+
     if(argc < 3){
         std::cout << "usage:\n" << argv[0] << " <image file> <config file>\n";
         std::cout << "example:\n" << argv[0] << " input.png configs/config_test.txt\n";
@@ -214,6 +222,11 @@ int main(int argc, char **argv){
         std::cout << "=====================parents=====================\n";
         std::cout << t->to_string();
     }
+
+    for(t->all_thresholds()){
+
+    }
+
     vips_shutdown();
     return 0;
 }
