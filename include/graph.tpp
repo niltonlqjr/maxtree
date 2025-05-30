@@ -1,3 +1,4 @@
+#include <vector>
 template<typename T>
 Edge::Edge(uint64_t u, uint64_t v){
     this->v1 = u;
@@ -12,12 +13,19 @@ Edge::Edge(uint64_t u, uint64_t v, T w){
 }
 
 
-template<typename Tv, typename Te>
-Graph(std::vector<Tv> v = std::vector<Tv>(), std::vector< Edge<Te> > = std::vector<Edge<Te> >()){
-    this->V = v;
-    this->E = E;
+template<typename Tv, typename Ted>
+Graph::Graph(){
+    
 }
 
+template<typename Tv, typename Ted>
+void Graph::add_vertex(Tv v){
+    uint64_t pos;
+    pos = this->V.len();
+    map_V_vector[v] = pos;
+    this->V.push_back(v);
+
+}
 
 
 

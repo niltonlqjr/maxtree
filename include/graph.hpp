@@ -1,4 +1,6 @@
 #include<cinttypes>
+#include<unordered_map>
+#include<vector>
 
 #ifndef __GRAPH_H__
 #define __GRAPH_H__
@@ -17,13 +19,16 @@ class Edge{
 
 };
 
-template <typename Tv, typename Te>
+template <typename Tv, typename Ted>
 class Graph{
     private:
         std::vector<Tv> V;
-        std::vector<Edge <Te> > E;
+        std::vector<Edge <Ted> > E;
+        std::unordered_map<Tv, uint64_t> map_V_vector;
     public:
-        Graph(std::vector<Tv> v = std::vector<Tv>(), std::vector<Edge<Te> > = std::vector<Edge<Te> >());
+        //Graph(std::vector<Tv> v = std::vector<Tv>(), std::vector<Edge<Te> > = std::vector<Edge<Te> >());
+        Graph();
+        void add_vertex(Tv v);
 };
 
 #endif
