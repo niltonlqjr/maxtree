@@ -98,9 +98,11 @@ class task{
 };
 
 
-component *grow_region(maxtree *m, uint64_t idx_ini){
+
+
+component *grow_region(maxtree *m, uint64_t idx_ini, uint64_t component_idx){
     std::queue<maxtree_node *>q;
-    component *ret = new component();
+    component *ret = new component(component_idx);
     
     double region_gval = m->at_pos(idx_ini)->gval;
     
@@ -147,13 +149,15 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
     m->fill_from_VImage(*in);
     
     component *c;
+    int id = 0;
     for(int i=0; i<m->h; i++){
         for(int j=0; j<m->w;j++){
             if(!m->at_pos(i,j)->visited){
                 
-                c = grow_region(m, m->index_of(i,j));
+                c = grow_region(m, m->index_of(i,j), id);
                 m->insert_component(*c, m->at_pos(i,j)->gval);
                 //std::cout << c->to_string() << "\n";
+                id++;
                 
                 delete c;
             }
@@ -223,9 +227,6 @@ int main(int argc, char **argv){
         std::cout << t->to_string();
     }
 
-    for(t->all_thresholds()){
-
-    }
 
     vips_shutdown();
     return 0;

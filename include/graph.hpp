@@ -1,0 +1,29 @@
+#include<cinttypes>
+
+#ifndef __GRAPH_H__
+#define __GRAPH_H__
+
+template <typename T>
+class Edge{
+    private:
+        uint64_t v1;
+        uint64_t v2;
+    public:
+        T w;
+
+        Edge(uint64_t u, uint64_t v);
+        Edge(uint64_t u, uint64_t v, T w);
+    
+
+};
+
+template <typename Tv, typename Te>
+class Graph{
+    private:
+        std::vector<Tv> V;
+        std::vector<Edge <Te> > E;
+    public:
+        Graph(std::vector<Tv> v = std::vector<Tv>(), std::vector<Edge<Te> > = std::vector<Edge<Te> >());
+};
+
+#endif

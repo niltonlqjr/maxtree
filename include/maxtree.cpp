@@ -1,15 +1,20 @@
 #include "maxtree.hpp"
 
 
-component::component(std::vector<int> p, int parent, int attr){
+component::component(u_int64_t id, std::vector<int> p, int parent, int attr){
     this->pixels = p;
     this->parent = parent;
     this->attribute = attr;
+    this->id = id;
+}
+
+std::vector<int> component::get_pixels_index(){
+    return this->pixels;
 }
 
 std::string component::to_string(){
     std::string s;
-    s+= "parent: "+ std::to_string(this->parent) + " pixels: ";
+    s+= "id: "+ std::to_string(this->id) +" parent: "+ std::to_string(this->parent) + " pixels: ";
     for(auto p: this->pixels){
         s += std::to_string(p) + " ";
     }
@@ -78,17 +83,23 @@ maxtree_node *maxtree::at_pos(int index){
 }
 
 void maxtree::insert_component(component c, double gval){
-        this->components[gval].push_back(c);
+    auto comps = this->components.find(gval);
+    if(comps == this->components.end()){
+        this->components[gval] = std::vector<component>();
+    }
+
+    this->components[gval].push_back(c);
 
 }
 
-void maxtree::insert_component(std::vector<int> comp, int parent, double threshold){
+void maxtree::insert_component(std::vector<int> comp, int parent, double threshold, uint64_t id){
     auto comps = this->components.find(threshold);
     if(comps == this->components.end()){
         this->components[threshold] = std::vector<component>();
     }
+
     this->threshold_locks[threshold].lock();
-    component new_comp = component(comp, parent);
+    component new_comp = component(id, comp, parent);
     this->components[threshold].push_back(new_comp);
     this->threshold_locks[threshold].unlock();
 

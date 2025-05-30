@@ -16,10 +16,13 @@ class component{
         int attribute;
         std::vector<double> adjacents;
 
+
     public:
-        component(std::vector<int> p = std::vector<int>(), int parent = -1, int attribute=0);
+        component(uint64_t id = -1, std::vector<int> p = std::vector<int>(), int parent = -1, int attribute=0);
         std::string to_string();
         void insert_pixel(int p);
+        int id;
+        std::vector<int> get_pixels_index();
         //compare with component
 /* 
         bool operator>(const component &r);
@@ -53,7 +56,7 @@ class maxtree{
         
         int index_of(int i, int j);
         void fill_from_VImage(vips::VImage &img);
-        void insert_component(std::vector<int> component, int parent, double threshold);
+        void insert_component(std::vector<int> component, int parent, double threshold, uint64_t id=-1);
         void insert_component(component c, double threshold);
         std::vector<component> components_at(double threshold);
         std::vector<double> all_thresholds();
