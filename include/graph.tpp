@@ -1,12 +1,14 @@
 #include <vector>
+
+
 template<typename T>
-Edge::Edge(uint64_t u, uint64_t v){
+Edge<T>::Edge(uint64_t u, uint64_t v){
     this->v1 = u;
     this->v2 = v;
 }
 
 template<typename T>
-Edge::Edge(uint64_t u, uint64_t v, T w){
+Edge<T>::Edge(uint64_t u, uint64_t v, T w){
     this->v1 = u;
     this->v2 = v;
     this->w = w;
@@ -14,12 +16,12 @@ Edge::Edge(uint64_t u, uint64_t v, T w){
 
 
 template<typename Tv, typename Ted>
-Graph::Graph(){
+Graph<Tv,Ted>::Graph(){
     
 }
 
 template<typename Tv, typename Ted>
-void Graph::add_vertex(Tv v){
+void Graph<Tv,Ted>::add_vertex(Tv v){
     uint64_t pos;
     pos = this->V.len();
     map_V_vector[v] = pos;
@@ -27,6 +29,15 @@ void Graph::add_vertex(Tv v){
 
 }
 
+template<typename Tv, typename Ted>
+void Graph<Tv,Ted>::add_edge(Edge<Ted> e){
+    this->E = e;
+}
+
+template<typename Tv, typename Ted>
+void Graph<Tv,Ted>::add_edge(Tv u, Tv v, Ted w){
+    Edge<Ted> ne = Edge<Ted>(this->map_V_vector[u], this->map_V_vector[v]);
+    this->E = ne;
+}
 
 
-#include "graph.hpp"

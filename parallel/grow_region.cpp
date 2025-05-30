@@ -20,6 +20,7 @@
 #include "heap.hpp"
 #include "utils.hpp"
 #include "bag_of_task.hpp"
+#include "graph.hpp"
 
 bool verbose;
 

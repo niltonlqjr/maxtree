@@ -29,6 +29,10 @@ class Graph{
         //Graph(std::vector<Tv> v = std::vector<Tv>(), std::vector<Edge<Te> > = std::vector<Edge<Te> >());
         Graph();
         void add_vertex(Tv v);
+        void add_edge(Edge<Ted> e);
+        void add_edge(Tv u, Tv v, Ted w);
 };
+
+#include "graph.tpp"
 
 #endif
