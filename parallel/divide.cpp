@@ -257,7 +257,9 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m, unsign
                         m->insert_component(new_task->get_all_pixels_ids(),new_task->parent_pixel,next_threshold);
                         if(verbose) std::cout << "task inserted\n";
                         gntm.lock();
-                        std::cout << global_num_task++ << "\n";
+                        std::cout << "task id:" << global_num_task++ << " - ";
+                        std::cout << "threshold:" << new_task->threshold << " - ";
+                        std::cout << "number of pixels:" << new_task->get_all_pixels_ids().size() << "\n";
                         gntm.unlock();
                     }
                     bag->insert_task(*new_task);
@@ -268,13 +270,11 @@ void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m, unsign
             }
             i++;
         }
-       /*  if(has_task){
+        /* if(has_task){
             delete t;
-        } */
+        }  */
     }
-    if(thread_num_task != NULL){
-        *thread_num_task = local_num_task;
-    }
+
 }
 
 maxtree *maxtree_main(VImage *in, int nth = 1){

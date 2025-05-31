@@ -95,7 +95,11 @@ void maxtree::insert_component(component c, double gval){
 void maxtree::insert_component(std::vector<int> comp, int parent, double threshold, uint64_t id){
     auto comps = this->components.find(threshold);
     if(comps == this->components.end()){
-        this->components[threshold] = std::vector<component>();
+        this->threshold_locks[threshold].lock();
+        if(comps == this->components.end()){
+            this->components[threshold] = std::vector<component>();
+        }
+        this->threshold_locks[threshold].unlock();
     }
 
     this->threshold_locks[threshold].lock();
@@ -113,7 +117,7 @@ void maxtree::insert_component(std::vector<int> comp, int parent, double thresho
         }
     }
     //try to speedup putting one lock per node, if necessary;
-    this->data_lock.lock();
+    /*this->data_lock.lock();
     for(int pidx: comp){
         
         int lbl_atu = this->data->at(pidx)->label;
@@ -130,7 +134,7 @@ void maxtree::insert_component(std::vector<int> comp, int parent, double thresho
         } 
     }
     
-    this->data_lock.unlock();
+    this->data_lock.unlock();*/
 
 }
 
@@ -198,30 +202,50 @@ std::vector<double> maxtree::all_thresholds(){
 
 
 
-std::vector<maxtree_node*> maxtree::get_neighbours(int pixel){
+std::vector<maxtree_node*> maxtree::get_neighbours(int pixel, int con){
     std::vector<maxtree_node*> v;
     int idx, pl, pc;
     std::tie(pl, pc) = this->lin_col(pixel);
-    if(pl >= 1){
-        idx = index_of(pl-1, pc);
-        v.push_back(this->data->at(idx));
+    if(con == 4 || con == 8){
+        if(pl >= 1){
+            idx = index_of(pl-1, pc);
+            v.push_back(this->data->at(idx));
+        }
+        if(pl < (unsigned int)h - 1){
+            idx = index_of(pl+1, pc);
+            v.push_back(this->data->at(idx));
+        }
+        if(pc >= 1){
+            idx = index_of(pl, pc-1);
+            v.push_back(this->data->at(idx));
+        }
+        if(pc < (unsigned int)w - 1){
+            idx = index_of(pl, pc+1);
+            v.push_back(this->data->at(idx));
+        }
     }
-    if(pl < (unsigned int)h - 1){
-        idx = index_of(pl+1, pc);
-        v.push_back(this->data->at(idx));
-    }
-    if(pc >= 1){
-        idx = index_of(pl, pc-1);
-        v.push_back(this->data->at(idx));
-    }
-    if(pc < (unsigned int)w - 1){
-        idx = index_of(pl, pc+1);
-        v.push_back(this->data->at(idx));
+    if(con == 8){
+        if(pl >= 1 && pc >=1){
+            idx = index_of(pl-1, pc-1);
+            v.push_back(this->data->at(idx));
+        }
+        if(pl < (unsigned int)h - 1 && pc < (unsigned int)w - 1){
+            idx = index_of(pl+1, pc+1);
+            v.push_back(this->data->at(idx));
+        }
+        if(pc >= 1 && pl < (unsigned int)h - 1){
+            idx = index_of(pl+1, pc-1);
+            v.push_back(this->data->at(idx));
+        }
+        if(pc < (unsigned int)w - 1 && pl >= 1){
+            idx = index_of(pl-1, pc+1);
+            v.push_back(this->data->at(idx));
+        }
     }
     return v;
 }
-
-std::vector<maxtree_node*> maxtree::get_neighbours(int pixel_line, int pixel_col){
+/* 
+std::vector<maxtree_node*> maxtree::get_neighbours(int pixel_line, int pixel_col, int con){
     std::vector<maxtree_node*> v;
     int idx;
     if(pixel_line >= 1){
@@ -242,7 +266,7 @@ std::vector<maxtree_node*> maxtree::get_neighbours(int pixel_line, int pixel_col
     }
     return v;
 }
-
+ */
 int maxtree::index_of(int l, int c){
     return l * this->w + c;
 }

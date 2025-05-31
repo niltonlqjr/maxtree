@@ -71,8 +71,8 @@ class maxtree{
 
         std::vector<maxtree_node*> *get_data();
 
-        std::vector<maxtree_node*> get_neighbours(int pixel);
-        std::vector<maxtree_node*> get_neighbours(int l, int c);
+        std::vector<maxtree_node*> get_neighbours(int pixel, int con=4);
+        //std::vector<maxtree_node*> get_neighbours(int l, int c, int con=4);
         std::tuple<int,int> lin_col(int index);
         
         void filter(Tattribute a);

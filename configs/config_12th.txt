@@ -6,6 +6,9 @@ server=10.1.1.2
 # number of threads for the process 
 threads=12
 
+#delta value for region
+delta=60
+
 #other configs:
 #...
 

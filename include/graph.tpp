@@ -22,8 +22,7 @@ Graph<Tv,Ted>::Graph(){
 
 template<typename Tv, typename Ted>
 void Graph<Tv,Ted>::add_vertex(Tv v){
-    uint64_t pos;
-    pos = this->V.len();
+    uint64_t pos = this->V.size();
     map_V_vector[v] = pos;
     this->V.push_back(v);
 

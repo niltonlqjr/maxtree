@@ -23,6 +23,7 @@
 #include "graph.hpp"
 
 bool verbose;
+int connectivity;
 
 using namespace vips;
 
@@ -99,7 +100,11 @@ class task{
 };
 
 
+/* Graph<double, double> build_adjacent_graph(maxtree *m){
+    m->all_thresholds();
+} */
 
+int delta;
 
 component *grow_region(maxtree *m, uint64_t idx_ini, uint64_t component_idx){
     std::queue<maxtree_node *>q;
@@ -120,12 +125,12 @@ component *grow_region(maxtree *m, uint64_t idx_ini, uint64_t component_idx){
         maxtree_node *p = q.front();
         q.pop();
         // std::cout << "p->gval:" << p->gval << " " << region_gval << "\n";
-        if(p->gval == region_gval){
+        if((p->gval >= region_gval - delta) && (p->gval <= region_gval + delta)){
             ret->insert_pixel(p->idx);
-            auto nb = m->get_neighbours(p->idx);
+            auto nb = m->get_neighbours(p->idx, connectivity);
             for(auto n: nb){
                 if(!n->visited){
-                    if(n->gval == region_gval){
+                    if((n->gval >= region_gval - delta) && (n->gval <= region_gval + delta)){
                         n->visited = true;
                         q.push(n);
                     }
@@ -141,14 +146,14 @@ component *grow_region(maxtree *m, uint64_t idx_ini, uint64_t component_idx){
 
 /*
 Ideia geral:
-    Duas regioes r e s são do mesmo componente se existe
-    caminho de r ate s e todos os tons de cinza no caminho sao
+    Duas regioes r e s são do mesmo componente se o tom de cinza de ambos é memso
+    e existe caminho de r ate s e todos os tons de cinza no caminho sao
     menores ou iguais ao tom de cinza de r
 */
 maxtree *maxtree_main(VImage *in, int nth = 1){
     maxtree *m = new maxtree(in->height(), in->width());
     m->fill_from_VImage(*in);
-    
+    uint64_t tpixel=0;
     component *c;
     int id = 0;
     for(int i=0; i<m->h; i++){
@@ -157,13 +162,17 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
                 
                 c = grow_region(m, m->index_of(i,j), id);
                 m->insert_component(*c, m->at_pos(i,j)->gval);
-                //std::cout << c->to_string() << "\n";
+                if(c->get_pixels_index().size() >= 100){
+                    std::cout << "id:" << id << " number of pixels:" << c->get_pixels_index().size() << "\n";
+                }
+                tpixel += c->get_pixels_index().size();
                 id++;
                 
                 delete c;
             }
         }
     }
+    std::cout << "total pixels:" << tpixel << "\n";
     return m;
 }
 
@@ -187,7 +196,7 @@ int main(int argc, char **argv){
 
     int h,w,nth;
     verbose = false;
-
+    connectivity = 4;
     nth = std::stoi(configs->at("threads"));
     auto conf_verbose = configs->find("verbose");
     if(conf_verbose != configs->end()){
@@ -195,6 +204,12 @@ int main(int argc, char **argv){
             verbose = true;
         }
     }
+
+    auto conf_delta = configs->find("delta");
+    if(conf_delta != configs->end()){
+        delta = std::stoi(conf_delta->second);
+    }
+
 
     if(argc == 4) nth = std::stoi(argv[3]);
     

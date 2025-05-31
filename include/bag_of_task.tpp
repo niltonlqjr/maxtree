@@ -41,7 +41,7 @@ bool bag_of_tasks<Task>::get_task(Task &ret, int priority){
     }else{
         pos = this->position_of(priority);
     }
-    while(this->num_task == 0 && this->running){
+    while(this->num_task <= 0 && this->running){
         this->waiting++;
         this->has_task.wait(l);
     }
