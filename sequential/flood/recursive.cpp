@@ -103,7 +103,7 @@ int flood(int lambda, maxtree_node *r,
     return lpar;
 }
 
-std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0, int gl = 256){
+std::vector<maxtree_node*> *compute_maxtree(VImage *in, int band = 0, int gl = 256){
     std::vector<maxtree_node*> *data;
     data = new std::vector<maxtree_node*>;
     int h=in->height();
@@ -148,7 +148,7 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0, int gl = 256){
 
 int main(int argc, char **argv){
     VImage *in;
-    std::vector<maxtree_node*> *t;
+    std::vector<maxtree_node*> *tdata;
     if (VIPS_INIT (argv[0])) 
         vips_error_exit (NULL);
 
@@ -158,38 +158,43 @@ int main(int argc, char **argv){
     w=in->width();
 
     for(int i=0;i<argc;i++){
-		std::cout << argv[i] << " ";
-	}
-	std::cout << "\n";
+        std::cout << argv[i] << " ";
+    }
+    std::cout << "\n";
 
 
-	if(argc < 2){
-		std::cout << "usage: " << argv[0] << " input_image config_file\n";
-		exit(0);
-	}
+    if(argc < 2){
+        std::cout << "usage: " << argv[0] << " input_image config_file\n";
+        exit(0);
+    }
 
-	if (VIPS_INIT (argv[0])) {
+    if (VIPS_INIT (argv[0])) {
         vips_error_exit (NULL);
-	}
+    }
     bool verbose=false;
     in = new vips::VImage(vips::VImage::new_from_file(argv[1],NULL));
 
 
-	if(argc > 2){	
-		auto configs = parse_config(argv[2]);
-		if (configs->find("verbose") != configs->end()){
-			if(configs->at("verbose") == "true"){
-				verbose=true;
-			}
-		}
-	}
+    if(argc > 2){    
+        auto configs = parse_config(argv[2]);
+        if (configs->find("verbose") != configs->end()){
+            if(configs->at("verbose") == "true"){
+                verbose=true;
+            }
+        }
+    }
 
     vips::VImage cp = in->copy_memory();
     if(verbose) print_VImage_band(&cp);
-    t=maxtree(in);
-    if(verbose) print_matrix(t, h, w);
-    label_components(t);
-    if(verbose) print_labels(t, h, w);
+    tdata=compute_maxtree(in);
+    label_components(tdata);
+    
+    maxtree *t = new maxtree(tdata, h, w);
+    //if(verbose) print_matrix(t, h, w);
+    //if(verbose) print_labels(t, h, w);
+    std::cout << "gval\n" << t->to_string(GVAL);
+    std::cout << "label\n" << t->to_string(LABEL);
+    std::cout << "parent\n" << t->to_string(PARENT);
     vips_shutdown();
     return 0;
 }

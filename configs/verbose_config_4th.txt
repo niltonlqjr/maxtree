@@ -1,11 +1,11 @@
 # comments will be ignored, and every comment must start the line with # (it can't have any char before, not even a blank space)
 # blank lines also be ignored
-
+#verbose=true
 # main server 
      server=10.1.1.2
 # number of threads for the process 
 threads=  4
-
-#other configs:
-#...
-verbose  =    true    
+# grid lines
+glines=4
+# grid columns
+gcolumns=4

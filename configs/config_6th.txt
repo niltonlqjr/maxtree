@@ -5,7 +5,7 @@
 server=10.1.1.2
 # number of threads for the process 
 threads=6
-
-#other configs:
-#...
-
+# grid lines
+glines=4
+# grid columns
+gcolumns=4

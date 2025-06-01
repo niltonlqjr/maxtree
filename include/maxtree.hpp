@@ -55,7 +55,7 @@ class maxtree{
         maxtree(std::vector<maxtree_node*> *data, int h, int w);
         
         int index_of(int i, int j);
-        void fill_from_VImage(vips::VImage &img);
+        void fill_from_VImage(vips::VImage &img, bool verbose=false);
         void insert_component(std::vector<int> component, int parent, double threshold, uint64_t id=-1);
         void insert_component(component c, double threshold);
         std::vector<component> components_at(double threshold);
@@ -74,7 +74,7 @@ class maxtree{
         std::vector<maxtree_node*> get_neighbours(int pixel, int con=4);
         //std::vector<maxtree_node*> get_neighbours(int l, int c, int con=4);
         std::tuple<int,int> lin_col(int index);
-        
+        void compute_sequential_iterative();
         void filter(Tattribute a);
 };
 

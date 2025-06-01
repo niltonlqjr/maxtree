@@ -40,7 +40,7 @@ maxtree::maxtree(std::vector<maxtree_node*> *data, int h, int w){
 }
 
 maxtree_node *maxtree::at_pos(int l, int c){
-    int idx = this->index_of(l, c);
+    int idx = this->index_of(l, c); 
     return this->data->at(idx);
 }
 
@@ -53,7 +53,70 @@ unsigned long long int maxtree::get_size(){
     return this->data->size();
 }
 
-void maxtree::fill_from_VImage(vips::VImage &img_in){
+
+
+void maxtree::compute_sequential_iterative(){
+    #define INQUEUE -2
+    std::priority_queue<maxtree_node*, std::vector<maxtree_node*> ,cmp_maxtree_nodes> pixel_pq;
+    std::stack<maxtree_node*> pixel_stack;
+    maxtree_node *xm, *nextpix, *p;
+    unsigned long long int idx=0;
+    
+
+    xm = min_gval(this->get_data());
+    pixel_pq.push(xm);
+    pixel_stack.push(xm);
+    nextpix = xm;
+
+    do{
+        p = nextpix;
+        auto N = this->get_neighbours(p->idx);
+        for(auto q: N){
+            if(q->parent == -1){/* if q not visited */
+                q->parent = INQUEUE;
+                pixel_pq.push(q);
+                if(q->gval > p->gval){
+                    break;
+                }
+            }
+        }
+        nextpix = pixel_pq.top();
+
+        if(nextpix->gval > p->gval){
+            pixel_stack.push(nextpix);
+        }else{
+            pixel_pq.pop();
+            if(p!=pixel_stack.top()){
+                p->parent = pixel_stack.top()->idx;
+            }
+            
+            if(pixel_pq.empty()){
+                nextpix=p;
+            }else{
+                nextpix = pixel_pq.top();
+            }
+
+            if(nextpix->gval < p->gval){
+                
+                while(!pixel_stack.empty() && nextpix->gval < pixel_stack.top()->gval){
+                    auto st = pixel_stack.top();
+                    pixel_stack.pop();
+                    if(!pixel_stack.empty())
+                        st->parent = pixel_stack.top()->idx;
+                }
+                if(pixel_stack.empty() || pixel_stack.top()->gval < nextpix->gval){
+                    pixel_stack.push(nextpix);
+                }
+            }
+
+        }
+
+    }while(!pixel_pq.empty());
+    maxtree_node *root = pixel_stack.top();
+    root->parent = root->idx;
+}
+
+void maxtree::fill_from_VImage(vips::VImage &img_in, bool verbose){
     this->h = img_in.height();
     this->w = img_in.width();
     vips::VImage img = img_in.copy_memory();
@@ -62,12 +125,15 @@ void maxtree::fill_from_VImage(vips::VImage &img_in){
     char aux_enum_c[][50] = {"VIPS_FORMAT_UCHAR", "VIPS_FORMAT_CHAR", "VIPS_FORMAT_USHORT","VIPS_FORMAT_SHORT",
          "VIPS_FORMAT_UINT"," VIPS_FORMAT_INT"," VIPS_FORMAT_FLOAT"," VIPS_FORMAT_COMPLEX"," VIPS_FORMAT_DOUBLE",
          "VIPS_FORMAT_DPCOMPLEX","VIPS_FORMAT_LAST"};
-    if (img_pels->BandFmt > 0){
-        std::cout << aux_enum_c[img_pels->BandFmt];
-    }else {
-        std::cout << "VIPS_FORMAT_NOTSET";
+    if(verbose){
+        std::cout << "pixel format: ";
+        if (img_pels->BandFmt > 0){
+            std::cout << aux_enum_c[img_pels->BandFmt];
+        }else {
+            std::cout << "VIPS_FORMAT_NOTSET";
+        }
+        std::cout << "\n";
     }
-    std::cout << "\n";
     
     for(int l = 0; l < this->h; l++){
         for(int c = 0; c < this->w; c++){
@@ -155,7 +221,7 @@ std::string maxtree::to_string(enum maxtee_node_field field, bool colored, int s
     }else if(field == LABEL){
         for(int i=0; i < this->h; i++){
             for(int j=0; j < this->w; j++){
-                auto point = this->data->at(this->index_of(i,j))->parent;
+                auto point = this->data->at(this->index_of(i,j))->label;
                 if(colored)
                     r+=terminal_color_string(point % 8);
                 r += fill(std::to_string(point), spaces-1) + " " ;
@@ -244,29 +310,7 @@ std::vector<maxtree_node*> maxtree::get_neighbours(int pixel, int con){
     }
     return v;
 }
-/* 
-std::vector<maxtree_node*> maxtree::get_neighbours(int pixel_line, int pixel_col, int con){
-    std::vector<maxtree_node*> v;
-    int idx;
-    if(pixel_line >= 1){
-        idx = index_of(pixel_line-1, pixel_col);
-        v.push_back(this->data->at(idx));
-    }
-    if(pixel_line < (unsigned int)h - 1){
-        idx = index_of(pixel_line+1, pixel_col);
-        v.push_back(this->data->at(idx));
-    }
-    if(pixel_col >= 1){
-        idx = index_of(pixel_line, pixel_col-1);
-        v.push_back(this->data->at(idx));
-    }
-    if(pixel_col < (unsigned int)w - 1){
-        idx = index_of(pixel_line, pixel_col+1);
-        v.push_back(this->data->at(idx));
-    }
-    return v;
-}
- */
+
 int maxtree::index_of(int l, int c){
     return l * this->w + c;
 }

@@ -96,52 +96,52 @@ void compute_maxtree(maxtree *t){
 
 
 int main(int argc, char *argv[]){
-	vips::VImage *in;
+    vips::VImage *in;
     maxtree *t;
-	std::cout << "argc: " << argc << " argv:" ;
-	for(int i=0;i<argc;i++){
-		std::cout << argv[i] << " ";
-	}
-	std::cout << "\n";
+    std::cout << "argc: " << argc << " argv:" ;
+    for(int i=0;i<argc;i++){
+        std::cout << argv[i] << " ";
+    }
+    std::cout << "\n";
 
 
-	if(argc < 2){
-		std::cout << "usage: " << argv[0] << " input_image config_file\n";
-		exit(0);
-	}
+    if(argc < 2){
+        std::cout << "usage: " << argv[0] << " input_image config_file\n";
+        exit(0);
+    }
 
-	if (VIPS_INIT (argv[0])) {
+    if (VIPS_INIT (argv[0])) {
         vips_error_exit (NULL);
-	}
+    }
 
-	bool verbose=false;
+    bool verbose=false;
     in = new vips::VImage(vips::VImage::new_from_file(argv[1],NULL));
 
 
-	if(argc > 2){	
-		auto configs = parse_config(argv[2]);
-		if (configs->find("verbose") != configs->end()){
-			if(configs->at("verbose") == "true"){
-				verbose=true;
-			}
-		}
-	}
+    if(argc > 2){    
+        auto configs = parse_config(argv[2]);
+        if (configs->find("verbose") != configs->end()){
+            if(configs->at("verbose") == "true"){
+                verbose=true;
+            }
+        }
+    }
 
-	std::cout << "start\n";
-	
+    std::cout << "start\n";
+    
     int h,w;
     h=in->height();
     w=in->width();
-	t = new maxtree(h,w);
-	vips::VImage cp = in->copy_memory();
-	t->fill_from_VImage(cp);
+    t = new maxtree(h,w);
+    vips::VImage cp = in->copy_memory();
+    t->fill_from_VImage(cp);
     compute_maxtree(t);
-	if(verbose){
-		std::cout<<"__________________GVAL________________\n";
-		std::cout << t->to_string(GVAL,5);
-		std::cout<<"__________________PARENT________________\n";
-		std::cout << t->to_string();
-	}
+    if(verbose){
+        std::cout<<"__________________GVAL________________\n";
+        std::cout << t->to_string(GVAL,5);
+        std::cout<<"__________________PARENT________________\n";
+        std::cout << t->to_string();
+    }
     
     
     return 0;
