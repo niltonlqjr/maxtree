@@ -50,6 +50,16 @@ merge: base
 		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} -I${heap_dir} \
 		${vips_args} -o ${dest_merge}
 
+
+vips_region: base
+	mkdir -p exec
+	g++ ${OPT} ${EXE_CPP_FLAGS} teste_region.cpp \
+		${utils_dir}/utils.o \
+	 	${maxtree_node_dir}/maxtree_node.o \
+		${maxtree_dir}/maxtree.o \
+		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} -I${heap_dir} \
+		${vips_args} -o teste_region
+
 grow: base
 	mkdir -p exec
 	g++ ${OPT} ${EXE_CPP_FLAGS} ${source_grow} \

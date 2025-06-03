@@ -53,7 +53,8 @@ int main(int argc, char *argv[]){
     }
 
     bool verbose=false;
-    in = new vips::VImage(vips::VImage::new_from_file(argv[1],NULL));
+    in = new vips::VImage(vips::VImage::new_from_file(argv[1],
+        VImage::option ()->set ("access", VIPS_ACCESS_SEQUENTIAL)));
 
 
     auto configs = parse_config(argv[2]);
@@ -75,7 +76,7 @@ int main(int argc, char *argv[]){
     uint32_t glines = std::stoi(configs->at("glines"));
     uint32_t gcolumns = std::stoi(configs->at("gcolumns"));
 
-    std::cout << "configurations";
+    std::cout << "configurations:\n";
     print_unordered_map(configs);
     std::cout << "====================\n";
     std::cout << "start\n";
@@ -84,7 +85,6 @@ int main(int argc, char *argv[]){
     h=in->height();
     w=in->width();
     
-
     uint32_t h_trunc = h/glines;
     uint32_t w_trunc = w/gcolumns;
 
@@ -92,36 +92,30 @@ int main(int argc, char *argv[]){
     uint32_t num_w_ceil = w%gcolumns;
 
     std::vector<maxtree *> tiles;
-
+    uint32_t reg_top=0, reg_left=0; 
     for(uint32_t i=0; i<glines; i++){
         uint32_t tile_lines = i < num_h_ceil ? h_trunc : h_trunc+1;
         for(uint32_t j=0; j<gcolumns; j++){
             uint32_t tiles_columns = j < num_w_ceil ? w_trunc : w_trunc+1;
-            tiles.push_back(new maxtree(tile_lines, tiles_columns));
-            //create region of image and fill tile from region
+            maxtree *new_tree = new maxtree(tile_lines, tiles_columns);
+            vips::VRegion reg = in->region(reg_left,reg_top,tiles_columns,tile_lines);
+            reg.prepare(reg_left,reg_top,tiles_columns,tile_lines);
+            new_tree->fill_from_VRegion(reg,reg_top, reg_left,verbose);
+            tiles.push_back(new_tree);
+            vips_region_invalidate(reg.get_region());
         }
     }
 
-    t = new maxtree(h,w);
-
-    std::cout << "full image:" << t->h << ", " << t->w << "\n";
-
     for(int i=0; i < tiles.size(); i++){
+        t = tiles.at(i);
         std::cout << "tile:" << i << " " << tiles.at(i)->h << ", " <<  tiles.at(i)->w << "\n";
+        t->compute_sequential_iterative();
+        if(verbose){
+            std::cout << "__________________GVAL________________\n";
+            std::cout << t->to_string(GVAL,5);
+            std::cout << "__________________PARENT________________\n";
+            std::cout << t->to_string();
+        }
     }
-    
-    vips::VImage cp = in->copy_memory();
-   
-    t->fill_from_VImage(cp,verbose);
-
-    t->compute_sequential_iterative();
-    if(verbose){
-        std::cout<<"__________________GVAL________________\n";
-        std::cout << t->to_string(GVAL,5);
-        std::cout<<"__________________PARENT________________\n";
-        std::cout << t->to_string();
-    }
-    
-    
     return 0;
 }

@@ -143,6 +143,27 @@ void maxtree::fill_from_VImage(vips::VImage &img_in, bool verbose){
         }
     }
 }
+ 
+void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t base_w, bool verbose){
+    VipsRegion *c_region = reg_in.get_region();
+    this->h = vips_region_height(c_region);
+    this->w = vips_region_width(c_region);
+    
+    char aux_enum_c[][50] = {"VIPS_FORMAT_UCHAR", "VIPS_FORMAT_CHAR", "VIPS_FORMAT_USHORT","VIPS_FORMAT_SHORT",
+         "VIPS_FORMAT_UINT"," VIPS_FORMAT_INT"," VIPS_FORMAT_FLOAT"," VIPS_FORMAT_COMPLEX"," VIPS_FORMAT_DOUBLE",
+         "VIPS_FORMAT_DPCOMPLEX","VIPS_FORMAT_LAST"};
+    
+    
+    for(int l = 0; l < this->h; l++){
+        for(int c = 0; c < this->w; c++){
+            int x = this->index_of(l,c);
+            //VipsPel *vpel__ = VIPS_IMAGE_ADDR(c_region, c, l);
+            VipsPel *vpel = VIPS_REGION_ADDR(c_region, c+base_w, l+base_h);
+            this->data->push_back(new maxtree_node((*vpel),x));
+        }
+    }
+} 
+
 
 maxtree_node *maxtree::at_pos(int index){
     return this->data->at(index);
