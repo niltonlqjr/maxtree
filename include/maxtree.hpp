@@ -62,6 +62,11 @@ class maxtree{
         void insert_component(component c, double threshold);
         std::vector<component> components_at(double threshold);
         std::vector<double> all_thresholds();
+
+        maxtree get_boundary_tree();
+
+        void merge(maxtree to_merge);
+
         
         std::string to_string(enum maxtee_node_field field = PARENT,bool colored = true, int spaces = 5);
 

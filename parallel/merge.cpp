@@ -92,8 +92,9 @@ int main(int argc, char *argv[]){
     uint32_t num_w_ceil = w%gcolumns;
 
     std::vector<maxtree *> tiles;
-    uint32_t reg_top=0, reg_left=0; 
+    uint32_t reg_top=0, reg_left; 
     for(uint32_t i=0; i<glines; i++){
+        reg_left=0;
         uint32_t tile_lines = i < num_h_ceil ? h_trunc : h_trunc+1;
         for(uint32_t j=0; j<gcolumns; j++){
             uint32_t tiles_columns = j < num_w_ceil ? w_trunc : w_trunc+1;
@@ -103,7 +104,9 @@ int main(int argc, char *argv[]){
             new_tree->fill_from_VRegion(reg,reg_top, reg_left,verbose);
             tiles.push_back(new_tree);
             vips_region_invalidate(reg.get_region());
+            reg_left+=tiles_columns;
         }
+        reg_top+=tile_lines;
     }
 
     for(int i=0; i < tiles.size(); i++){
@@ -117,5 +120,8 @@ int main(int argc, char *argv[]){
             std::cout << t->to_string();
         }
     }
+
+    //as boundary trees tem alturas e tamanhos distintos, logo é possível estimar o custo de um merge
+
     return 0;
 }
