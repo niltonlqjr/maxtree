@@ -96,7 +96,7 @@ int main(int argc, char *argv[]){
     std::cout << "num_h_ceil:" << num_h_ceil << "\n";
     std::cout << "num_w_ceil:" << num_w_ceil << "\n";
     
-    std::vector<maxtree *> tiles;
+    std::vector<std::vector<maxtree *>> tiles;
 
     uint32_t i,j,x = 0;
     uint32_t noborder_rt=0, noborder_rl, lines_inc, columns_inc; // original tiles (without borders) size variables
@@ -114,6 +114,7 @@ int main(int argc, char *argv[]){
             tile_lines++;
         }
         noborder_rl=0;
+        tiles.push_back(std::vector<maxtree *>());
         for(j=0; j<gcolumns; j++){
             std::cout << "===============inner loop=======================\n";
             std::cout << x++ << "->" << i << "," << j <<"\n";
@@ -129,18 +130,18 @@ int main(int argc, char *argv[]){
             }
 
             //std::cout << "filling: " << noborder_rt << "," << noborder_rl << "..." << noborder_rt + lines_inc << "," << noborder_rl + columns_inc <<"\n";
-
-            std::cout << "with borders:\n";
-            std::cout << reg_left << "," << reg_top << "," << tile_columns << "," << tile_lines << "\n no borders: \n";
-            std::cout << noborder_rl << "," << noborder_rt << "," << columns_inc << "," << tile_lines << "\n------------\n";
-            
+            if(verbose){
+                std::cout << "with borders:\n";
+                std::cout << reg_left << "," << reg_top << "," << tile_columns << "," << tile_lines << "\nno borders: \n";
+                std::cout << noborder_rl << "," << noborder_rt << "," << columns_inc << "," << lines_inc << "\n------------\n";
+            }
             maxtree *new_tree = new maxtree(tile_lines, tile_columns);
             vips::VRegion reg = in->region(reg_left, reg_top, tile_columns, tile_lines);
             
             reg.prepare(reg_left, reg_top, tile_columns, tile_lines);
             new_tree->fill_from_VRegion(reg, reg_top, reg_left, verbose);
-            tiles.push_back(new_tree);
-            //vips_region_invalidate(reg.get_region());
+            tiles.at(i).push_back(new_tree);
+            vips_region_invalidate(reg.get_region());
             
             //std::cout << new_tree->to_string(GVAL,5);
             noborder_rl+=columns_inc;
@@ -149,9 +150,10 @@ int main(int argc, char *argv[]){
         noborder_rt+=lines_inc;
     }
 
-    for(int i=0; i < tiles.size(); i++){
-        t = tiles.at(i);
-        std::cout << "tile:" << i << " " << tiles.at(i)->h << ", " <<  tiles.at(i)->w << "\n";
+    for(int i=0; i < glines; i++){
+        for(int j=0;j<gcolumns; j++)
+        t = tiles.at(i).at(j);
+        if (verbose) std::cout << "tile:" << i << ", " << j << " size:" << t->h << ", " <<  t->w << "\n";
         t->compute_sequential_iterative();
         if(verbose){
             std::cout << "__________________GVAL________________\n";
