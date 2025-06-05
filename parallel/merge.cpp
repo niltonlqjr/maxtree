@@ -91,13 +91,18 @@ int main(int argc, char *argv[]){
     uint32_t num_h_ceil = h%glines;
     uint32_t num_w_ceil = w%gcolumns;
 
+    std::cout << "h trunc:" << h_trunc << "\n";
+    std::cout << "w trunc:" << w_trunc << "\n";
+    std::cout << "num_h_ceil:" << num_h_ceil << "\n";
+    std::cout << "num_w_ceil:" << num_w_ceil << "\n";
+    
     std::vector<maxtree *> tiles;
 
     uint32_t i,j,x = 0;
     uint32_t noborder_rt=0, noborder_rl, lines_inc, columns_inc; // original tiles (without borders) size variables
     uint32_t reg_top, reg_left, tile_lines, tile_columns; // tiles used by algorithm (with border) size variables
     for(i=0; i<glines; i++){
-        lines_inc = i < num_h_ceil ? h_trunc : h_trunc+1;
+        lines_inc = i < num_h_ceil ? h_trunc +1 : h_trunc;
         
         tile_lines = lines_inc;
         reg_top = noborder_rt;
@@ -105,41 +110,41 @@ int main(int argc, char *argv[]){
             tile_lines++;
             reg_top--;
         }
-        if(noborder_rt+lines_inc < h - 2){//check if there is a bottom border
+        if(noborder_rt+lines_inc < h - 1){//check if there is a bottom border
             tile_lines++;
         }
         noborder_rl=0;
         for(j=0; j<gcolumns; j++){
-            std::cout << "===============inner=======================\n";
+            std::cout << "===============inner loop=======================\n";
             std::cout << x++ << "->" << i << "," << j <<"\n";
-            std::cout << "======================================\n";
-            columns_inc = j < num_w_ceil ? w_trunc : w_trunc+1;
+            columns_inc = j < num_w_ceil ? w_trunc+1 : w_trunc;
             tile_columns = columns_inc;
             reg_left = noborder_rl;
             if(noborder_rl > 0){//check if there is a left border
                 tile_columns++;
                 reg_left--;
             }
-            if(noborder_rl+columns_inc < w - 2){//check if there is a right border
+            if(noborder_rl+columns_inc < w - 1){//check if there is a right border
                 tile_columns++;
             }
 
             //std::cout << "filling: " << noborder_rt << "," << noborder_rl << "..." << noborder_rt + lines_inc << "," << noborder_rl + columns_inc <<"\n";
 
-            
-            std::cout << reg_left << "," << reg_top << "," << tile_columns << "," << tile_lines << "\n------------\n";
+            std::cout << "with borders:\n";
+            std::cout << reg_left << "," << reg_top << "," << tile_columns << "," << tile_lines << "\n no borders: \n";
             std::cout << noborder_rl << "," << noborder_rt << "," << columns_inc << "," << tile_lines << "\n------------\n";
-
+            
             maxtree *new_tree = new maxtree(tile_lines, tile_columns);
             vips::VRegion reg = in->region(reg_left, reg_top, tile_columns, tile_lines);
-
+            
             reg.prepare(reg_left, reg_top, tile_columns, tile_lines);
             new_tree->fill_from_VRegion(reg, reg_top, reg_left, verbose);
             tiles.push_back(new_tree);
-           //vips_region_invalidate(reg.get_region());
-
-            std::cout << new_tree->to_string(GVAL,5);
+            //vips_region_invalidate(reg.get_region());
+            
+            //std::cout << new_tree->to_string(GVAL,5);
             noborder_rl+=columns_inc;
+            std::cout << "======================================\n";
         }
         noborder_rt+=lines_inc;
     }
