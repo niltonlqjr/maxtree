@@ -30,6 +30,7 @@ maxtree::maxtree(int h, int w){
     this->w = w;
     // this->data = new std::unordered_map<int, maxtree_node*>();
     this->data = new std::vector<maxtree_node*>();
+    this->levelroots = new std::vector<maxtree_node*>();
 }
 
 // maxtree::maxtree(std::unordered_map<int, maxtree_node*> *data, int h, int w){
@@ -37,6 +38,7 @@ maxtree::maxtree(std::vector<maxtree_node*> *data, int h, int w){
     this->data = data;
     this->h=h;
     this->w=w;
+    this->levelroots = new std::vector<maxtree_node*>();
 }
 
 maxtree_node *maxtree::at_pos(int l, int c){
@@ -54,6 +56,9 @@ unsigned long long int maxtree::get_size(){
 }
 
 
+std::vector<maxtree_node *> *maxtree::get_levelroots(){
+    return this->levelroots;
+}
 
 void maxtree::compute_sequential_iterative(){
     #define INQUEUE -2
@@ -101,6 +106,7 @@ void maxtree::compute_sequential_iterative(){
                 while(!pixel_stack.empty() && nextpix->gval < pixel_stack.top()->gval){
                     auto st = pixel_stack.top();
                     pixel_stack.pop();
+                    this->levelroots->push_back(st);
                     if(!pixel_stack.empty())
                         st->parent = pixel_stack.top()->idx;
                 }
@@ -113,7 +119,8 @@ void maxtree::compute_sequential_iterative(){
 
     }while(!pixel_pq.empty());
     maxtree_node *root = pixel_stack.top();
-    root->parent = root->idx;
+    this->levelroots->push_back(root);
+    root->parent = -1;
 }
 
 void maxtree::fill_from_VImage(vips::VImage &img_in, bool verbose){
@@ -142,6 +149,24 @@ void maxtree::fill_from_VImage(vips::VImage &img_in, bool verbose){
             this->data->push_back(new maxtree_node((*vpel),x));
         }
     }
+}
+
+maxtree_node *maxtree::get_levelroot(maxtree_node *n){
+    maxtree_node *n_parent;
+    if(n->parent != -1){
+        n_parent = this->data->at(n->parent);
+    }else{
+        return n;
+    }
+    while(n->gval == n_parent->gval){
+        n = this->data->at(n->parent);
+        if(n->parent == -1){
+            break;
+        }
+        n_parent = this->data->at(n_parent->parent);
+        
+    }
+    return n;
 }
 
 maxtree maxtree::get_boundary_tree(){
@@ -285,7 +310,19 @@ std::string maxtree::to_string(enum maxtee_node_field field, bool colored, int s
             }
             r += "\n";
         }
+    }else if(field == LEVELROOT){
+        for(int i=0; i < this->h; i++){
+            for(int j=0; j < this->w; j++){
+                maxtree_node *lroot = this->get_levelroot(this->data->at(this->index_of(i,j)));
+                auto dpoint = lroot->idx;
+                if(colored)
+                    r+=terminal_color_string(dpoint % 8);
+                r += fill(std::to_string(dpoint), spaces+5) + " " ;
+            }
+            r += "\n";
+        }
     }
+
     r+=terminal_color_string(RESET);
     return r;
 }

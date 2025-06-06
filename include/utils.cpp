@@ -189,6 +189,8 @@ std::vector<maxtree_node*> get_neighbours(maxtree_node *pixel,
 }
 
 
+
+
 maxtree_node *min_gval(std::vector<maxtree_node*> *t){
     unsigned int i; 
     maxtree_node *min = t->at(0);

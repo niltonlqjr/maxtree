@@ -42,9 +42,11 @@ class maxtree{
     private:
         // std::unordered_map<int, maxtree_node*> *data;
         std::vector<maxtree_node *> *data;
+        std::vector<maxtree_node *> *levelroots;
         std::unordered_map<double, std::vector<component>> components;
         std::unordered_map<double, std::mutex> threshold_locks;
         std::mutex data_lock;
+        maxtree_node *get_levelroot(maxtree_node *n);
         
     public:
         
@@ -64,6 +66,8 @@ class maxtree{
         std::vector<double> all_thresholds();
 
         maxtree get_boundary_tree();
+
+        std::vector<maxtree_node *> *get_levelroots();
 
         void merge(maxtree to_merge);
 

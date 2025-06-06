@@ -150,16 +150,28 @@ int main(int argc, char *argv[]){
         noborder_rt+=lines_inc;
     }
 
+
     for(int i=0; i < glines; i++){
-        for(int j=0;j<gcolumns; j++)
-        t = tiles.at(i).at(j);
-        if (verbose) std::cout << "tile:" << i << ", " << j << " size:" << t->h << ", " <<  t->w << "\n";
-        t->compute_sequential_iterative();
-        if(verbose){
-            std::cout << "__________________GVAL________________\n";
-            std::cout << t->to_string(GVAL,5);
-            std::cout << "__________________PARENT________________\n";
-            std::cout << t->to_string();
+        for(int j=0;j<gcolumns; j++){
+            t = tiles.at(i).at(j);
+            if (verbose) std::cout << "tile:" << i << ", " << j << " size:" << t->h << ", " <<  t->w << "\n";
+            t->compute_sequential_iterative();
+            if(verbose){
+                std::cout << "__________________GVAL________________\n";
+                std::cout << t->to_string(GVAL,5);
+                std::cout << "_________________PARENT________________\n";
+                std::cout << t->to_string();
+                std::cout << "________________LEVELROOT________________\n";
+                std::cout << t->to_string(LEVELROOT,5);
+
+                std::cout << "_____________LEVELROOT vector___________\n";
+                for(auto r: *(t->get_levelroots())){
+                    std::cout << r->idx << " ";
+                }
+                std::cout << "\n";
+                
+
+            }
         }
     }
 
