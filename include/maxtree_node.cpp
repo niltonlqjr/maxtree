@@ -2,10 +2,10 @@
 #include <string>
 
 
-maxtree_node::maxtree_node(double g, unsigned long long int i, Tattribute a){
+maxtree_node::maxtree_node(double g, unsigned long long int i, Tattribute attr){
     this->idx = i;
     this->gval = g;
-    this->a = a;
+    this->attribute = attr;
     this->label = 0;
     this->parent = -1;
     this->visited=false;

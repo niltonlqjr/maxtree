@@ -8,17 +8,13 @@
 #include <ostream>
 #include <sysexits.h>
 
-
 #include "maxtree.hpp"
 #include "maxtree_node.hpp"
 #include "utils.hpp"
 
-
 #define INQUEUE -2
 
 using namespace vips;
-
-
 
 void print_pq(std::priority_queue<maxtree_node*, std::vector<maxtree_node*> ,cmp_maxtree_nodes> pq){
     std::cout <<"===========QUEUE=============\n";
@@ -41,8 +37,6 @@ int main(int argc, char *argv[]){
     }
     std::cout << "\n";
 
-    
-
     if(argc <= 2){
         std::cout << "usage: " << argv[0] << " input_image config_file\n";
         exit(EX_USAGE);
@@ -53,10 +47,9 @@ int main(int argc, char *argv[]){
     }
 
     bool verbose=false;
+
     in = new vips::VImage(vips::VImage::new_from_file(argv[1],
         VImage::option ()->set ("access", VIPS_ACCESS_SEQUENTIAL)));
-
-
     auto configs = parse_config(argv[2]);
 
     if (configs->find("verbose") != configs->end()){
@@ -97,11 +90,12 @@ int main(int argc, char *argv[]){
     std::cout << "num_w_ceil:" << num_w_ceil << "\n";
     
     std::vector<std::vector<maxtree *>> tiles;
-
+    bool left, top, right, bottom;
     uint32_t i,j,x = 0;
     uint32_t noborder_rt=0, noborder_rl, lines_inc, columns_inc; // original tiles (without borders) size variables
     uint32_t reg_top, reg_left, tile_lines, tile_columns; // tiles used by algorithm (with border) size variables
     for(i=0; i<glines; i++){
+        std::vector<bool> borders(4,false);
         lines_inc = i < num_h_ceil ? h_trunc +1 : h_trunc;
         
         tile_lines = lines_inc;
@@ -109,13 +103,17 @@ int main(int argc, char *argv[]){
         if(noborder_rt > 0){ //check if there is a top border
             tile_lines++;
             reg_top--;
+            borders.at(TOP_BORDER) = true;
         }
         if(noborder_rt+lines_inc < h - 1){//check if there is a bottom border
             tile_lines++;
+            borders.at(BOTTOM_BORDER) = true;
         }
         noborder_rl=0;
         tiles.push_back(std::vector<maxtree *>());
         for(j=0; j<gcolumns; j++){
+            borders.at(LEFT_BORDER) = false;
+            borders.at(RIGHT_BORDER) = false;
             std::cout << "===============inner loop=======================\n";
             std::cout << x++ << "->" << i << "," << j <<"\n";
             columns_inc = j < num_w_ceil ? w_trunc+1 : w_trunc;
@@ -124,18 +122,21 @@ int main(int argc, char *argv[]){
             if(noborder_rl > 0){//check if there is a left border
                 tile_columns++;
                 reg_left--;
+                borders.at(LEFT_BORDER) = true;
             }
             if(noborder_rl+columns_inc < w - 1){//check if there is a right border
                 tile_columns++;
+                borders.at(RIGHT_BORDER) = true;
             }
-
+            
             //std::cout << "filling: " << noborder_rt << "," << noborder_rl << "..." << noborder_rt + lines_inc << "," << noborder_rl + columns_inc <<"\n";
             if(verbose){
                 std::cout << "with borders:\n";
                 std::cout << reg_left << "," << reg_top << "," << tile_columns << "," << tile_lines << "\nno borders: \n";
                 std::cout << noborder_rl << "," << noborder_rt << "," << columns_inc << "," << lines_inc << "\n------------\n";
             }
-            maxtree *new_tree = new maxtree(tile_lines, tile_columns);
+            
+            maxtree *new_tree = new maxtree(borders,tile_lines, tile_columns);
             vips::VRegion reg = in->region(reg_left, reg_top, tile_columns, tile_lines);
             
             reg.prepare(reg_left, reg_top, tile_columns, tile_lines);
@@ -168,6 +169,8 @@ int main(int argc, char *argv[]){
                 for(auto r: *(t->get_levelroots())){
                     std::cout << r->idx << " ";
                 }
+
+                std::cout << t->string_borders() << "\n";
                 std::cout << "\n";
                 
 

@@ -9,6 +9,9 @@
 #ifndef __MAXTREE_HPP__
 #define __MAXTREE_HPP__
 
+enum borders{
+    LEFT_BORDER, TOP_BORDER, RIGHT_BORDER, BOTTOM_BORDER
+};
 
 class component{
     private:
@@ -47,6 +50,7 @@ class maxtree{
         std::unordered_map<double, std::mutex> threshold_locks;
         std::mutex data_lock;
         maxtree_node *get_levelroot(maxtree_node *n);
+        std::vector<bool> *tile_borders;
         
     public:
         
@@ -54,8 +58,9 @@ class maxtree{
         int w;
         maxtree(int h, int w);
         // maxtree(std::unordered_map<int, maxtree_node*> *data, int h, int w);
-
         maxtree(std::vector<maxtree_node*> *data, int h, int w);
+        maxtree(std::vector <bool> borders, int h, int w);
+        maxtree(std::vector<maxtree_node*> *data, std::vector<bool> borders, int h, int w);
         
         int index_of(int i, int j);
         void fill_from_VImage(vips::VImage &img, bool verbose=false);
@@ -73,6 +78,7 @@ class maxtree{
 
         
         std::string to_string(enum maxtee_node_field field = PARENT,bool colored = true, int spaces = 5);
+        std::string string_borders();
 
         unsigned long long int get_size();
         
@@ -81,7 +87,6 @@ class maxtree{
         // std::unordered_map<int, maxtree_node*> *get_data();
 
         std::vector<maxtree_node*> *get_data();
-
         std::vector<maxtree_node*> get_neighbours(int pixel, int con=4);
         //std::vector<maxtree_node*> get_neighbours(int l, int c, int con=4);
         std::tuple<int,int> lin_col(int index);

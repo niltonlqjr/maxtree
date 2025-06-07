@@ -31,15 +31,35 @@ maxtree::maxtree(int h, int w){
     // this->data = new std::unordered_map<int, maxtree_node*>();
     this->data = new std::vector<maxtree_node*>();
     this->levelroots = new std::vector<maxtree_node*>();
+    this->tile_borders = new std::vector<bool>(4,false);
 }
 
 // maxtree::maxtree(std::unordered_map<int, maxtree_node*> *data, int h, int w){
 maxtree::maxtree(std::vector<maxtree_node*> *data, int h, int w){
-    this->data = data;
     this->h=h;
     this->w=w;
+    this->data = data;
+    this->levelroots = new std::vector<maxtree_node*>();
+    this->tile_borders = new std::vector<bool>(4,false);
+}
+
+maxtree::maxtree(std::vector <bool> borders, int h, int w){
+    this->h = h;
+    this->w = w;
+    // this->data = new std::unordered_map<int, maxtree_node*>();
+    this->data = new std::vector<maxtree_node*>();
+    this->levelroots = new std::vector<maxtree_node*>();
+    this->tile_borders = new std::vector<bool>(borders);
+}
+
+maxtree::maxtree(std::vector<maxtree_node*> *data, std::vector<bool> borders, int h, int w){
+    this->h=h;
+    this->w=w;
+    this->data = data;
+    this->tile_borders = new std::vector<bool>(borders);
     this->levelroots = new std::vector<maxtree_node*>();
 }
+
 
 maxtree_node *maxtree::at_pos(int l, int c){
     int idx = this->index_of(l, c); 
@@ -170,6 +190,7 @@ maxtree_node *maxtree::get_levelroot(maxtree_node *n){
 }
 
 maxtree maxtree::get_boundary_tree(){
+
     
 }
 
@@ -327,6 +348,15 @@ std::string maxtree::to_string(enum maxtee_node_field field, bool colored, int s
     return r;
 }
 
+std::string maxtree::string_borders(){
+    std::string ret="";
+    if(this->tile_borders->at(LEFT_BORDER)) ret+="Left ";
+    if(this->tile_borders->at(TOP_BORDER)) ret+="Top ";
+    if(this->tile_borders->at(RIGHT_BORDER)) ret+="Rigth ";
+    if(this->tile_borders->at(BOTTOM_BORDER)) ret+="Bottom ";
+    if(ret == "") ret+="No Borders";
+    return ret;
+}
 
 
 std::vector<component> maxtree::components_at(double threshold){

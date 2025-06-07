@@ -15,11 +15,11 @@ class maxtree_node{
         long long int parent;
         long long int label;
         unsigned long long int idx;
-        Tattribute a;
         double gval;
         bool visited;
+        Tattribute attribute;
 
-        maxtree_node(double g, unsigned long long int i, Tattribute a = Tattr_default);
+        maxtree_node(double g, unsigned long long int i, Tattribute attr = Tattr_default);
     
 
         bool operator>(const maxtree_node &r);
