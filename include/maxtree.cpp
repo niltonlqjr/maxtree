@@ -113,6 +113,7 @@ void maxtree::compute_sequential_iterative(){
             pixel_pq.pop();
             if(p!=pixel_stack.top()){
                 p->parent = pixel_stack.top()->idx;
+                pixel_stack.top()->compute_attribute(p->attribute);
             }
             
             if(pixel_pq.empty()){
@@ -127,8 +128,10 @@ void maxtree::compute_sequential_iterative(){
                     auto st = pixel_stack.top();
                     pixel_stack.pop();
                     this->levelroots->push_back(st);
-                    if(!pixel_stack.empty())
+                    if(!pixel_stack.empty()){
                         st->parent = pixel_stack.top()->idx;
+                        pixel_stack.top()->compute_attribute(st->attribute);
+                    }
                 }
                 if(pixel_stack.empty() || pixel_stack.top()->gval < nextpix->gval){
                     pixel_stack.push(nextpix);
@@ -336,6 +339,16 @@ std::string maxtree::to_string(enum maxtee_node_field field, bool colored, int s
             for(int j=0; j < this->w; j++){
                 maxtree_node *lroot = this->get_levelroot(this->data->at(this->index_of(i,j)));
                 auto dpoint = lroot->idx;
+                if(colored)
+                    r+=terminal_color_string(dpoint % 8);
+                r += fill(std::to_string(dpoint), spaces+5) + " " ;
+            }
+            r += "\n";
+        }
+    }else if(field == ATTRIBUTE){
+        for(int i=0; i < this->h; i++){
+            for(int j=0; j < this->w; j++){
+                auto dpoint = this->data->at(this->index_of(i,j))->attribute;
                 if(colored)
                     r+=terminal_color_string(dpoint % 8);
                 r += fill(std::to_string(dpoint), spaces+5) + " " ;

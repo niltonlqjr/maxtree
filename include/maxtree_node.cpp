@@ -11,6 +11,10 @@ maxtree_node::maxtree_node(double g, unsigned long long int i, Tattribute attr){
     this->visited=false;
 }
 
+void maxtree_node::compute_attribute(Tattribute a){
+    this->attribute += a;
+}
+
 /* std::string maxtree_node::to_str(){
     std::string s;
     s = "(id:"+ std::to_string(this->idx) 

@@ -159,11 +159,13 @@ int main(int argc, char *argv[]){
             t->compute_sequential_iterative();
             if(verbose){
                 std::cout << "__________________GVAL________________\n";
-                std::cout << t->to_string(GVAL,5);
+                std::cout << t->to_string(GVAL,true,5);
                 std::cout << "_________________PARENT________________\n";
                 std::cout << t->to_string();
                 std::cout << "________________LEVELROOT________________\n";
-                std::cout << t->to_string(LEVELROOT,5);
+                std::cout << t->to_string(LEVELROOT,true,5);
+                std::cout << "________________ATTRIBUTE________________\n";
+                std::cout << t->to_string(ATTRIBUTE,false,5);
 
                 std::cout << "_____________LEVELROOT vector___________\n";
                 for(auto r: *(t->get_levelroots())){
@@ -172,6 +174,8 @@ int main(int argc, char *argv[]){
 
                 std::cout << t->string_borders() << "\n";
                 std::cout << "\n";
+
+                
                 
 
             }
