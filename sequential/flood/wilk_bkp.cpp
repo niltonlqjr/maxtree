@@ -57,7 +57,7 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
     std::stack<maxtree_node*> pixel_stack;
     maxtree_node *xm, *nextpix, *p;
 
-    unsigned long long int idx=0;
+    uint64_t idx=0;
     VImage img = in->copy_memory();
     VipsImage *pointer_image = img.get_image();
     VipsPel *vpel;

@@ -39,9 +39,7 @@ unsigned int index_of(unsigned int l, unsigned int c, int h, int w){
     return l*w+c;    
 }
 
-std::tuple<unsigned int, unsigned int> lin_col(int index, int h, int w){
-    return std::make_tuple(index/w, index%w);
-}
+
 
 void print_VImage_band(vips::VImage *in, int band){
     double p;
@@ -105,7 +103,7 @@ std::string fill(std::string s, int size){
     return r;
 }
 
-void print_labels(std::vector<maxtree_node*> *m, int  h, int w, bool metadata){
+void print_labels(std::vector<maxtree_node*> *m, uint64_t  h, uint64_t w, bool metadata){
     std::cout << h << ", " << w << "\n";
     std::cout << m->size()<<"\n";
     int l,c;
@@ -121,7 +119,7 @@ void print_labels(std::vector<maxtree_node*> *m, int  h, int w, bool metadata){
 }
 
 
-void print_matrix(std::vector<maxtree_node*> *m, int  h, int w, bool metadata){
+void print_matrix(std::vector<maxtree_node*> *m, uint64_t  h, uint64_t w, bool metadata){
     std::cout << h << ", " << w << "\n";
     std::cout << m->size()<<"\n";
     int l,c;
@@ -159,37 +157,6 @@ void print_unordered_map(std::unordered_map<std::string, std::string> *m){
         std::cout << x.first << "=>" << x.second << "\n";
     }
 }
-
-
-
-
-std::vector<maxtree_node*> get_neighbours(maxtree_node *pixel, 
-                                          std::vector<maxtree_node *> *t,
-                                          unsigned int h, unsigned int w){
-    std::vector<maxtree_node*> v;
-    unsigned int idx, pl, pc;
-    std::tie(pl, pc) = lin_col(pixel->idx, h, w);
-    if(pl >= 1){
-        idx = index_of(pl-1, pc, h, w);
-        v.push_back(t->at(idx));
-    }
-    if(pl < (unsigned int)h - 1){
-        idx = index_of(pl+1, pc, h, w);
-        v.push_back(t->at(idx));
-    }
-    if(pc >= 1){
-        idx = index_of(pl, pc-1, h, w);
-        v.push_back(t->at(idx));
-    }
-    if(pc < (unsigned int)w - 1){
-        idx = index_of(pl, pc+1, h, w);
-        v.push_back(t->at(idx));
-    }
-    return v;
-}
-
-
-
 
 maxtree_node *min_gval(std::vector<maxtree_node*> *t){
     unsigned int i; 

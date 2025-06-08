@@ -2,6 +2,7 @@
 #include <string>
 #include <tuple>
 #include <mutex>
+#include <vector>
 
 #include "utils.hpp"
 #include "maxtree_node.hpp"
@@ -80,14 +81,14 @@ class maxtree{
         std::string to_string(enum maxtee_node_field field = PARENT,bool colored = true, int spaces = 5);
         std::string string_borders();
 
-        unsigned long long int get_size();
+        uint64_t get_size();
         
-        maxtree_node *at_pos(int h, int w);
-        maxtree_node *at_pos(int index);
+        maxtree_node *at_pos(int64_t h, int64_t w);
+        maxtree_node *at_pos(int64_t index);
         // std::unordered_map<int, maxtree_node*> *get_data();
 
         std::vector<maxtree_node*> *get_data();
-        std::vector<maxtree_node*> get_neighbours(int pixel, int con=4);
+        std::vector<maxtree_node*> get_neighbours(uint64_t pixel, int con=4);
         //std::vector<maxtree_node*> get_neighbours(int l, int c, int con=4);
         std::tuple<int,int> lin_col(int index);
         void compute_sequential_iterative();

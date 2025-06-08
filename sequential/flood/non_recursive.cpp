@@ -58,6 +58,36 @@ class custom_priority_queue : public std::priority_queue<T, std::vector<T>, cmp>
 
 };
 
+std::tuple<uint64_t, uint64_t> lin_col(int64_t index, int64_t h, int64_t w){
+    return std::make_tuple(index/w, index%w);
+}
+
+std::vector<maxtree_node*> get_neighbours(maxtree_node *pixel, 
+                                          std::vector<maxtree_node *> *t,
+                                          uint64_t h, uint64_t w){
+    std::vector<maxtree_node*> v;
+    uint64_t idx, pl, pc;
+    std::tie(pl, pc) = lin_col(pixel->idx, h, w);
+    if(pl >= 1){
+        idx = index_of(pl-1, pc, h, w);
+        v.push_back(t->at(idx));
+    }
+    if(pl < (unsigned int)h - 1){
+        idx = index_of(pl+1, pc, h, w);
+        v.push_back(t->at(idx));
+    }
+    if(pc >= 1){
+        idx = index_of(pl, pc-1, h, w);
+        v.push_back(t->at(idx));
+    }
+    if(pc < (unsigned int)w - 1){
+        idx = index_of(pl, pc+1, h, w);
+        v.push_back(t->at(idx));
+    }
+    return v;
+}
+
+
 std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
     std::vector<maxtree_node*> *data;
     data = new std::vector<maxtree_node*>;
@@ -71,7 +101,7 @@ std::vector<maxtree_node*> *maxtree(VImage *in, int band = 0){
     maxtree_node *q, *p, *r;
 
 
-    unsigned long long int idx=0;
+    uint64_t idx=0;
     VImage img = in->copy_memory();
     VipsImage *pointer_image = img.get_image();
     VipsPel *vpel;

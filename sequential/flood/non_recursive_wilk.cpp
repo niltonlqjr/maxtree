@@ -34,7 +34,7 @@ void compute_maxtree(maxtree *t){
     std::priority_queue<maxtree_node*, std::vector<maxtree_node*> ,cmp_maxtree_nodes> pixel_pq;
     std::stack<maxtree_node*> pixel_stack;
     maxtree_node *xm, *nextpix, *p;
-    unsigned long long int idx=0;
+    uint64_t idx=0;
     
 
     xm = min_gval(t->get_data());

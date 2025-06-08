@@ -7,19 +7,19 @@ enum maxtee_node_field {
     PARENT, LABEL, IDX, GVAL, LEVELROOT, ATTRIBUTE
 };
 
-#define Tattribute unsigned long long int
+#define Tattribute uint64_t
 #define Tattr_default 1
 
 class maxtree_node{
     public:
-        long long int parent;
-        long long int label;
-        unsigned long long int idx;
+        int64_t parent;
+        int64_t label;
+        uint64_t idx;
         double gval;
         bool visited;
         Tattribute attribute;
 
-        maxtree_node(double g, unsigned long long int i, Tattribute attr = Tattr_default);
+        maxtree_node(double g, uint64_t i, Tattribute attr = Tattr_default);
         void compute_attribute(Tattribute);
 
         bool operator>(const maxtree_node &r);

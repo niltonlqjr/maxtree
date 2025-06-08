@@ -2,7 +2,7 @@
 #include <string>
 
 
-maxtree_node::maxtree_node(double g, unsigned long long int i, Tattribute attr){
+maxtree_node::maxtree_node(double g, uint64_t i, Tattribute attr){
     this->idx = i;
     this->gval = g;
     this->attribute = attr;

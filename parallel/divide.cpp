@@ -217,14 +217,14 @@ int grow_region(maxtree *m, int idx_ini, task *t, task *new_task, double &thresh
 std::mutex gntm;
 int global_num_task = 0;
 
-void maxtree_worker(unsigned int id, bag_of_tasks<task> *bag, maxtree *m, unsigned long long int *thread_num_task) {
+void maxtree_worker(uint64_t id, bag_of_tasks<task> *bag, maxtree *m, uint64_t *thread_num_task) {
     task *new_task;
     task *t = new task();
     std::unordered_map<int, bool> *visited;
     int idx_pixel, i, num_visited;
     bool create_new_task, has_task;
     double next_threshold;
-    unsigned long long int local_num_task = 0;
+    uint64_t local_num_task = 0;
     while(bag->is_running()){
         has_task = bag->get_task(*t);
         if(!has_task){
@@ -316,7 +316,7 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
     auto pix_ids=t0->get_all_pixels_ids();
     m->insert_component(pix_ids, 0, t0->threshold);
     bag->insert_task(*t0);
-    std::vector<unsigned long long int> create_tasks;
+    std::vector<uint64_t> create_tasks;
     for(tid = 0; tid<nth; tid++){
         create_tasks.push_back(0);
         threads.push_back(new std::thread(maxtree_worker,tid,bag,m, &create_tasks.at(tid)));
@@ -340,7 +340,7 @@ maxtree *maxtree_main(VImage *in, int nth = 1){
         th->join();
     }
 
-    unsigned long long int total_task;
+    uint64_t total_task;
     for(auto t: create_tasks){
         std::cout << t << "\n";
         total_task+=t;

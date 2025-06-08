@@ -61,7 +61,7 @@ maxtree::maxtree(std::vector<maxtree_node*> *data, std::vector<bool> borders, in
 }
 
 
-maxtree_node *maxtree::at_pos(int l, int c){
+maxtree_node *maxtree::at_pos(int64_t l, int64_t c){
     int idx = this->index_of(l, c); 
     return this->data->at(idx);
 }
@@ -71,7 +71,7 @@ std::vector<maxtree_node*> *maxtree::get_data(){
     return this->data;
 }
 
-unsigned long long int maxtree::get_size(){
+uint64_t maxtree::get_size(){
     return this->data->size();
 }
 
@@ -85,7 +85,7 @@ void maxtree::compute_sequential_iterative(){
     std::priority_queue<maxtree_node*, std::vector<maxtree_node*> ,cmp_maxtree_nodes> pixel_pq;
     std::stack<maxtree_node*> pixel_stack;
     maxtree_node *xm, *nextpix, *p;
-    unsigned long long int idx=0;
+    uint64_t idx=0;
     
 
     xm = min_gval(this->get_data());
@@ -194,7 +194,6 @@ maxtree_node *maxtree::get_levelroot(maxtree_node *n){
 
 maxtree maxtree::get_boundary_tree(){
 
-    
 }
 
 void maxtree::merge(maxtree to_merge){
@@ -230,7 +229,7 @@ void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t
 } 
 
 
-maxtree_node *maxtree::at_pos(int index){
+maxtree_node *maxtree::at_pos(int64_t index){
     return this->data->at(index);
 }
 
@@ -385,16 +384,16 @@ std::vector<double> maxtree::all_thresholds(){
 
 
 
-std::vector<maxtree_node*> maxtree::get_neighbours(int pixel, int con){
+std::vector<maxtree_node*> maxtree::get_neighbours(uint64_t pixel, int con){
     std::vector<maxtree_node*> v;
-    int idx, pl, pc;
+    int64_t idx, pl, pc;
     std::tie(pl, pc) = this->lin_col(pixel);
     if(con == 4 || con == 8){
         if(pl >= 1){
             idx = index_of(pl-1, pc);
             v.push_back(this->data->at(idx));
         }
-        if(pl < (unsigned int)h - 1){
+        if(pl < (uint64_t)h - 1){
             idx = index_of(pl+1, pc);
             v.push_back(this->data->at(idx));
         }
@@ -402,7 +401,7 @@ std::vector<maxtree_node*> maxtree::get_neighbours(int pixel, int con){
             idx = index_of(pl, pc-1);
             v.push_back(this->data->at(idx));
         }
-        if(pc < (unsigned int)w - 1){
+        if(pc < (uint64_t)w - 1){
             idx = index_of(pl, pc+1);
             v.push_back(this->data->at(idx));
         }
@@ -412,15 +411,15 @@ std::vector<maxtree_node*> maxtree::get_neighbours(int pixel, int con){
             idx = index_of(pl-1, pc-1);
             v.push_back(this->data->at(idx));
         }
-        if(pl < (unsigned int)h - 1 && pc < (unsigned int)w - 1){
+        if(pl < (uint64_t)h - 1 && pc < (uint64_t)w - 1){
             idx = index_of(pl+1, pc+1);
             v.push_back(this->data->at(idx));
         }
-        if(pc >= 1 && pl < (unsigned int)h - 1){
+        if(pc >= 1 && pl < (uint64_t)h - 1){
             idx = index_of(pl+1, pc-1);
             v.push_back(this->data->at(idx));
         }
-        if(pc < (unsigned int)w - 1 && pl >= 1){
+        if(pc < (uint64_t)w - 1 && pl >= 1){
             idx = index_of(pl-1, pc+1);
             v.push_back(this->data->at(idx));
         }

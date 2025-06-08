@@ -35,9 +35,9 @@ class task{
         int parent_thread;
         int size;
         double gval;
-        unsigned long long int ini_idx;
+        uint64_t ini_idx;
 
-    task(unsigned long long int ini_idx, double gval = 0, int parent_thread = 0){
+    task(uint64_t ini_idx, double gval = 0, int parent_thread = 0){
         this->gval = gval;
         this->ini_idx = ini_idx;
         this->parent_thread = parent_thread;
