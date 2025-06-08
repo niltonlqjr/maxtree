@@ -192,8 +192,8 @@ maxtree_node *maxtree::get_levelroot(maxtree_node *n){
     return n;
 }
 
-maxtree maxtree::get_boundary_tree(){
-
+boundary_tree *maxtree::get_boundary_tree(){
+    return new boundary_tree();
 }
 
 void maxtree::merge(maxtree to_merge){

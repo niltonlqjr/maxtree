@@ -1,19 +1,33 @@
 #include <vector>
-#include <>
-
 #include "maxtree_node.hpp"
 
 #ifndef __BOUNDARY_TREE__
 #define __BOUNDARY_TREE__
 
+
+class boundary_node{
+    public:
+        double gval;
+        uint64_t maxtree_idx;
+        uint64_t boundary_idx;
+        int64_t boundary_parent;
+        int64_t boundary_levelroot;
+        boundary_node(double gval, uint64_t maxtree_idx, uint64_t boundary_idx,
+                      int64_t boundary_parent=-1,int64_t boundary_levelroot=-1);
+        boundary_node(maxtree_node *n, uint64_t boundary_idx,
+                      int64_t boundary_parent=-1,int64_t boundary_levelroot=-1);
+
+};
+
 class boundary_tree{
     private:
-        std::vector<uint64_t> border_index;
-        std::vector<int64_t> border_parent;
-        
+        std::vector<boundary_node *> *border_elements;
     public:
-        Tattribute atribute;
-}
+        boundary_tree();
+        boundary_tree(std::vector<boundary_node *> *border_elements);
+        ~boundary_tree();
+        void insert_element(boundary_node n);
+};
 
 
 #endif

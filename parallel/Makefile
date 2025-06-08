@@ -4,6 +4,7 @@
 
 maxtree_node_dir=../include
 maxtree_dir=../include
+boundary_tree_dir=../include
 utils_dir=../include
 heap_dir=../include
 
@@ -32,24 +33,25 @@ dest_merge = exec/${merge_name}
 
 all: merge grow divide
 
-divide: base
-	mkdir -p exec
-	g++ ${OPT} ${EXE_CPP_FLAGS} ${source_divide} \
-		${utils_dir}/utils.o \
-	 	${maxtree_node_dir}/maxtree_node.o \
-		${maxtree_dir}/maxtree.o \
-		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} -I${heap_dir} \
-		${vips_args} -o ${dest_divide}
-
 merge: base
 	mkdir -p exec
 	g++ ${OPT} ${EXE_CPP_FLAGS} ${source_merge} \
 		${utils_dir}/utils.o \
 	 	${maxtree_node_dir}/maxtree_node.o \
 		${maxtree_dir}/maxtree.o \
+		${boundary_tree_dir}/boundary_tree.o \
 		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} -I${heap_dir} \
 		${vips_args} -o ${dest_merge}
 
+divide: base
+	mkdir -p exec
+	g++ ${OPT} ${EXE_CPP_FLAGS} ${source_divide} \
+		${utils_dir}/utils.o \
+	 	${maxtree_node_dir}/maxtree_node.o \
+		${maxtree_dir}/maxtree.o \
+		${boundary_tree_dir}/boundary_tree.o \
+		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} -I${heap_dir} \
+		${vips_args} -o ${dest_divide}
 
 vips_region: base
 	mkdir -p exec
@@ -57,6 +59,7 @@ vips_region: base
 		${utils_dir}/utils.o \
 	 	${maxtree_node_dir}/maxtree_node.o \
 		${maxtree_dir}/maxtree.o \
+		${boundary_tree_dir}/boundary_tree.o \
 		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} -I${heap_dir} \
 		${vips_args} -o teste_region
 
@@ -66,10 +69,14 @@ grow: base
 		${utils_dir}/utils.o \
 	 	${maxtree_node_dir}/maxtree_node.o \
 		${maxtree_dir}/maxtree.o \
+		${boundary_tree_dir}/boundary_tree.o \
 		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} -I${heap_dir} \
 		${vips_args} -o ${dest_grow}
 
-base: maxtree_node.o maxtree.o utils.o
+base: maxtree_node.o maxtree.o utils.o boundary_tree.o
+
+boundary_tree.o:
+	g++ ${OBJ_CPP_FLAGS} ${boundary_tree_dir}/boundary_tree.cpp -I${boundary_tree_dir} ${vips_args} -o ${boundary_tree_dir}/boundary_tree.o
 
 maxtree.o:
 	g++ ${OBJ_CPP_FLAGS} ${maxtree_dir}/maxtree.cpp -I${maxtree_dir} ${vips_args} -o ${maxtree_dir}/maxtree.o

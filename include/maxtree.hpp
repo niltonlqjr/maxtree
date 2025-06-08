@@ -6,6 +6,7 @@
 
 #include "utils.hpp"
 #include "maxtree_node.hpp"
+#include "boundary_tree.hpp"
 
 #ifndef __MAXTREE_HPP__
 #define __MAXTREE_HPP__
@@ -71,7 +72,7 @@ class maxtree{
         std::vector<component> components_at(double threshold);
         std::vector<double> all_thresholds();
 
-        maxtree get_boundary_tree();
+        boundary_tree *get_boundary_tree();
 
         std::vector<maxtree_node *> *get_levelroots();
 
