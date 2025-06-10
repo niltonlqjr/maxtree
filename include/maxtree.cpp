@@ -193,7 +193,48 @@ maxtree_node *maxtree::get_levelroot(maxtree_node *n){
 }
 
 boundary_tree *maxtree::get_boundary_tree(){
-    return new boundary_tree();
+    boundary_tree *bonud_tree = new boundary_tree();
+    maxtree_node *tn;
+    uint32_t i, j; 
+    uint64_t boundary_index=0;
+
+    /*
+    0---------->w
+    ^           |
+    |           |
+    |           |
+    |           V
+    X-----------h
+    */
+
+    if(this->tile_borders->at(TOP_BORDER)){
+        for(j=0; j<this->w; j++){
+            tn = this->at_pos(0,j);
+            boundary_node n(tn, boundary_index, true);
+            bonud_tree->insert_element(n);
+        }
+    }
+
+    if(this->tile_borders->at(RIGHT_BORDER)){
+        for(i=0; i<this->h; i++){
+            tn = this->at_pos(i, this->w-1);
+            boundary_node n(tn, boundary_index, true);
+            bonud_tree->insert_element(n); 
+        }
+    }
+
+    if(this->tile_borders->at(BOTTOM_BORDER)){
+        for(j=this->w-1; j>=0; j--){
+            tn = this->at_pos(this->h-1,j);
+        }
+    }
+    
+    if(this->tile_borders->at(LEFT_BORDER)){
+        
+    }
+
+    
+
 }
 
 void maxtree::merge(maxtree to_merge){

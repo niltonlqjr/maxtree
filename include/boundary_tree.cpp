@@ -1,20 +1,22 @@
 #include "boundary_tree.hpp"
 
 
-boundary_node::boundary_node(double gval, uint64_t maxtree_idx, uint64_t boundary_idx,
+boundary_node::boundary_node(double gval, uint64_t maxtree_idx, uint64_t boundary_idx, bool in_tree,
                              int64_t boundary_parent,int64_t boundary_levelroot){
 
     this->gval=gval;
+    this->in_tree=in_tree;
     this->maxtree_idx=maxtree_idx;
     this->boundary_idx=boundary_idx;
     this->boundary_parent=boundary_parent;
     this->boundary_levelroot=boundary_levelroot;
 }
 
-boundary_node::boundary_node(maxtree_node *n, uint64_t boundary_idx,
+boundary_node::boundary_node(maxtree_node *n, uint64_t boundary_idx, bool in_tree,
                              int64_t boundary_parent,int64_t boundary_levelroot){
 
     this->gval=n->gval;
+    this->in_tree=in_tree;
     this->maxtree_idx=n->idx;
     this->boundary_idx=boundary_idx;
     this->boundary_parent=boundary_parent;

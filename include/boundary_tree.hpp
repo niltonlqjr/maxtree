@@ -8,13 +8,14 @@
 class boundary_node{
     public:
         double gval;
+        bool in_tree;
         uint64_t maxtree_idx;
         uint64_t boundary_idx;
         int64_t boundary_parent;
         int64_t boundary_levelroot;
-        boundary_node(double gval, uint64_t maxtree_idx, uint64_t boundary_idx,
+        boundary_node(double gval, uint64_t maxtree_idx, uint64_t boundary_idx, bool in_tree=false,
                       int64_t boundary_parent=-1,int64_t boundary_levelroot=-1);
-        boundary_node(maxtree_node *n, uint64_t boundary_idx,
+        boundary_node(maxtree_node *n, uint64_t boundary_idx, bool in_tree=false,
                       int64_t boundary_parent=-1,int64_t boundary_levelroot=-1);
 
 };
