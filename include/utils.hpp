@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <fstream>
 #include <algorithm>
+#include <cinttypes>
 
 #include "maxtree_node.hpp"
 

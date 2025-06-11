@@ -1,4 +1,5 @@
 #include <vector>
+#include <cinttypes>
 
 #ifndef __HEAP_HPP__
 #define __HEAP_HPP__

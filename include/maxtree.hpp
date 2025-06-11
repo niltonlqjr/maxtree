@@ -3,6 +3,7 @@
 #include <tuple>
 #include <mutex>
 #include <vector>
+#include <cinttypes>
 
 #include "utils.hpp"
 #include "maxtree_node.hpp"

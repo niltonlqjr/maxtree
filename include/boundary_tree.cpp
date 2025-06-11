@@ -37,6 +37,32 @@ boundary_tree::~boundary_tree(){
     }
     delete border_elements;
 }
-void boundary_tree::insert_element(boundary_node n){
-    this->border_elements->push_back(new boundary_node(n));
+bool boundary_tree::insert_element(boundary_node &n){
+    
+    if(this->border_elements->size() <= n.boundary_idx){
+        this->border_elements->push_back(new boundary_node(n));
+        return true;
+    }else{
+        return false;
+    }
+}
+
+std::string boundary_tree::to_string(enum boundary_tree_field f){
+    
+    uint32_t i,j;
+    std::ostringstream ss;
+    for(boundary_node *bn: *(this->border_elements)){
+        if(f == BOUNDARY_PARENT){
+            ss << bn->boundary_parent;
+        }else if(f == BOUNDARY_LEVELROOT){
+            ss << bn->boundary_levelroot;
+        }else if(f == BOUNDARY_IDX){
+            ss << bn->boundary_idx;
+        }else if(f == MAXTREE_IDX){
+            ss << bn->maxtree_idx;
+        }else if(f == BOUNDARY_GVAL){
+            ss << bn->gval;
+        }
+    }
+    return ss.str();
 }

@@ -1,5 +1,5 @@
 #include <string>
-
+#include <cinttypes>
 #ifndef __MAXTREE_NODE_HPP__
 #define __MAXTREE_NODE_HPP__
 

@@ -1,9 +1,16 @@
 #include <vector>
+#include <cinttypes>
+#include <sstream>
+#include <iostream>
+
 #include "maxtree_node.hpp"
 
 #ifndef __BOUNDARY_TREE__
 #define __BOUNDARY_TREE__
 
+enum boundary_tree_field{
+    BOUNDARY_PARENT, MAXTREE_IDX, BOUNDARY_IDX, BOUNDARY_GVAL, BOUNDARY_LEVELROOT
+};
 
 class boundary_node{
     public:
@@ -27,7 +34,8 @@ class boundary_tree{
         boundary_tree();
         boundary_tree(std::vector<boundary_node *> *border_elements);
         ~boundary_tree();
-        void insert_element(boundary_node n);
+        bool insert_element(boundary_node &n);
+        std::string to_string(enum boundary_tree_field f=BOUNDARY_PARENT);
 };
 
 

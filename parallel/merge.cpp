@@ -10,6 +10,8 @@
 
 #include "maxtree.hpp"
 #include "maxtree_node.hpp"
+#include "boundary_tree.hpp"
+
 #include "utils.hpp"
 
 #define INQUEUE -2
@@ -155,6 +157,7 @@ int main(int argc, char *argv[]){
     for(int i=0; i < glines; i++){
         for(int j=0;j<gcolumns; j++){
             t = tiles.at(i).at(j);
+
             if (verbose) std::cout << "tile:" << i << ", " << j << " size:" << t->h << ", " <<  t->w << "\n";
             t->compute_sequential_iterative();
             if(verbose){
@@ -171,17 +174,23 @@ int main(int argc, char *argv[]){
                 for(auto r: *(t->get_levelroots())){
                     std::cout << r->idx << " ";
                 }
-
+                std::cout << "\n";
                 std::cout << t->string_borders() << "\n";
                 std::cout << "\n";
-
-                
-                
-
             }
         }
     }
 
+    std::cout <<"\n\n===============BOUNDARY TREES=================\n";
+
+    for(int i=0; i < glines; i++){
+        for(int j=0;j<gcolumns; j++){
+            t = tiles.at(i).at(j);
+            boundary_tree *bt = t->get_boundary_tree();
+            std::cout << i << " " << j << "\n" << bt->to_string() << "\n";
+            delete bt;
+        }
+    }
     //as boundary trees tem alturas e tamanhos distintos, logo é possível estimar o custo de um merge
 
     return 0;
