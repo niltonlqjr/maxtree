@@ -194,11 +194,12 @@ maxtree_node *maxtree::get_levelroot(maxtree_node *n){
 
 
 
+
 boundary_tree *maxtree::get_boundary_tree(){
     boundary_tree *bonud_tree = new boundary_tree();
     maxtree_node *tn;
     uint32_t i, j; 
-    uint64_t boundary_index=0;
+    
 
     /*
     border[0]       -------->    border[w-1]
@@ -212,37 +213,40 @@ boundary_tree *maxtree::get_boundary_tree(){
     
     for(j=0; j<this->w; j++){
         tn = this->at_pos(0,j);
-        std::cout << "j:" << j << "\n";
-        boundary_node n(tn, boundary_index);
+        tn = this->get_levelroot(tn);
+        boundary_node n(tn, -1);
         if(bonud_tree->insert_element(n)){
-            boundary_index++;
+            //add ancestors
         }
     }
 
     for(i=0; i<this->h; i++){
         tn = this->at_pos(i, this->w-1);
-        std::cout << "i:" << i << "\n";
-        boundary_node n(tn, boundary_index);
+        tn = this->get_levelroot(tn);
+        boundary_node n(tn,-1);
         if(bonud_tree->insert_element(n)){
-            boundary_index++;
+            //add ancestors
         }
     }
 
-    for(j=this->w-1; j>=0; j--){
+    
+    
+    for( j=this->w-1; (int32_t) j>=0; j--){
         tn = this->at_pos(this->h-1,j);
-        std::cout << "j:" << j << "\n";
-        boundary_node n(tn, boundary_index);
+        tn = this->get_levelroot(tn);
+        boundary_node n(tn, -1);
         if(bonud_tree->insert_element(n)){
-            boundary_index++;
+            //add ancestors
         }
+        
     }
 
-    for(i=this->h-1; i >= 0; i--){
+    for(i=this->h-1; (int32_t)i >= 0; i--){
         tn = this->at_pos(i,0);
-        std::cout << "i:"  << i << "\n";
-        boundary_node n(tn, boundary_index);
+        tn = this->get_levelroot(tn);
+        boundary_node n(tn, -1);
         if(bonud_tree->insert_element(n)){
-            boundary_index++;
+            //add ancestors
         }
     }
 

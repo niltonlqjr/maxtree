@@ -2,6 +2,7 @@
 #include <cinttypes>
 #include <sstream>
 #include <iostream>
+#include <unordered_map>
 
 #include "maxtree_node.hpp"
 
@@ -15,24 +16,22 @@ enum boundary_tree_field{
 class boundary_node{
     public:
         double gval;
-        bool in_tree;
+        //bool in_tree;
         uint64_t maxtree_idx;
-        uint64_t boundary_idx;
+        //uint64_t boundary_idx;
         int64_t boundary_parent;
         int64_t boundary_levelroot;
-        boundary_node(double gval, uint64_t maxtree_idx, uint64_t boundary_idx, bool in_tree=false,
-                      int64_t boundary_parent=-1,int64_t boundary_levelroot=-1);
-        boundary_node(maxtree_node *n, uint64_t boundary_idx, bool in_tree=false,
-                      int64_t boundary_parent=-1,int64_t boundary_levelroot=-1);
+        boundary_node(double gval, uint64_t maxtree_idx, int64_t boundary_parent=-1,int64_t boundary_levelroot=-1);
+        boundary_node(maxtree_node *n, int64_t boundary_parent=-1,int64_t boundary_levelroot=-1);
 
 };
 
 class boundary_tree{
     private:
-        std::vector<boundary_node *> *border_elements;
+        std::unordered_map<uint64_t, boundary_node *> *border_elements;
     public:
         boundary_tree();
-        boundary_tree(std::vector<boundary_node *> *border_elements);
+        boundary_tree(std::unordered_map<uint64_t, boundary_node *> *border_elements);
         ~boundary_tree();
         bool insert_element(boundary_node &n);
         std::string to_string(enum boundary_tree_field f=BOUNDARY_PARENT);

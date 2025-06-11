@@ -86,10 +86,12 @@ int main(int argc, char *argv[]){
     uint32_t num_h_ceil = h%glines;
     uint32_t num_w_ceil = w%gcolumns;
 
-    std::cout << "h trunc:" << h_trunc << "\n";
-    std::cout << "w trunc:" << w_trunc << "\n";
-    std::cout << "num_h_ceil:" << num_h_ceil << "\n";
-    std::cout << "num_w_ceil:" << num_w_ceil << "\n";
+    if(verbose){
+        std::cout << "h trunc:" << h_trunc << "\n";
+        std::cout << "w trunc:" << w_trunc << "\n";
+        std::cout << "num_h_ceil:" << num_h_ceil << "\n";
+        std::cout << "num_w_ceil:" << num_w_ceil << "\n";
+    }
     
     std::vector<std::vector<maxtree *>> tiles;
     bool left, top, right, bottom;
@@ -116,8 +118,10 @@ int main(int argc, char *argv[]){
         for(j=0; j<gcolumns; j++){
             borders.at(LEFT_BORDER) = false;
             borders.at(RIGHT_BORDER) = false;
-            std::cout << "===============inner loop=======================\n";
-            std::cout << x++ << "->" << i << "," << j <<"\n";
+            if(verbose){
+                std::cout << "===============inner loop=======================\n";
+                std::cout << x++ << "->" << i << "," << j <<"\n";
+            }
             columns_inc = j < num_w_ceil ? w_trunc+1 : w_trunc;
             tile_columns = columns_inc;
             reg_left = noborder_rl;
@@ -148,7 +152,9 @@ int main(int argc, char *argv[]){
             
             //std::cout << new_tree->to_string(GVAL,5);
             noborder_rl+=columns_inc;
-            std::cout << "======================================\n";
+            if(verbose){
+                std::cout << "======================================\n";
+            }
         }
         noborder_rt+=lines_inc;
     }
@@ -180,14 +186,18 @@ int main(int argc, char *argv[]){
             }
         }
     }
-
-    std::cout <<"\n\n===============BOUNDARY TREES=================\n";
+    if(verbose){
+        std::cout <<"\n\n===============BOUNDARY TREES=================\n";
+    }
 
     for(int i=0; i < glines; i++){
         for(int j=0;j<gcolumns; j++){
             t = tiles.at(i).at(j);
             boundary_tree *bt = t->get_boundary_tree();
-            std::cout << i << " " << j << "\n" << bt->to_string() << "\n";
+            if(verbose){
+                std::cout << "tile:" << i << " " << j << "\n";
+                std::cout << "boundary tree nodes:" << bt->to_string(MAXTREE_IDX) << "\n";
+            }
             delete bt;
         }
     }
