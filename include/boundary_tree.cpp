@@ -47,6 +47,16 @@ bool boundary_tree::insert_element(boundary_node &n){
     }
 }
 
+boundary_node *boundary_tree::get_border_node(uint64_t maxtree_idx){
+    boundary_node *ret;
+    try{
+        ret = this->border_elements->at(maxtree_idx);
+    }catch(...){
+        ret = NULL;
+    }
+    return ret;
+}
+
 std::string boundary_tree::to_string(enum boundary_tree_field f){
     
     uint32_t i,j;

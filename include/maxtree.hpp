@@ -66,17 +66,22 @@ class maxtree{
         maxtree(std::vector<maxtree_node*> *data, std::vector<bool> borders, int h, int w);
         
         int index_of(int i, int j);
+        std::tuple<int,int> lin_col(int index);
+        maxtree_node *at_pos(int64_t h, int64_t w);
+        maxtree_node *at_pos(int64_t index);
+
+        maxtree_node *get_parent(uint64_t node_idx);
+
         void fill_from_VImage(vips::VImage &img, bool verbose=false);
         void fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t base_w, bool verbose=false);
         void insert_component(std::vector<int> component, int parent, double threshold, uint64_t id=-1);
         void insert_component(component c, double threshold);
+        
         std::vector<component> components_at(double threshold);
         std::vector<double> all_thresholds();
-
-        boundary_tree *get_boundary_tree();
-
         std::vector<maxtree_node *> *get_levelroots();
 
+        boundary_tree *get_boundary_tree();
         void merge(maxtree to_merge);
 
         
@@ -85,14 +90,12 @@ class maxtree{
 
         uint64_t get_size();
         
-        maxtree_node *at_pos(int64_t h, int64_t w);
-        maxtree_node *at_pos(int64_t index);
         // std::unordered_map<int, maxtree_node*> *get_data();
 
         std::vector<maxtree_node*> *get_data();
         std::vector<maxtree_node*> get_neighbours(uint64_t pixel, int con=4);
         //std::vector<maxtree_node*> get_neighbours(int l, int c, int con=4);
-        std::tuple<int,int> lin_col(int index);
+        
         void compute_sequential_iterative();
         void filter(Tattribute a);
 };

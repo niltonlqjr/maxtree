@@ -34,6 +34,7 @@ class boundary_tree{
         boundary_tree(std::unordered_map<uint64_t, boundary_node *> *border_elements);
         ~boundary_tree();
         bool insert_element(boundary_node &n);
+        boundary_node *get_border_node(uint64_t maxtree_idx);
         std::string to_string(enum boundary_tree_field f=BOUNDARY_PARENT);
 };
 

@@ -198,7 +198,7 @@ int main(int argc, char *argv[]){
                 std::cout << "tile:" << i << " " << j << "\n";
                 std::cout << "boundary tree nodes:" << bt->to_string(MAXTREE_IDX) << "\n";
             }
-            delete bt;
+            //delete bt;
         }
     }
     //as boundary trees tem alturas e tamanhos distintos, logo é possível estimar o custo de um merge

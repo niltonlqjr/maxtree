@@ -192,15 +192,18 @@ maxtree_node *maxtree::get_levelroot(maxtree_node *n){
     return n;
 }
 
+maxtree_node *maxtree::get_parent(uint64_t node_idx){
+    maxtree_node *n = this->at_pos(node_idx);
+    if(n->parent != -1){
+        return this->at_pos(n->parent);
+    }else{
+        return NULL;
+    }
+}
 
 
 
 boundary_tree *maxtree::get_boundary_tree(){
-    boundary_tree *bonud_tree = new boundary_tree();
-    maxtree_node *tn;
-    uint32_t i, j; 
-    
-
     /*
     border[0]       -------->    border[w-1]
     border[2h+2w-1] ^       |
@@ -210,13 +213,31 @@ boundary_tree *maxtree::get_boundary_tree(){
     border[h+2w-1]  <------ v   border[h+w-1]
     */
 
-    
+
+    boundary_tree *bonud_tree = new boundary_tree();
+    boundary_node *bound_parent, *current;
+    maxtree_node *tn, *parent;
+    uint32_t i, j, pidx; 
+        
     for(j=0; j<this->w; j++){
-        tn = this->at_pos(0,j);
-        tn = this->get_levelroot(tn);
-        boundary_node n(tn, -1);
+        tn = this->at_pos(0,j); // get the maxtree node at position 0,j
+        tn = this->get_levelroot(tn); // find for the levelroot of this node
+        boundary_node n(tn, -1); // create boundary tree
         if(bonud_tree->insert_element(n)){
-            //add ancestors
+            //adding ancestors of tn
+            current=bonud_tree->get_border_node(tn->idx);//get the added node
+            while(current!=NULL){
+                parent = this->get_parent(current->maxtree_idx); // get parent (stored in maxtree) of current boundary node
+                if(parent != NULL){// if this node has a parent (not the tile root)
+                    boundary_node bound_parent(parent,-1); // create the parent node to add on bondary tree
+                    bonud_tree->insert_element(bound_parent);
+                    pidx = parent->idx;
+                }else{
+                    pidx = -1;
+                }
+                current->boundary_parent = pidx;// update the parent of current node
+                current=bonud_tree->get_border_node(pidx);// go to the parent and add its ancerstors
+            }
         }
     }
 
@@ -225,7 +246,19 @@ boundary_tree *maxtree::get_boundary_tree(){
         tn = this->get_levelroot(tn);
         boundary_node n(tn,-1);
         if(bonud_tree->insert_element(n)){
-            //add ancestors
+            current=bonud_tree->get_border_node(tn->idx);
+            while(current!=NULL){
+                parent = this->get_parent(current->maxtree_idx);
+                if(parent != NULL){
+                    boundary_node bound_parent(parent,-1);
+                    bonud_tree->insert_element(bound_parent);
+                    pidx = parent->idx;
+                }else{
+                    pidx = -1;
+                }
+                current->boundary_parent = pidx;
+                current=bonud_tree->get_border_node(pidx);
+            }
         }
     }
 
@@ -236,7 +269,19 @@ boundary_tree *maxtree::get_boundary_tree(){
         tn = this->get_levelroot(tn);
         boundary_node n(tn, -1);
         if(bonud_tree->insert_element(n)){
-            //add ancestors
+            current=bonud_tree->get_border_node(tn->idx);
+            while(current!=NULL){
+                parent = this->get_parent(current->maxtree_idx);
+                if(parent != NULL){
+                    boundary_node bound_parent(parent,-1);
+                    bonud_tree->insert_element(bound_parent);
+                    pidx = parent->idx;
+                }else{
+                    pidx = -1;
+                }
+                current->boundary_parent = pidx;
+                current=bonud_tree->get_border_node(pidx);
+            }
         }
         
     }
@@ -246,7 +291,20 @@ boundary_tree *maxtree::get_boundary_tree(){
         tn = this->get_levelroot(tn);
         boundary_node n(tn, -1);
         if(bonud_tree->insert_element(n)){
-            //add ancestors
+            //adding ancestors
+            current=bonud_tree->get_border_node(tn->idx);
+            while(current!=NULL){
+                parent = this->get_parent(current->maxtree_idx);
+                if(parent != NULL){
+                    boundary_node bound_parent(parent,-1);
+                    bonud_tree->insert_element(bound_parent);
+                    pidx = parent->idx;
+                }else{
+                    pidx = -1;
+                }
+                current->boundary_parent = pidx;
+                current=bonud_tree->get_border_node(pidx);
+            }
         }
     }
 
@@ -438,8 +496,6 @@ std::vector<double> maxtree::all_thresholds(){
     }
     return ret;
 }
-
-
 
 std::vector<maxtree_node*> maxtree::get_neighbours(uint64_t pixel, int con){
     std::vector<maxtree_node*> v;
