@@ -19,6 +19,8 @@ test_files=../../testes/fig.png ../../testes/example.png ../../testes/high_borde
 maxtree_node_dir=../../include
 utils_dir=../../include
 maxtree_dir=../../include
+boundary_tree_dir=../../include
+
 
 source_non_rec_wilk= ${non_rec_wilk_name}.cpp
 source_non_rec = ${non_rec_name}.cpp
@@ -39,20 +41,29 @@ all: non_rec rec wilkinson
 all+bkp: non_rec rec wilkinson wilkinson_old
 
 
-non_rec: maxtree_node.o utils.o maxtree.o
+non_rec: base
 	${MKDIR} -p exec
-	g++ ${OPT} ${source_non_rec} ${utils_dir}/utils.o ${maxtree_node_dir}/maxtree_node.o ${maxtree_dir}/maxtree.o \
+	g++ ${OPT} ${source_non_rec} ${utils_dir}/utils.o ${maxtree_node_dir}/maxtree_node.o \
+		${maxtree_dir}/maxtree.o ${boundary_tree_dir}/boundary_tree.o \
         -I${maxtree_node_dir}  -I${maxtree_dir} -I${utils_dir}  ${vips_args} -o ${dest_nonrec}
 
-rec: maxtree_node.o utils.o maxtree.o
+rec: base
 	${MKDIR} -p exec
-	g++ ${OPT} ${source_rec} ${utils_dir}/utils.o ${maxtree_node_dir}/maxtree_node.o ${maxtree_dir}/maxtree.o \
+	g++ ${OPT} ${source_rec} ${utils_dir}/utils.o ${maxtree_node_dir}/maxtree_node.o \
+		${boundary_tree_dir}/boundary_tree.o ${maxtree_dir}/maxtree.o \
         -I${maxtree_node_dir}  -I${maxtree_dir} -I${utils_dir} ${vips_args} -o ${dest_rec}
 
-wilkinson: maxtree_node.o utils.o maxtree.o
+wilkinson: base
 	${MKDIR} -p exec
-	g++ ${OPT} ${source_non_rec_wilk} ${utils_dir}/utils.o ${maxtree_node_dir}/maxtree_node.o ${maxtree_dir}/maxtree.o \
-    -I${maxtree_node_dir}  -I${maxtree_dir} -I${utils_dir} ${vips_args} -o ${dest_nonrec_wilk}
+	g++ ${OPT} ${source_non_rec_wilk} ${utils_dir}/utils.o ${maxtree_node_dir}/maxtree_node.o \
+		${boundary_tree_dir}/boundary_tree.o ${maxtree_dir}/maxtree.o \
+    	-I${maxtree_node_dir}  -I${maxtree_dir} -I${utils_dir} ${vips_args} -o ${dest_nonrec_wilk}
+
+
+base: maxtree_node.o maxtree.o utils.o boundary_tree.o
+
+boundary_tree.o:
+	g++ ${OBJ_CPP_FLAGS} ${boundary_tree_dir}/boundary_tree.cpp -I${boundary_tree_dir} ${vips_args} -o ${boundary_tree_dir}/boundary_tree.o
 
 maxtree_node.o: #${maxtree_node_dir}/maxtree_node.cpp ${maxtree_node_dir}/maxtree_node.hpp 
 	g++ ${OBJ_CPP_FLAGS} ${maxtree_node_dir}/maxtree_node.cpp -I${maxtree_node_dir} -o ${maxtree_node_dir}/maxtree_node.o
@@ -63,8 +74,9 @@ maxtree.o:
 utils.o:
 	g++ ${OBJ_CPP_FLAGS} ${utils_dir}/utils.cpp ${vips_args} -I${utils_dir} -o ${utils_dir}/utils.o
 
-wilkinson_old: maxtree_node.o utils.o maxtree.o
+wilkinson_old: base
 	g++ ${OPT} wilk_bkp.cpp ${utils_dir}/utils.o ${maxtree_node_dir}/maxtree_node.o \
+	${boundary_tree_dir}/boundary_tree.o \
     -I ${maxtree_node_dir} ${vips_args} -o exec/wilk_bkp
 
 
