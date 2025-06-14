@@ -1,7 +1,7 @@
 #include "maxtree.hpp"
 
 
-component::component(u_int64_t id, std::vector<int> p, int parent, int attr){
+component::component(uint64_t id, std::vector<int> p, int parent, int attr){
     this->pixels = p;
     this->parent = parent;
     this->attribute = attr;
@@ -25,7 +25,7 @@ void component::insert_pixel(int p){
     this->pixels.push_back(p);
 }
 
-maxtree::maxtree(int h, int w){
+maxtree::maxtree(uint32_t h, uint32_t w){
     this->h = h;
     this->w = w;
     // this->data = new std::unordered_map<int, maxtree_node*>();
@@ -34,8 +34,8 @@ maxtree::maxtree(int h, int w){
     this->tile_borders = new std::vector<bool>(4,false);
 }
 
-// maxtree::maxtree(std::unordered_map<int, maxtree_node*> *data, int h, int w){
-maxtree::maxtree(std::vector<maxtree_node*> *data, int h, int w){
+// maxtree::maxtree(std::unordered_map<int, maxtree_node*> *data, int32_t h, int32_t w){
+maxtree::maxtree(std::vector<maxtree_node*> *data, int32_t h, int32_t w){
     this->h=h;
     this->w=w;
     this->data = data;
@@ -43,7 +43,7 @@ maxtree::maxtree(std::vector<maxtree_node*> *data, int h, int w){
     this->tile_borders = new std::vector<bool>(4,false);
 }
 
-maxtree::maxtree(std::vector <bool> borders, int h, int w){
+maxtree::maxtree(std::vector <bool> borders, int32_t h, int32_t w){
     this->h = h;
     this->w = w;
     // this->data = new std::unordered_map<int, maxtree_node*>();
@@ -52,7 +52,7 @@ maxtree::maxtree(std::vector <bool> borders, int h, int w){
     this->tile_borders = new std::vector<bool>(borders);
 }
 
-maxtree::maxtree(std::vector<maxtree_node*> *data, std::vector<bool> borders, int h, int w){
+maxtree::maxtree(std::vector<maxtree_node*> *data, std::vector<bool> borders, int32_t h, int32_t w){
     this->h=h;
     this->w=w;
     this->data = data;
@@ -60,12 +60,22 @@ maxtree::maxtree(std::vector<maxtree_node*> *data, std::vector<bool> borders, in
     this->levelroots = new std::vector<maxtree_node*>();
 }
 
+uint64_t maxtree::index_of(uint32_t l, uint32_t c){
+    return l * this->w + c;
+}
+
+std::tuple<uint32_t,uint32_t> maxtree::lin_col(uint64_t index){
+    return std::make_tuple(index / this->w, index % this->w);
+}
 
 maxtree_node *maxtree::at_pos(int64_t l, int64_t c){
-    int idx = this->index_of(l, c); 
+    int32_t idx = this->index_of(l, c); 
     return this->data->at(idx);
 }
 
+maxtree_node *maxtree::at_pos(int64_t index){
+    return this->data->at(index);
+}
 // std::unordered_map<int, maxtree_node*> *maxtree::get_data(){
 std::vector<maxtree_node*> *maxtree::get_data(){
     return this->data;
@@ -190,15 +200,6 @@ maxtree_node *maxtree::get_levelroot(maxtree_node *n){
         
     }
     return n;
-}
-
-maxtree_node *maxtree::get_parent(uint64_t node_idx){
-    maxtree_node *n = this->at_pos(node_idx);
-    if(n->parent >= 0){
-        return this->at_pos(n->parent);
-    }else{
-        return NULL;
-    }
 }
 
 
@@ -392,9 +393,6 @@ boundary_tree *maxtree::get_boundary_tree(){
 }
  */
 
-
-
-
  
 void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t base_w, bool verbose){
     VipsRegion *c_region = reg_in.get_region();
@@ -423,10 +421,6 @@ void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t
 } 
 
 
-maxtree_node *maxtree::at_pos(int64_t index){
-    return this->data->at(index);
-}
-
 void maxtree::insert_component(component c, double gval){
     auto comps = this->components.find(gval);
     if(comps == this->components.end()){
@@ -437,7 +431,7 @@ void maxtree::insert_component(component c, double gval){
 
 }
 
-void maxtree::insert_component(std::vector<int> comp, int parent, double threshold, uint64_t id){
+void maxtree::insert_component(std::vector<int> comp, int64_t parent, double threshold, uint64_t id){
     auto comps = this->components.find(threshold);
     if(comps == this->components.end()){
         this->threshold_locks[threshold].lock();
@@ -484,7 +478,7 @@ void maxtree::insert_component(std::vector<int> comp, int parent, double thresho
 }
 
 
-std::string maxtree::to_string(enum maxtee_node_field field, bool colored, int spaces ){
+std::string maxtree::to_string(enum maxtee_node_field field, bool colored, uint8_t spaces ){
     std::string r;
     //a lot of ifs with same for code inside to avoid branches inside for
     if(field == PARENT){
@@ -576,7 +570,7 @@ std::vector<double> maxtree::all_thresholds(){
     return ret;
 }
 
-std::vector<maxtree_node*> maxtree::get_neighbours(uint64_t pixel, int con){
+std::vector<maxtree_node*> maxtree::get_neighbours(uint64_t pixel, uint8_t con){
     std::vector<maxtree_node*> v;
     int64_t idx, pl, pc;
     std::tie(pl, pc) = this->lin_col(pixel);
@@ -619,13 +613,7 @@ std::vector<maxtree_node*> maxtree::get_neighbours(uint64_t pixel, int con){
     return v;
 }
 
-int maxtree::index_of(int l, int c){
-    return l * this->w + c;
-}
 
-std::tuple<int,int> maxtree::lin_col(int index){
-    return std::make_tuple(index / this->w, index % this->w);
-}
 
 void maxtree::filter(Tattribute a){
     //todo
