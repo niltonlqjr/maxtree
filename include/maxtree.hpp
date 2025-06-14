@@ -4,6 +4,7 @@
 #include <mutex>
 #include <vector>
 #include <cinttypes>
+#include <sysexits.h>
 
 #include "utils.hpp"
 #include "maxtree_node.hpp"
@@ -81,7 +82,7 @@ class maxtree{
         std::vector<double> all_thresholds();
         std::vector<maxtree_node *> *get_levelroots();
 
-        boundary_tree *get_boundary_tree();
+        boundary_tree *get_boundary_tree(uint8_t connectivity=4);
         void merge(maxtree to_merge);
 
         

@@ -176,14 +176,14 @@ void maxtree::fill_from_VImage(vips::VImage &img_in, bool verbose){
 
 maxtree_node *maxtree::get_levelroot(maxtree_node *n){
     maxtree_node *n_parent;
-    if(n->parent != -1){
+    if(n->parent >= 0){
         n_parent = this->data->at(n->parent);
     }else{
         return n;
     }
     while(n->gval == n_parent->gval){
         n = this->data->at(n->parent);
-        if(n->parent == -1){
+        if(n->parent <= -1){
             break;
         }
         n_parent = this->data->at(n_parent->parent);
@@ -194,7 +194,7 @@ maxtree_node *maxtree::get_levelroot(maxtree_node *n){
 
 maxtree_node *maxtree::get_parent(uint64_t node_idx){
     maxtree_node *n = this->at_pos(node_idx);
-    if(n->parent != -1){
+    if(n->parent >= 0){
         return this->at_pos(n->parent);
     }else{
         return NULL;
@@ -202,6 +202,86 @@ maxtree_node *maxtree::get_parent(uint64_t node_idx){
 }
 
 
+boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
+    boundary_tree *bound_tree;
+    boundary_node *bound_parent, *current;
+    maxtree_node *tn, *parent, *to_merge, *neighbour;
+    uint32_t i, j, pidx; 
+
+    if(connectivity != 4){
+        std::cerr << "Connectivity different of 4-connect not implemented yet\n";
+        exit(EX_SOFTWARE);
+    }
+
+    bound_tree = new boundary_tree();
+    if(this->tile_borders->at(TOP_BORDER)){
+        for(j=0; j<this->w; j++){
+            to_merge = this->at_pos(1,j);    
+            neighbour = this->at_pos(0,j);
+            if(neighbour->gval < to_merge->gval){
+                to_merge=neighbour;
+            }
+            tn = this->get_levelroot(to_merge);
+            boundary_node n(tn,to_merge->idx);
+            if(bound_tree->insert_element(n)){
+                bound_tree->add_parents(tn,this->get_data());
+            }
+        }
+    }
+
+    if(this->tile_borders->at(RIGHT_BORDER)){
+        for(i=0; i<this->h; i++){
+            to_merge = this->at_pos(i, this->w-2);
+            neighbour = this->at_pos(i, this->w-1);
+            if(neighbour->gval < to_merge->gval){
+                to_merge=neighbour;
+            }
+            
+            tn = this->get_levelroot(to_merge);
+            boundary_node n(tn,to_merge->idx);
+            if(bound_tree->insert_element(n)){
+                bound_tree->add_parents(tn, this->get_data());
+                
+            }
+        }
+    }
+
+    if(this->tile_borders->at(BOTTOM_BORDER)){
+        for(j = this->w-1; (int32_t)j >= 0; j--){
+            to_merge = this->at_pos(this->h-2,j);
+            neighbour = this->at_pos(this->h-1,j);
+            if(neighbour->gval < to_merge->gval){
+                to_merge=neighbour;
+            }
+            tn = this->get_levelroot(to_merge);
+            boundary_node n(tn,to_merge->idx);
+            if(bound_tree->insert_element(n)){
+                bound_tree->add_parents(tn, this->get_data());
+            }
+        }
+    }
+
+    if(this->tile_borders->at(LEFT_BORDER)){
+        for(i=this->h-1; (int32_t)i >=0; i--){
+            to_merge = this->at_pos(i, 1);
+            neighbour = this->at_pos(i, 0);
+            if(neighbour->gval < to_merge->gval){
+                to_merge=neighbour;
+            }
+            tn = this->get_levelroot(to_merge);
+            boundary_node n(tn,to_merge->idx);
+            if(bound_tree->insert_element(n)){
+                bound_tree->add_parents(tn, this->get_data());
+            }
+        }
+    }
+    return bound_tree;
+}
+
+
+/* 
+
+get only bordernodes without consider the overlap
 
 boundary_tree *maxtree::get_boundary_tree(){
     /*
@@ -211,7 +291,7 @@ boundary_tree *maxtree::get_boundary_tree(){
                     |       |
                     |       |
     border[h+2w-1]  <------ v   border[h+w-1]
-    */
+    
 
 
     boundary_tree *bonud_tree = new boundary_tree();
@@ -310,10 +390,9 @@ boundary_tree *maxtree::get_boundary_tree(){
 
     return bonud_tree;
 }
+ */
 
-void maxtree::merge(maxtree to_merge){
 
-}
 
 
  
