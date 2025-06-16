@@ -22,56 +22,64 @@ boundary_node::boundary_node(maxtree_node *n, uint64_t origin, int64_t boundary_
 }
 
 boundary_tree::boundary_tree(){
-    this->border_elements=new std::unordered_map<uint64_t, boundary_node *>();
+    this->border_elements=new std::vector<std::unordered_map<uint64_t, boundary_node *>*>();
+    for(auto b : TBordersVector){
+        this->border_elements->push_back(new std::unordered_map<uint64_t, boundary_node *>());
+    }
 }
 
-boundary_tree::boundary_tree(std::unordered_map<uint64_t, boundary_node *> *border_elements){
+boundary_tree::boundary_tree(std::vector<std::unordered_map<uint64_t, boundary_node *>*> *border_elements){
     this->border_elements=border_elements;
 }
 
 boundary_tree::~boundary_tree(){
-    for(auto pairs: *this->border_elements){
-        uint64_t n=pairs.first;
-        delete pairs.second;
+    for(uint32_t i=0;i < this->border_elements->size(); i++){
+        for(auto pairs: *this->border_elements->at(i)){
+            uint64_t n=pairs.first;
+            delete pairs.second;
+        }
+        delete this->border_elements->at(i);
     }
     delete this->border_elements;
 }
 
-bool boundary_tree::insert_element(boundary_node &n, int64_t origin){
+bool boundary_tree::insert_element(boundary_node &n, enum borders b, int64_t origin){
     boundary_node *new_n;
-    if(this->border_elements->find(n.maxtree_idx) != this->border_elements->end()){
+    auto border = this->border_elements->at(b);
+    if(border->find(n.maxtree_idx) != border->end()){
         return false;
     }else{
         new_n = new boundary_node(n);
-        this->border_elements->emplace(n.maxtree_idx, new_n);
+        border->emplace(n.maxtree_idx, new_n);
         return true;
     }
 }
 
-void boundary_tree::add_parents(maxtree_node *tn, std::vector<maxtree_node*> *maxtree_data){
+void boundary_tree::add_parents(maxtree_node *tn, enum borders b,std::vector<maxtree_node*> *maxtree_data){
     maxtree_node *parent;
     boundary_node *current;
     int64_t parent_idx;
     int64_t pidx;
-    current=this->get_border_node(tn->idx);//get the added node
+    current=this->get_border_node(tn->idx, b);//get the added node
     while(current!=NULL){
         pidx = maxtree_data->at(current->maxtree_idx)->parent; // get parent idx of current boundary node
         if(pidx >= 0){// if this node has a parent (not the tile root)
             parent = maxtree_data->at(pidx);
             boundary_node bound_parent(parent,tn->idx); //create the parent node to add on bondary tree
-            this->insert_element(bound_parent);
+            this->insert_element(bound_parent,b);
         }else{ 
             pidx = -1;
         }
         current->boundary_parent = pidx; // update the parent of current node
-        current=this->get_border_node(pidx); // go to the parent and add its ancerstors
+        current=this->get_border_node(pidx,b); // go to the parent and add its ancerstors
     }
 }
 
-boundary_node *boundary_tree::get_border_node(int64_t maxtree_idx){
+boundary_node *boundary_tree::get_border_node(int64_t maxtree_idx, enum borders b){
     boundary_node *ret;
+    auto border = this->border_elements->at(b);
     if (maxtree_idx >= 0){
-        ret = this->border_elements->at(maxtree_idx);
+        ret = border->at(maxtree_idx);
     }else{
         ret = NULL;
     }
@@ -86,20 +94,25 @@ std::string boundary_tree::to_string(enum boundary_tree_field f){
     
     uint32_t i,j;
     std::ostringstream ss;
-    for(auto pairs: *(this->border_elements)){
-        auto bn = pairs.second;
-        if(f == BOUNDARY_PARENT){
-            ss << bn->boundary_parent;
-        }else if(f == BOUNDARY_LEVELROOT){
-            ss << bn->boundary_levelroot;
-        }else if(f == BOUNDARY_IDX){
-            //ss << bn->boundary_idx;
-        }else if(f == MAXTREE_IDX){
-            ss << bn->maxtree_idx;
-        }else if(f == BOUNDARY_GVAL){
-            ss << bn->gval;
+    for(int i=0; i<NamesBordersVector.size();i++){
+        ss << NamesBordersVector[i] << ":";
+        auto v = *(this->border_elements->at(i));
+        for(auto pairs: v){
+            auto bn = pairs.second;
+            if(f == BOUNDARY_PARENT){
+                ss << bn->boundary_parent;
+            }else if(f == BOUNDARY_LEVELROOT){
+                ss << bn->boundary_levelroot;
+            }else if(f == BOUNDARY_IDX){
+                //ss << bn->boundary_idx;
+            }else if(f == MAXTREE_IDX){
+                ss << bn->maxtree_idx;
+            }else if(f == BOUNDARY_GVAL){
+                ss << bn->gval;
+            }
+            ss << " ";
         }
-        ss << " ";
+        ss << "\n";
     }
     return ss.str();
 }

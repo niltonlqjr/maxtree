@@ -25,9 +25,11 @@ void component::insert_pixel(int p){
     this->pixels.push_back(p);
 }
 
-maxtree::maxtree(uint32_t h, uint32_t w){
+maxtree::maxtree(uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j){
     this->h = h;
     this->w = w;
+    this->grid_i = grid_i;
+    this->grid_j = grid_j;
     // this->data = new std::unordered_map<int, maxtree_node*>();
     this->data = new std::vector<maxtree_node*>();
     this->levelroots = new std::vector<maxtree_node*>();
@@ -35,26 +37,32 @@ maxtree::maxtree(uint32_t h, uint32_t w){
 }
 
 // maxtree::maxtree(std::unordered_map<int, maxtree_node*> *data, int32_t h, int32_t w){
-maxtree::maxtree(std::vector<maxtree_node*> *data, int32_t h, int32_t w){
+maxtree::maxtree(std::vector<maxtree_node*> *data, uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j){
     this->h=h;
     this->w=w;
+    this->grid_i = grid_i;
+    this->grid_j = grid_j;
     this->data = data;
     this->levelroots = new std::vector<maxtree_node*>();
     this->tile_borders = new std::vector<bool>(4,false);
 }
 
-maxtree::maxtree(std::vector <bool> borders, int32_t h, int32_t w){
+maxtree::maxtree(std::vector <bool> borders, uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j){
     this->h = h;
     this->w = w;
+    this->grid_i = grid_i;
+    this->grid_j = grid_j;
     // this->data = new std::unordered_map<int, maxtree_node*>();
     this->data = new std::vector<maxtree_node*>();
     this->levelroots = new std::vector<maxtree_node*>();
     this->tile_borders = new std::vector<bool>(borders);
 }
 
-maxtree::maxtree(std::vector<maxtree_node*> *data, std::vector<bool> borders, int32_t h, int32_t w){
+maxtree::maxtree(std::vector<maxtree_node*> *data, std::vector<bool> borders, uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j){
     this->h=h;
     this->w=w;
+    this->grid_i = grid_i;
+    this->grid_j = grid_j;
     this->data = data;
     this->tile_borders = new std::vector<bool>(borders);
     this->levelroots = new std::vector<maxtree_node*>();
@@ -75,6 +83,16 @@ maxtree_node *maxtree::at_pos(int64_t l, int64_t c){
 
 maxtree_node *maxtree::at_pos(int64_t index){
     return this->data->at(index);
+}
+maxtree_node *maxtree::get_parent(uint64_t node_idx){
+    if(node_idx < 0){
+        return NULL;
+    }
+    maxtree_node *node  = this->at_pos(node_idx);
+    if(node->parent < 0){
+        return NULL;
+    }
+    return this->at_pos(node->parent);
 }
 // std::unordered_map<int, maxtree_node*> *maxtree::get_data(){
 std::vector<maxtree_node*> *maxtree::get_data(){
@@ -224,8 +242,8 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
             }
             tn = this->get_levelroot(to_merge);
             boundary_node n(tn,to_merge->idx);
-            if(bound_tree->insert_element(n)){
-                bound_tree->add_parents(tn,this->get_data());
+            if(bound_tree->insert_element(n,TOP_BORDER)){
+                bound_tree->add_parents(tn,TOP_BORDER,this->get_data());
             }
         }
     }
@@ -240,8 +258,8 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
             
             tn = this->get_levelroot(to_merge);
             boundary_node n(tn,to_merge->idx);
-            if(bound_tree->insert_element(n)){
-                bound_tree->add_parents(tn, this->get_data());
+            if(bound_tree->insert_element(n,RIGHT_BORDER)){
+                bound_tree->add_parents(tn, RIGHT_BORDER, this->get_data());
                 
             }
         }
@@ -256,8 +274,8 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
             }
             tn = this->get_levelroot(to_merge);
             boundary_node n(tn,to_merge->idx);
-            if(bound_tree->insert_element(n)){
-                bound_tree->add_parents(tn, this->get_data());
+            if(bound_tree->insert_element(n,BOTTOM_BORDER)){
+                bound_tree->add_parents(tn, BOTTOM_BORDER, this->get_data());
             }
         }
     }
@@ -271,8 +289,8 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
             }
             tn = this->get_levelroot(to_merge);
             boundary_node n(tn,to_merge->idx);
-            if(bound_tree->insert_element(n)){
-                bound_tree->add_parents(tn, this->get_data());
+            if(bound_tree->insert_element(n,LEFT_BORDER)){
+                bound_tree->add_parents(tn, LEFT_BORDER, this->get_data());
             }
         }
     }
@@ -280,11 +298,11 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
 }
 
 
-/* 
+/*
 
 get only bordernodes without consider the overlap
 
-boundary_tree *maxtree::get_boundary_tree(){
+boundary_tree *maxtree::get_boundary_tree_no_overlap(uint8_t connectivity){
     /*
     border[0]       -------->    border[w-1]
     border[2h+2w-1] ^       |
@@ -292,8 +310,12 @@ boundary_tree *maxtree::get_boundary_tree(){
                     |       |
                     |       |
     border[h+2w-1]  <------ v   border[h+w-1]
-    
-
+    */  
+    /*
+    if(connectivity != 4){
+        std::cerr << "Connectivity different of 4-connect not implemented yet\n";
+        exit(EX_SOFTWARE);
+    }
 
     boundary_tree *bonud_tree = new boundary_tree();
     boundary_node *bound_parent, *current;
@@ -391,7 +413,7 @@ boundary_tree *maxtree::get_boundary_tree(){
 
     return bonud_tree;
 }
- */
+/* */ 
 
  
 void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t base_w, bool verbose){

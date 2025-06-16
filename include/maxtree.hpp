@@ -13,9 +13,6 @@
 #ifndef __MAXTREE_HPP__
 #define __MAXTREE_HPP__
 
-enum borders{
-    LEFT_BORDER, TOP_BORDER, RIGHT_BORDER, BOTTOM_BORDER
-};
 
 class component{
     private:
@@ -60,11 +57,13 @@ class maxtree{
         
         uint32_t h;
         uint32_t w;
-        maxtree(uint32_t h, uint32_t w);
+        uint32_t grid_i;
+        uint32_t grid_j;
+        maxtree(uint32_t h, uint32_t w, uint32_t grid_i=-1, uint32_t grid_j=-1);
         // maxtree(std::unordered_map<int, maxtree_node*> *data, int32_t h, int32_t w);
-        maxtree(std::vector<maxtree_node*> *data, int32_t h, int32_t w);
-        maxtree(std::vector <bool> borders, int32_t h, int32_t w);
-        maxtree(std::vector<maxtree_node*> *data, std::vector<bool> borders, int32_t h, int32_t w);
+        maxtree(std::vector<maxtree_node*> *data, uint32_t h, uint32_t w, uint32_t grid_i=-1, uint32_t grid_j=-1);
+        maxtree(std::vector <bool> borders, uint32_t h, uint32_t w, uint32_t grid_i=-1, uint32_t grid_j=-1);
+        maxtree(std::vector<maxtree_node*> *data, std::vector<bool> borders, uint32_t h, uint32_t w, uint32_t grid_i=-1, uint32_t grid_j=-1);
         
         uint64_t index_of(uint32_t i, uint32_t j);
         std::tuple<uint32_t,uint32_t> lin_col(uint64_t index);
@@ -83,7 +82,8 @@ class maxtree{
         std::vector<maxtree_node *> *get_levelroots();
 
         boundary_tree *get_boundary_tree(uint8_t connectivity=4);
-        void merge(maxtree to_merge);
+        boundary_tree *get_boundary_tree_no_overlap(uint8_t connectivity=4);
+        
 
         
         std::string to_string(enum maxtee_node_field field = PARENT,bool colored = true, uint8_t spaces = 5);

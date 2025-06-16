@@ -1,5 +1,6 @@
 #include <string>
 #include <cinttypes>
+#include <vector>
 #ifndef __MAXTREE_NODE_HPP__
 #define __MAXTREE_NODE_HPP__
 
@@ -9,6 +10,28 @@ enum maxtee_node_field {
 
 #define Tattribute uint64_t
 #define Tattr_default 1
+
+enum borders{
+    LEFT_BORDER,
+    TOP_BORDER, 
+    RIGHT_BORDER, 
+    BOTTOM_BORDER
+};
+
+static const std::vector<enum borders> TBordersVector({
+    LEFT_BORDER,
+    TOP_BORDER, 
+    RIGHT_BORDER, 
+    BOTTOM_BORDER
+});
+
+static const std::vector<std::string> NamesBordersVector({
+    "LEFT_BORDER",
+    "TOP_BORDER", 
+    "RIGHT_BORDER", 
+    "BOTTOM_BORDER"
+});
+
 
 class maxtree_node{
     public:

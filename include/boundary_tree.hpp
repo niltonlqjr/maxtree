@@ -29,16 +29,16 @@ class boundary_node{
 
 class boundary_tree{
     private:
-        std::unordered_map<uint64_t, boundary_node *> *border_elements;
+        std::vector< std::unordered_map<uint64_t, boundary_node *> *> *border_elements;
     public:
         boundary_tree();
-        boundary_tree(std::unordered_map<uint64_t, boundary_node *> *border_elements);
+        boundary_tree(std::vector<std::unordered_map<uint64_t, boundary_node *> *> *border_elements);
         ~boundary_tree();
-        bool insert_element(boundary_node &n, int64_t origin=-1);
-        boundary_node *get_border_node(int64_t maxtree_idx);
+        bool insert_element(boundary_node &n, enum borders b, int64_t origin=-1);
+        boundary_node *get_border_node(int64_t maxtree_idx, enum borders b);
         std::string to_string(enum boundary_tree_field f=BOUNDARY_PARENT);
         void merge(boundary_tree *t);
-        void add_parents(maxtree_node *tn, std::vector<maxtree_node*> *maxtree_data);
+        void add_parents(maxtree_node *tn, enum borders b,std::vector<maxtree_node*> *maxtree_data);
 };
 
 

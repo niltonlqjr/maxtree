@@ -142,7 +142,7 @@ int main(int argc, char *argv[]){
                 std::cout << noborder_rl << "," << noborder_rt << "," << columns_inc << "," << lines_inc << "\n------------\n";
             }
             
-            maxtree *new_tree = new maxtree(borders,tile_lines, tile_columns);
+            maxtree *new_tree = new maxtree(borders,tile_lines, tile_columns, i, j);
             vips::VRegion reg = in->region(reg_left, reg_top, tile_columns, tile_lines);
             
             reg.prepare(reg_left, reg_top, tile_columns, tile_lines);
@@ -153,7 +153,7 @@ int main(int argc, char *argv[]){
             //std::cout << new_tree->to_string(GVAL,5);
             noborder_rl+=columns_inc;
             if(verbose){
-                std::cout << "======================================\n";
+                std::cout << "\n\n\n=====================================================================================\n\n\n";
             }
         }
         noborder_rt+=lines_inc;
@@ -164,9 +164,23 @@ int main(int argc, char *argv[]){
         for(int j=0;j<gcolumns; j++){
             t = tiles.at(i).at(j);
 
-            if (verbose) std::cout << "tile:" << i << ", " << j << " size:" << t->h << ", " <<  t->w << "\n";
+            if (verbose) {
+                std::cout << "=> computing tile (stored in maxtree):" << t->grid_i << ", " << t->grid_j << " size:" << t->h << ", " <<  t->w << "\n";
+                std::cout << "i:" << i << " j:" << j << "\n";
+            }
             t->compute_sequential_iterative();
+            
+        }
+    }
+    if(verbose){
+        std::cout <<"\n\n\n\n\n===============BOUNDARY TREES=================\n\n\n\n\n";
+    }
+
+    for(int i=0; i < glines; i++){
+        for(int j=0;j<gcolumns; j++){
+            t = tiles.at(i).at(j);
             if(verbose){
+                std::cout << ">>>>> tile:" << i << " " << j << "\n";
                 std::cout << "__________________GVAL________________\n";
                 std::cout << t->to_string(GVAL,true,5);
                 std::cout << "_________________PARENT________________\n";
@@ -176,27 +190,17 @@ int main(int argc, char *argv[]){
                 std::cout << "________________ATTRIBUTE________________\n";
                 std::cout << t->to_string(ATTRIBUTE,false,5);
 
-                std::cout << "_____________LEVELROOT vector___________\n";
+                std::cout << "Levels roots";
                 for(auto r: *(t->get_levelroots())){
                     std::cout << r->idx << " ";
                 }
-                std::cout << "\n";
-                std::cout << t->string_borders() << "\n";
-                std::cout << "\n";
             }
-        }
-    }
-    if(verbose){
-        std::cout <<"\n\n===============BOUNDARY TREES=================\n";
-    }
-
-    for(int i=0; i < glines; i++){
-        for(int j=0;j<gcolumns; j++){
-            t = tiles.at(i).at(j);
             boundary_tree *bt = t->get_boundary_tree();
             if(verbose){
-                std::cout << "tile:" << i << " " << j << "\n";
-                std::cout << "boundary tree nodes:" << bt->to_string(MAXTREE_IDX) << "\n";
+                std::cout << "\n";
+                std::cout << "borders:" <<t->string_borders() << "\n";
+                std::cout << "boundary tree nodes:\n" << bt->to_string(MAXTREE_IDX) << "\n";
+                std::cout << "\n==========================================================================================================\n\n\n";
             }
             //delete bt;
         }
