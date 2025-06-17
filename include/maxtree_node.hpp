@@ -32,6 +32,11 @@ static const std::vector<std::string> NamesBordersVector({
     "BOTTOM_BORDER"
 });
 
+enum merge_directions{
+    MERGE_HORIZONTAL,
+    MERGE_VERTICAL
+};
+
 
 class maxtree_node{
     public:

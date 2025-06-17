@@ -232,7 +232,7 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
         exit(EX_SOFTWARE);
     }
 
-    bound_tree = new boundary_tree();
+    bound_tree = new boundary_tree(this->h, this->w, this->grid_i, this->grid_j);
     if(this->tile_borders->at(TOP_BORDER)){
         for(j=0; j<this->w; j++){
             to_merge = this->at_pos(1,j);    

@@ -190,7 +190,7 @@ int main(int argc, char *argv[]){
                 std::cout << "________________ATTRIBUTE________________\n";
                 std::cout << t->to_string(ATTRIBUTE,false,5);
 
-                std::cout << "Levels roots";
+                std::cout << "Levels roots:";
                 for(auto r: *(t->get_levelroots())){
                     std::cout << r->idx << " ";
                 }

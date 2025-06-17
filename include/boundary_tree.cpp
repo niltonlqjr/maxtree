@@ -21,14 +21,23 @@ boundary_node::boundary_node(maxtree_node *n, uint64_t origin, int64_t boundary_
     this->boundary_levelroot=boundary_levelroot;
 }
 
-boundary_tree::boundary_tree(){
+boundary_tree::boundary_tree(uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j){
+    this->h=h;
+    this->w=w;
+    this->grid_i=grid_i;
+    this->grid_j = grid_j;
     this->border_elements=new std::vector<std::unordered_map<uint64_t, boundary_node *>*>();
     for(auto b : TBordersVector){
         this->border_elements->push_back(new std::unordered_map<uint64_t, boundary_node *>());
     }
 }
 
-boundary_tree::boundary_tree(std::vector<std::unordered_map<uint64_t, boundary_node *>*> *border_elements){
+boundary_tree::boundary_tree(std::vector<std::unordered_map<uint64_t, boundary_node *>*> *border_elements,
+                             uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j){
+    this->h=h;
+    this->w=w;
+    this->grid_i=grid_i;
+    this->grid_j = grid_j;
     this->border_elements=border_elements;
 }
 
@@ -55,7 +64,7 @@ bool boundary_tree::insert_element(boundary_node &n, enum borders b, int64_t ori
     }
 }
 
-void boundary_tree::add_parents(maxtree_node *tn, enum borders b,std::vector<maxtree_node*> *maxtree_data){
+void boundary_tree::add_parents(maxtree_node *tn, enum borders b, std::vector<maxtree_node*> *maxtree_data){
     maxtree_node *parent;
     boundary_node *current;
     int64_t parent_idx;
@@ -65,7 +74,7 @@ void boundary_tree::add_parents(maxtree_node *tn, enum borders b,std::vector<max
         pidx = maxtree_data->at(current->maxtree_idx)->parent; // get parent idx of current boundary node
         if(pidx >= 0){// if this node has a parent (not the tile root)
             parent = maxtree_data->at(pidx);
-            boundary_node bound_parent(parent,tn->idx); //create the parent node to add on bondary tree
+            boundary_node bound_parent(parent,current->maxtree_idx); //create the parent node to add on bondary tree
             this->insert_element(bound_parent,b);
         }else{ 
             pidx = -1;
@@ -86,7 +95,27 @@ boundary_node *boundary_tree::get_border_node(int64_t maxtree_idx, enum borders 
     return ret;
 }
 
-void boundary_tree::merge(boundary_tree *t){
+void boundary_tree::merge(boundary_tree *t, enum merge_directions d){
+    std::unordered_map<uint64_t, boundary_node *> *v_this, *v_t;
+    if(d == MERGE_HORIZONTAL){
+        if(this->grid_i < t->grid_i){
+            v_this = this->border_elements->at(BOTTOM_BORDER);
+            v_t = t->border_elements->at(TOP_BORDER);
+        }else{
+            v_this = this->border_elements->at(TOP_BORDER);
+            v_t = t->border_elements->at(BOTTOM_BORDER);
+        }
+    }else if(d == MERGE_VERTICAL){
+        if(this->grid_j < t->grid_j){
+            v_this = this->border_elements->at(RIGHT_BORDER);
+            v_t = t->border_elements->at(LEFT_BORDER);
+        }else{
+            v_this = this->border_elements->at(LEFT_BORDER);
+            v_t = t->border_elements->at(RIGHT_BORDER);
+        }
+    }
+
+    
 
 }
 
