@@ -22,8 +22,10 @@ class boundary_node{
         int64_t boundary_parent;
         int64_t boundary_levelroot;
         uint64_t origin;
-        boundary_node(double gval, uint64_t maxtree_idx, uint64_t origin, int64_t boundary_parent=-1,int64_t boundary_levelroot=-1);
-        boundary_node(maxtree_node *n, uint64_t origin, int64_t boundary_parent=-1,int64_t boundary_levelroot=-1);
+        boundary_node(double gval, uint64_t maxtree_idx,
+             uint64_t origin, int64_t boundary_parent=-1,int64_t boundary_levelroot=-1);
+        boundary_node(maxtree_node *n, uint64_t origin,
+             int64_t boundary_parent=-1,int64_t boundary_levelroot=-1);
 
 };
 
@@ -36,7 +38,7 @@ class boundary_tree{
         uint32_t grid_i;
         uint32_t grid_j;
         boundary_tree(uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j);
-        boundary_tree(std::vector<std::unordered_map<uint64_t, boundary_node *> *> *border_elements,
+        boundary_tree(std::vector<std::unordered_map<uint64_t, boundary_node *>*> *border_elements,
              uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j);
         ~boundary_tree();
         bool insert_element(boundary_node &n, enum borders b, int64_t origin=-1);

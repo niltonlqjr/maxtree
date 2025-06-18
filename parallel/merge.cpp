@@ -234,14 +234,32 @@ int main(int argc, char *argv[]){
     }
     /*
         realizar o merge:
-        1. montar uma tabela de boundary trees fazendo um mapeamento de "linha/coluna" do grid para a boundary tree
+        1. montar uma tabela de boundary trees fazendo um mapeamento de "linha/coluna"
+           do grid para a boundary tree 
+           - ok (tiles_table)
         2. conectar dois tiles do grid vendo os vizinhos de acordo com a tabela;
-        3. atualizar a tabela de forma que as duas entradas dos tiles conectados apontem para a mesma boundary tree
+        3. atualizar a tabela de forma que as duas entradas dos tiles conectados 
+           apontem para a mesma boundary tree
 
         Otimização (fazer depois): fazer na maior dimensão do grid e depois na menor
     */
-
-
+    int64_t ntrees = glines * gcolumns;
+    
+    uint32_t linc = 2, cinc=2;
+    while(ntrees >= 2){
+        for(uint32_t i = 0; i<glines; i+=linc){
+            for(uint32_t j = 0; j+cinc<gcolumns; j+=cinc){
+                boundary_tree *base_bt = tiles_table[i][j];
+                boundary_tree *to_merge = tiles_table[i][j+cinc]; 
+                //base_bt->merge(to_merge,MERGE_VERTICAL);
+                std::cout << "base: grid_i:" << base_bt->grid_i << " grid_j:" << base_bt->grid_j << "\n";
+                std::cout << "to_merge: grid_i:" << to_merge->grid_i << " grid_j:" << to_merge->grid_j << "\n";
+                ntrees--;
+                std::cout << "ntrees:" << ntrees << " dim:"  << glines * gcolumns <<"\n";
+            }
+        }
+        cinc*=2;
+    }
 
     
 

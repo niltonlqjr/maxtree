@@ -114,6 +114,10 @@ void boundary_tree::merge(boundary_tree *t, enum merge_directions d){
             v_t = t->border_elements->at(RIGHT_BORDER);
         }
     }
+
+    
+
+    std::cout << "merge nodes:\n";
     for(auto x: *v_this){
         std::cout << x.first <<" ";
     }
@@ -123,8 +127,19 @@ void boundary_tree::merge(boundary_tree *t, enum merge_directions d){
     }
     std::cout << "\n";
     
-
-    
+    if(d==MERGE_VERTICAL){
+        if(this->grid_i < t->grid_i){
+            this->grid_i = t->grid_i;
+        }else{
+            t->grid_i = this->grid_i;
+        }
+    }else if(d==MERGE_VERTICAL){
+        if(this->grid_j < t->grid_j){
+            this->grid_j = t->grid_j;
+        }else{
+            t->grid_j = this->grid_j;
+        }
+    }
 
 }
 
