@@ -13,8 +13,8 @@ server = 10.1.1.2
 threads=  1
 
 # grid lines (integer value)
-glines=4
+glines=3
 # grid columns(integer value)
-gcolumns=4
+gcolumns=5
 
 
