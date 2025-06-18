@@ -245,20 +245,31 @@ int main(int argc, char *argv[]){
     */
     int64_t ntrees = glines * gcolumns;
     
-    uint32_t linc = 2, cinc=2;
-    while(ntrees >= 2){
-        for(uint32_t i = 0; i<glines; i+=linc){
-            for(uint32_t j = 0; j+cinc<gcolumns; j+=cinc){
+    
+    uint32_t grid_col_inc = 2; 
+    while(ntrees > glines){ /* merge horizonta */
+        for(i = 0; i < glines; i++){
+            for(j = 0; j+grid_col_inc/2 < gcolumns; j+=grid_col_inc){
                 boundary_tree *base_bt = tiles_table[i][j];
-                boundary_tree *to_merge = tiles_table[i][j+cinc]; 
-                //base_bt->merge(to_merge,MERGE_VERTICAL);
-                std::cout << "base: grid_i:" << base_bt->grid_i << " grid_j:" << base_bt->grid_j << "\n";
-                std::cout << "to_merge: grid_i:" << to_merge->grid_i << " grid_j:" << to_merge->grid_j << "\n";
+                boundary_tree *to_merge = tiles_table[i][j+grid_col_inc/2]; 
+                base_bt->merge(to_merge,MERGE_VERTICAL);
+                if(verbose){
+                    std::cout << "base: grid_i:" << base_bt->grid_i << " grid_j:" << base_bt->grid_j << "\n";
+                    std::cout << "to_merge: grid_i:" << to_merge->grid_i << " grid_j:" << to_merge->grid_j << "\n";
+                    std::cout << "i:" << i << " j:" << j << "\n";
+                    std::cout << "grid_line_inc:" << grid_line_inc << " grid_col_inc:" << grid_col_inc << "\n";
+                    std::cout << "ntrees:" << ntrees << " glines:"  << glines << " gcol:" <<  gcolumns <<"\n";
+                    std::cout << "================\n";
+                }
                 ntrees--;
-                std::cout << "ntrees:" << ntrees << " dim:"  << glines * gcolumns <<"\n";
+                
             }
         }
-        cinc*=2;
+        // std::cout << "antes:" << grid_col_inc << "\n";
+        grid_col_inc*=2;
+        // std::cout << "depois:" << grid_col_inc << "\n";
+
+        std::cout << "++++++++++++++++\n";
     }
 
     
