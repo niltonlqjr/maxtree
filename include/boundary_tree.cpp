@@ -114,6 +114,15 @@ void boundary_tree::merge(boundary_tree *t, enum merge_directions d){
             v_t = t->border_elements->at(RIGHT_BORDER);
         }
     }
+    for(auto x: *v_this){
+        std::cout << x.first <<" ";
+    }
+    std::cout << "\n";
+    for(auto x: *v_t){
+        std::cout << x.first <<" ";
+    }
+    std::cout << "\n";
+    
 
     
 

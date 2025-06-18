@@ -48,6 +48,9 @@ int main(int argc, char *argv[]){
         vips_error_exit (NULL);
     }
 
+    /*
+        Reading configuration file
+    */
     bool verbose=false;
 
     in = new vips::VImage(vips::VImage::new_from_file(argv[1],
@@ -57,6 +60,12 @@ int main(int argc, char *argv[]){
     if (configs->find("verbose") != configs->end()){
         if(configs->at("verbose") == "true"){
             verbose=true;
+        }
+    }
+    bool colored = false;
+    if(configs->find("colored") != configs->end()){
+        if(configs->at("colored") == "true"){
+            colored = true;
         }
     }
 
@@ -92,12 +101,19 @@ int main(int argc, char *argv[]){
         std::cout << "num_h_ceil:" << num_h_ceil << "\n";
         std::cout << "num_w_ceil:" << num_w_ceil << "\n";
     }
-    
+
+    /*end config*/
+
+    /*
+    split image
+    */
+
     std::vector<std::vector<maxtree *>> tiles;
     bool left, top, right, bottom;
     uint32_t i,j,x = 0;
     uint32_t noborder_rt=0, noborder_rl, lines_inc, columns_inc; // original tiles (without borders) size variables
     uint32_t reg_top, reg_left, tile_lines, tile_columns; // tiles used by algorithm (with border) size variables
+
     for(i=0; i<glines; i++){
         std::vector<bool> borders(4,false);
         lines_inc = i < num_h_ceil ? h_trunc +1 : h_trunc;
@@ -142,7 +158,7 @@ int main(int argc, char *argv[]){
                 std::cout << noborder_rl << "," << noborder_rt << "," << columns_inc << "," << lines_inc << "\n------------\n";
             }
             
-            maxtree *new_tree = new maxtree(borders,tile_lines, tile_columns, i, j);
+            maxtree *new_tree = new maxtree(borders, tile_lines, tile_columns, i, j);
             vips::VRegion reg = in->region(reg_left, reg_top, tile_columns, tile_lines);
             
             reg.prepare(reg_left, reg_top, tile_columns, tile_lines);
@@ -159,6 +175,9 @@ int main(int argc, char *argv[]){
         noborder_rt+=lines_inc;
     }
 
+    /*
+    computing tiles maxtree
+    */
 
     for(int i=0; i < glines; i++){
         for(int j=0;j<gcolumns; j++){
@@ -176,19 +195,26 @@ int main(int argc, char *argv[]){
         std::cout <<"\n\n\n\n\n===============BOUNDARY TREES=================\n\n\n\n\n";
     }
 
+    /*
+    computing boundary trees
+    */
+    std::vector<std::vector<boundary_tree *>> tiles_table;
     for(int i=0; i < glines; i++){
         for(int j=0;j<gcolumns; j++){
             t = tiles.at(i).at(j);
+            tiles_table.push_back(std::vector<boundary_tree *>());
             if(verbose){
                 std::cout << ">>>>> tile:" << i << " " << j << "\n";
+                std::cout << ">>> maxtree: grid_i = " << t->grid_i << " grid_j = " << t->grid_j << "\n";
+
                 std::cout << "__________________GVAL________________\n";
-                std::cout << t->to_string(GVAL,true,5);
+                std::cout << t->to_string(GVAL,colored,5);
                 std::cout << "_________________PARENT________________\n";
-                std::cout << t->to_string();
+                std::cout << t->to_string(PARENT,colored);
                 std::cout << "________________LEVELROOT________________\n";
-                std::cout << t->to_string(LEVELROOT,true,5);
+                std::cout << t->to_string(LEVELROOT,colored,5);
                 std::cout << "________________ATTRIBUTE________________\n";
-                std::cout << t->to_string(ATTRIBUTE,false,5);
+                std::cout << t->to_string(ATTRIBUTE,colored,5);
 
                 std::cout << "Levels roots:";
                 for(auto r: *(t->get_levelroots())){
@@ -196,6 +222,7 @@ int main(int argc, char *argv[]){
                 }
             }
             boundary_tree *bt = t->get_boundary_tree();
+            tiles_table.at(i).push_back(bt);
             if(verbose){
                 std::cout << "\n";
                 std::cout << "borders:" <<t->string_borders() << "\n";
@@ -205,6 +232,20 @@ int main(int argc, char *argv[]){
             //delete bt;
         }
     }
+    /*
+        realizar o merge:
+        1. montar uma tabela de boundary trees fazendo um mapeamento de "linha/coluna" do grid para a boundary tree
+        2. conectar dois tiles do grid vendo os vizinhos de acordo com a tabela;
+        3. atualizar a tabela de forma que as duas entradas dos tiles conectados apontem para a mesma boundary tree
+
+        Otimização (fazer depois): fazer na maior dimensão do grid e depois na menor
+    */
+
+
+
+    
+
+
     //as boundary trees tem alturas e tamanhos distintos, logo é possível estimar o custo de um merge
 
     return 0;
