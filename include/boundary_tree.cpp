@@ -117,9 +117,6 @@ void boundary_tree::merge(boundary_tree *t, enum merge_directions d){
 
     
 
-    std::cout << "merge nodes:\n";
-    std::cout << "(" << this->grid_i << ", " << this->grid_j << ") <===> ";
-    std::cout << "(" << t->grid_i << ", " << t->grid_j << ")\n";
     for(auto x: *v_this){
         std::cout << x.first <<" ";
     }
