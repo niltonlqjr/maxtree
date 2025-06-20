@@ -88,7 +88,7 @@ void boundary_tree::add_lroot_tree(maxtree_node *tn, int64_t origin, std::vector
     }
     while(current!=NULL){
         pidx = maxtree_data->at(current->maxtree_idx)->parent; // get parent idx of current boundary node
-        if(this->boundary_tree_lroot->find(pidx) == this->boundary_tree_lroot->end()){
+        if(this->boundary_tree_lroot->find(pidx) == this->boundary_tree_lroot->end()){// parent isn't in boundary tree
             if(pidx >= 0){// if this node has a parent (not the tile root)
                 parent = maxtree_data->at(pidx);
                 bound_parent = new boundary_node(parent, origin); //create the parent node to add on bondary tree
