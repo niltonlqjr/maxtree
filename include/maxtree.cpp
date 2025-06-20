@@ -84,6 +84,7 @@ maxtree_node *maxtree::at_pos(int64_t l, int64_t c){
 maxtree_node *maxtree::at_pos(int64_t index){
     return this->data->at(index);
 }
+
 maxtree_node *maxtree::get_parent(uint64_t node_idx){
     if(node_idx < 0){
         return NULL;
@@ -94,6 +95,7 @@ maxtree_node *maxtree::get_parent(uint64_t node_idx){
     }
     return this->at_pos(node->parent);
 }
+
 // std::unordered_map<int, maxtree_node*> *maxtree::get_data(){
 std::vector<maxtree_node*> *maxtree::get_data(){
     return this->data;
@@ -174,7 +176,7 @@ void maxtree::compute_sequential_iterative(){
     root->parent = -1;
 }
 
-void maxtree::fill_from_VImage(vips::VImage &img_in, bool verbose){
+void maxtree::fill_from_VImage(vips::VImage &img_in, uint32_t global_nlines, uint32_t global_ncols, bool verbose){
     this->h = img_in.height();
     this->w = img_in.width();
     vips::VImage img = img_in.copy_memory();
@@ -289,7 +291,7 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
                 to_merge=neighbour;
             }
             tn = this->get_levelroot(to_merge);
-            boundary_node n(to_merge,to_merge->idx);
+            boundary_node n(to_merge,to_merge->idx,tn->idx);
             bound_tree->insert_element(n,LEFT_BORDER);
             bound_tree->add_lroot_tree(tn, to_merge->idx, this->get_data());
         }
@@ -416,11 +418,34 @@ boundary_tree *maxtree::get_boundary_tree_no_overlap(uint8_t connectivity){
 /* */ 
 
  
-void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t base_w, bool verbose){
+void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t base_w, uint32_t l_tiles, uint32_t c_tiles, bool verbose){
     VipsRegion *c_region = reg_in.get_region();
+    uint64_t global_idx;
+    
     this->h = vips_region_height(c_region);
     this->w = vips_region_width(c_region);
     
+    uint32_t noborder_h = this->h, noborder_w = this->w;
+
+    int32_t ini_col=base_h, ini_line=base_h;
+
+    if(this->tile_borders->at(LEFT_BORDER)){
+        noborder_h--;
+        ini_col++;
+    }
+    if(this->tile_borders->at(RIGHT_BORDER)){
+        noborder_h--;
+    }
+    if(this->tile_borders->at(TOP_BORDER)){
+        noborder_w--;
+        ini_line++;
+    }
+    if(this->tile_borders->at(BOTTOM_BORDER)){
+        noborder_w--;
+    }
+    auto tam_noborder_tile = noborder_h * noborder_w;
+
+
    /*  if(verbose){
         std::cout << "filling: " << base_h << "," << base_w << "..." << base_h+this->h << "," << base_w+this->w <<"\n";
     } */
@@ -436,8 +461,10 @@ void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t
             } */
             int x = this->index_of(l,c);
             //VipsPel *vpel__ = VIPS_IMAGE_ADDR(c_region, c, l);
+            global_idx=this->grid_i * c_tiles * tam_noborder_tile + this->grid_j*tam_noborder_tile ;//global_idx is at start of the tile with no borders
+            global_idx += (l - ini_line)*noborder_w*this->grid_j;
             VipsPel *vpel = VIPS_REGION_ADDR(c_region, c+base_w, l+base_h);
-            this->data->push_back(new maxtree_node((*vpel),x));
+            this->data->push_back(new maxtree_node((*vpel),x,global_idx));
         }
     }
 } 
@@ -640,3 +667,4 @@ std::vector<maxtree_node*> maxtree::get_neighbours(uint64_t pixel, uint8_t con){
 void maxtree::filter(Tattribute a){
     //todo
 }
+

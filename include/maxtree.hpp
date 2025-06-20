@@ -72,7 +72,7 @@ class maxtree{
 
         maxtree_node *get_parent(uint64_t node_idx);
 
-        void fill_from_VImage(vips::VImage &img, bool verbose=false);
+        void fill_from_VImage(vips::VImage &img, uint32_t global_nlines, uint32_t global_ncols, bool verbose=false);
         void fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t base_w, bool verbose=false);
         void insert_component(std::vector<int> component, int64_t parent, double threshold, uint64_t id=-1);
         void insert_component(component c, double threshold);
@@ -80,7 +80,7 @@ class maxtree{
         std::vector<component> components_at(double threshold);
         std::vector<double> all_thresholds();
         std::vector<maxtree_node *> *get_levelroots();
-
+        
         boundary_tree *get_boundary_tree(uint8_t connectivity=4);
         boundary_tree *get_boundary_tree_no_overlap(uint8_t connectivity=4);
         
@@ -99,6 +99,7 @@ class maxtree{
         
         void compute_sequential_iterative();
         void filter(Tattribute a);
+
 };
 
 #endif

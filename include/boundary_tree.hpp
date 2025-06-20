@@ -18,14 +18,14 @@ class boundary_node{
         double gval;
         //bool in_tree;
         uint64_t maxtree_idx;
-        //uint64_t boundary_idx;
-        int64_t boundary_parent;
-        int64_t boundary_levelroot;
+        uint64_t global_idx;
+        int64_t maxtree_levelroot;
         uint64_t origin;
-        boundary_node(double gval, uint64_t maxtree_idx,
-             uint64_t origin, int64_t boundary_parent=-1,int64_t boundary_levelroot=-1);
-        boundary_node(maxtree_node *n, uint64_t origin,
-             int64_t boundary_parent=-1,int64_t boundary_levelroot=-1);
+        boundary_node(double gval, uint64_t maxtree_idx, uint64_t origin,
+             int64_t maxtree_levelroot, uint64_t global_idx);
+        boundary_node(maxtree_node *n, uint64_t origin, 
+            int64_t maxtree_levelroot);
+);
 
 };
 
@@ -48,6 +48,8 @@ class boundary_tree{
         void merge(boundary_tree *t, enum merge_directions d);
         void add_lroot_tree(maxtree_node *tn, int64_t origin, std::vector<maxtree_node*> *maxtree_data);
         bool insert_lroot(boundary_node *n);
+
+        void merge_branches(boundary_node *this_node, boundary_tree *t, boundary_node *t_node);
 };
 
 

@@ -1,24 +1,24 @@
 #include "boundary_tree.hpp"
 
 
-boundary_node::boundary_node(double gval, uint64_t maxtree_idx, uint64_t origin, int64_t boundary_parent, int64_t boundary_levelroot){
+boundary_node::boundary_node(double gval, uint64_t maxtree_idx, uint64_t origin,
+               int64_t maxtree_levelroot, uint64_t global_idx){
     this->gval=gval;
-    //this->in_tree=in_tree;
     this->maxtree_idx=maxtree_idx;
     this->origin = origin;
-    //this->boundary_idx=boundary_idx;
-    this->boundary_parent=boundary_parent;
-    this->boundary_levelroot=boundary_levelroot;
+    this->maxtree_levelroot = maxtree_levelroot;
+    this->global_idx;
+
 }
 
-boundary_node::boundary_node(maxtree_node *n, uint64_t origin, int64_t boundary_parent,int64_t boundary_levelroot){
+boundary_node::boundary_node(maxtree_node *n, uint64_t origin,
+               int64_t maxtree_levelroot, uint64_t global_idx){
     this->gval=n->gval;
     //this->in_tree=in_tree;
     this->maxtree_idx=n->idx;
     this->origin = origin;
-    //this->boundary_idx=boundary_idx;
-    this->boundary_parent=boundary_parent;
-    this->boundary_levelroot=boundary_levelroot;
+    this->maxtree_levelroot = maxtree_levelroot;
+    this->global_idx;
     
 }
 
@@ -112,6 +112,12 @@ boundary_node *boundary_tree::get_border_node_lroot(int64_t maxtree_idx){
     return ret;
 }
 
+void boundary_tree::merge_branches(boundary_node *this_node, boundary_tree *t, boundary_node *t_node){
+    boundary_node *x = this->boundary_tree_lroot->at(this_node->maxtree_levelroot);
+    boundary_node *y = t->boundary_tree_lroot->at(t_node->maxtree_levelroot);
+    while()
+}
+
 void boundary_tree::merge(boundary_tree *t, enum merge_directions d){
     std::unordered_map<uint64_t, boundary_node *> *v_this, *v_t;
     if(d == MERGE_HORIZONTAL){
@@ -142,10 +148,14 @@ void boundary_tree::merge(boundary_tree *t, enum merge_directions d){
     }
     std::cout << "\n";
     
-    if(d==MERGE_HORIZONTAL){
-        
-    }else if(d==MERGE_VERTICAL){
-        
+    if(v_t->size() != v_this->size()){
+        std::cerr << "invalid borders for tiles (" << this->grid_i << ", " << this->grid_j
+                  << ") and (" << t->grid_i  << ", " << t->grid_j << "\n";
+        exit(0);
+    }
+
+    for(auto i=0; i<= v_this->size; i++){
+
     }
 
 }
@@ -176,3 +186,5 @@ std::string boundary_tree::to_string(enum boundary_tree_field f){
     }
     return ss.str();
 }
+
+

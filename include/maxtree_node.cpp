@@ -2,12 +2,13 @@
 #include <string>
 
 
-maxtree_node::maxtree_node(double g, uint64_t i, Tattribute attr){
+maxtree_node::maxtree_node(double g, uint64_t i, Tattribute attr, uint64_t global_idx){
     this->idx = i;
     this->gval = g;
     this->attribute = attr;
     this->label = 0;
     this->parent = -1;
+    this->global_idx = global_idx
     this->visited=false;
 }
 
