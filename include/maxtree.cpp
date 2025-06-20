@@ -241,10 +241,11 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
                 to_merge=neighbour;
             }
             tn = this->get_levelroot(to_merge);
-            boundary_node n(tn,to_merge->idx);
-            if(bound_tree->insert_element(n,TOP_BORDER)){
-                bound_tree->add_parents(tn,TOP_BORDER,this->get_data());
-            }
+            boundary_node n(to_merge,to_merge->idx);
+            bound_tree->insert_element(n,TOP_BORDER);
+            
+            bound_tree->add_lroot_tree(tn,to_merge->idx,this->get_data());
+            
         }
     }
 
@@ -257,41 +258,40 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
             }
             
             tn = this->get_levelroot(to_merge);
-            boundary_node n(tn,to_merge->idx);
-            if(bound_tree->insert_element(n,RIGHT_BORDER)){
-                bound_tree->add_parents(tn, RIGHT_BORDER, this->get_data());
-                
-            }
+            boundary_node n(to_merge,to_merge->idx);
+            bound_tree->insert_element(n,RIGHT_BORDER);
+            bound_tree->add_lroot_tree(tn, to_merge->idx, this->get_data());
         }
     }
 
     if(this->tile_borders->at(BOTTOM_BORDER)){
-        for(j = this->w-1; (int32_t)j >= 0; j--){
+        //for(j = this->w-1; (int32_t)j >= 0; j--){
+        for(j=0; j < this->w; j++){
             to_merge = this->at_pos(this->h-2,j);
             neighbour = this->at_pos(this->h-1,j);
             if(neighbour->gval < to_merge->gval){
                 to_merge=neighbour;
             }
             tn = this->get_levelroot(to_merge);
-            boundary_node n(tn,to_merge->idx);
-            if(bound_tree->insert_element(n,BOTTOM_BORDER)){
-                bound_tree->add_parents(tn, BOTTOM_BORDER, this->get_data());
-            }
+            boundary_node n(to_merge,to_merge->idx);
+            bound_tree->insert_element(n,BOTTOM_BORDER);
+            bound_tree->add_lroot_tree(tn, to_merge->idx, this->get_data());
+            
         }
     }
 
     if(this->tile_borders->at(LEFT_BORDER)){
-        for(i=this->h-1; (int32_t)i >=0; i--){
+        //for(i=this->h-1; (int32_t)i >=0; i--){
+        for(i=0; i < this->h; i++){
             to_merge = this->at_pos(i, 1);
             neighbour = this->at_pos(i, 0);
             if(neighbour->gval < to_merge->gval){
                 to_merge=neighbour;
             }
             tn = this->get_levelroot(to_merge);
-            boundary_node n(tn,to_merge->idx);
-            if(bound_tree->insert_element(n,LEFT_BORDER)){
-                bound_tree->add_parents(tn, LEFT_BORDER, this->get_data());
-            }
+            boundary_node n(to_merge,to_merge->idx);
+            bound_tree->insert_element(n,LEFT_BORDER);
+            bound_tree->add_lroot_tree(tn, to_merge->idx, this->get_data());
         }
     }
     return bound_tree;

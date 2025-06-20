@@ -32,6 +32,7 @@ class boundary_node{
 class boundary_tree{
     private:
         std::vector< std::unordered_map<uint64_t, boundary_node *> *> *border_elements;
+        std::unordered_map<uint64_t, boundary_node*> *boundary_tree_lroot;
     public:
         uint32_t h;
         uint32_t w;
@@ -41,11 +42,12 @@ class boundary_tree{
         boundary_tree(std::vector<std::unordered_map<uint64_t, boundary_node *>*> *border_elements,
              uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j);
         ~boundary_tree();
-        bool insert_element(boundary_node &n, enum borders b, int64_t origin=-1);
-        boundary_node *get_border_node(int64_t maxtree_idx, enum borders b);
+        void insert_element(boundary_node &n, enum borders b, int64_t origin=-1);
+        boundary_node *get_border_node_lroot(int64_t maxtree_idx);
         std::string to_string(enum boundary_tree_field f=BOUNDARY_PARENT);
         void merge(boundary_tree *t, enum merge_directions d);
-        void add_parents(maxtree_node *tn, enum borders b,std::vector<maxtree_node*> *maxtree_data);
+        void add_lroot_tree(maxtree_node *tn, int64_t origin, std::vector<maxtree_node*> *maxtree_data);
+        bool insert_lroot(boundary_node *n);
 };
 
 

@@ -192,17 +192,20 @@ int main(int argc, char *argv[]){
         }
     }
     if(verbose){
-        std::cout <<"\n\n\n\n\n===============BOUNDARY TREES=================\n\n\n\n\n";
+        std::cout <<"\n===============BOUNDARY TREES=================\n";
+        std::cout <<"==============================================\n";
     }
 
     /*
     computing boundary trees
     */
-    std::vector<std::vector<boundary_tree *>> tiles_table;
-    for(int i=0; i < glines; i++){
-        for(int j=0;j<gcolumns; j++){
+    std::vector<std::vector<boundary_tree *> > tiles_table;
+    for(i=0; i < glines; i++){
+        tiles_table.push_back(std::vector<boundary_tree *>());
+        for(j=0;j<gcolumns; j++){
             t = tiles.at(i).at(j);
-            tiles_table.push_back(std::vector<boundary_tree *>());
+            boundary_tree *bt = t->get_boundary_tree();
+            tiles_table.at(i).push_back(bt);
             if(verbose){
                 std::cout << ">>>>> tile:" << i << " " << j << "\n";
                 std::cout << ">>> maxtree: grid_i = " << t->grid_i << " grid_j = " << t->grid_j << "\n";
@@ -221,8 +224,6 @@ int main(int argc, char *argv[]){
                     std::cout << r->idx << " ";
                 }
             }
-            boundary_tree *bt = t->get_boundary_tree();
-            tiles_table.at(i).push_back(bt);
             if(verbose){
                 std::cout << "\n";
                 std::cout << "borders:" <<t->string_borders() << "\n";

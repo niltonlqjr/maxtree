@@ -26,7 +26,17 @@
 #define	COLOR_WHITE   "\033[0;37m"	
 #define COLOR_RESET   "\033[0m"
 
-const std::string COLORS[] = {COLOR_BLACK,COLOR_RED,COLOR_GREEN,COLOR_YELLOW,COLOR_BLUE,COLOR_MAGENTA,COLOR_CYAN,COLOR_WHITE,COLOR_RESET};
+const std::string COLORS[] = {COLOR_BLACK,
+                              COLOR_RED,
+                              COLOR_GREEN,
+                              COLOR_YELLOW,
+                              COLOR_BLUE,
+                              COLOR_MAGENTA,
+                              COLOR_CYAN,
+                              COLOR_WHITE,
+                              COLOR_RESET
+                            };
+                            
 enum terminal_colors {BLACK,RED,GREEN,YELLOW,BLUE,MAGENTA,CYAN,WHITE,RESET};
 
 std::string terminal_color_string(int color);
