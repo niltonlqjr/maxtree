@@ -85,7 +85,7 @@ int main(int argc, char *argv[]){
     std::cout << "====================\n";
     std::cout << "start\n";
     
-    int h,w;
+    uint32_t h,w;
     h=in->height();
     w=in->width();
     
@@ -163,7 +163,7 @@ int main(int argc, char *argv[]){
             
             reg.prepare(reg_left, reg_top, tile_columns, tile_lines);
             
-            new_tree->fill_from_VRegion(reg, reg_top, reg_left, glines, gcolumns);
+            new_tree->fill_from_VRegion(reg, reg_top, reg_left, h, w);
             tiles.at(i).push_back(new_tree);
             vips_region_invalidate(reg.get_region());
             

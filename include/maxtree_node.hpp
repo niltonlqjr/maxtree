@@ -48,7 +48,7 @@ class maxtree_node{
         bool visited;
         Tattribute attribute;
 
-        maxtree_node(double g, uint64_t i, Tattribute attr = Tattr_default, uint64_t global_idx = 0);
+        maxtree_node(double g, uint64_t i, uint64_t global_idx = 0, Tattribute attr = Tattr_default);
         void compute_attribute(Tattribute);
 
         bool operator>(const maxtree_node &r);

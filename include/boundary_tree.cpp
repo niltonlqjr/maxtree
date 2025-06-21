@@ -7,7 +7,7 @@ boundary_node::boundary_node(double gval, uint64_t maxtree_idx, uint64_t origin,
     this->maxtree_idx=maxtree_idx;
     this->origin = origin;
     this->maxtree_levelroot = maxtree_levelroot;
-    this->global_idx;
+    this->global_idx = global_idx;
 
 }
 

@@ -462,12 +462,10 @@ void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t
             } */
             int x = this->index_of(l,c);
             //VipsPel *vpel__ = VIPS_IMAGE_ADDR(c_region, c, l);
-            //global_idx=this->grid_i * c_tiles * tam_noborder_tile + this->grid_j*tam_noborder_tile ;//global_idx is at start of the tile with no borders
-            //global_idx += (l - ini_line)*noborder_w*this->grid_j + c;
-            global_idx = c+base_w * c_tiles + l+base_h;
+            global_idx = (l+base_h) * c_tiles + (c+base_w);
             std::cout << "local:(" << l << "," << c << ") Global:(" << l+base_h << ","<< c+base_w << ")";
             VipsPel *vpel = VIPS_REGION_ADDR(c_region, c+base_w, l+base_h);
-            this->data->push_back(new maxtree_node((*vpel),x,global_idx));
+            this->data->push_back(new maxtree_node((*vpel), x, global_idx));
         }
     }
 } 
