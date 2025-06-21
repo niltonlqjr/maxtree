@@ -12,13 +12,13 @@ boundary_node::boundary_node(double gval, uint64_t maxtree_idx, uint64_t origin,
 }
 
 boundary_node::boundary_node(maxtree_node *n, uint64_t origin,
-               int64_t maxtree_levelroot, uint64_t global_idx){
+               int64_t maxtree_levelroot){
     this->gval=n->gval;
     //this->in_tree=in_tree;
     this->maxtree_idx=n->idx;
     this->origin = origin;
     this->maxtree_levelroot = maxtree_levelroot;
-    this->global_idx;
+    this->global_idx = n->global_idx;
     
 }
 
@@ -83,7 +83,7 @@ void boundary_tree::add_lroot_tree(maxtree_node *tn, int64_t origin, std::vector
     if(this->boundary_tree_lroot->find(tn->idx) != this->boundary_tree_lroot->end()){
         current=this->get_border_node_lroot(tn->idx);
     }else{
-        current = new boundary_node(tn, origin);
+        current = new boundary_node(tn, origin, tn->idx);
         this->insert_lroot(current);
     }
     while(current!=NULL){
@@ -91,13 +91,13 @@ void boundary_tree::add_lroot_tree(maxtree_node *tn, int64_t origin, std::vector
         if(this->boundary_tree_lroot->find(pidx) == this->boundary_tree_lroot->end()){// parent isn't in boundary tree
             if(pidx >= 0){// if this node has a parent (not the tile root)
                 parent = maxtree_data->at(pidx);
-                bound_parent = new boundary_node(parent, origin); //create the parent node to add on bondary tree
+                bound_parent = new boundary_node(parent, origin, parent->idx); //create the parent node to add on bondary tree
                 this->insert_lroot(bound_parent);
             }else{ 
                 pidx = -1;
             }
         }
-        current->boundary_parent = pidx; // update the parent of current node
+        //current->boundary_parent = pidx; // update the parent of current node
         current=this->get_border_node_lroot(pidx); // go to the parent and add its ancerstors
     }
 }
@@ -115,7 +115,7 @@ boundary_node *boundary_tree::get_border_node_lroot(int64_t maxtree_idx){
 void boundary_tree::merge_branches(boundary_node *this_node, boundary_tree *t, boundary_node *t_node){
     boundary_node *x = this->boundary_tree_lroot->at(this_node->maxtree_levelroot);
     boundary_node *y = t->boundary_tree_lroot->at(t_node->maxtree_levelroot);
-    while()
+    
 }
 
 void boundary_tree::merge(boundary_tree *t, enum merge_directions d){
@@ -138,15 +138,29 @@ void boundary_tree::merge(boundary_tree *t, enum merge_directions d){
         }
     }
 
+    std::cout << "local idx:\n";
+    
     for(auto x: *v_this){
-        std::cout << x.first <<" ";
+        std::cout << x.first <<" " ;
     }
     std::cout << "\n";
     
     for(auto x: *v_t){
         std::cout << x.first <<" ";
     }
+    std::cout << "\nglobal idx\n";
+
+    
+    for(auto x: *v_this){
+        std::cout << x.second->global_idx <<" " ;
+    }
     std::cout << "\n";
+    
+    for(auto x: *v_t){
+        std::cout << x.second->global_idx <<" ";
+    }
+    std::cout << "\n";
+    
     
     if(v_t->size() != v_this->size()){
         std::cerr << "invalid borders for tiles (" << this->grid_i << ", " << this->grid_j
@@ -154,9 +168,10 @@ void boundary_tree::merge(boundary_tree *t, enum merge_directions d){
         exit(0);
     }
 
-    for(auto i=0; i<= v_this->size; i++){
-
-    }
+/*    for(auto i=0; i< v_this->size(); i++){
+        std::cout << "v_this global idx:" << v_this->at(i)->global_idx 
+                  << "v_t global idx:" << v_t->at(i)->global_idx << "\n";
+    }*/
 
 }
 
@@ -170,9 +185,9 @@ std::string boundary_tree::to_string(enum boundary_tree_field f){
         for(auto pairs: v){
             auto bn = pairs.second;
             if(f == BOUNDARY_PARENT){
-                ss << bn->boundary_parent;
+                //ss << bn->boundary_parent;
             }else if(f == BOUNDARY_LEVELROOT){
-                ss << bn->boundary_levelroot;
+                //ss << bn->boundary_levelroot;
             }else if(f == BOUNDARY_IDX){
                 //ss << bn->boundary_idx;
             }else if(f == MAXTREE_IDX){

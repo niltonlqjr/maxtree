@@ -243,7 +243,7 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
                 to_merge=neighbour;
             }
             tn = this->get_levelroot(to_merge);
-            boundary_node n(to_merge,to_merge->idx);
+            boundary_node n(to_merge,to_merge->idx,tn->idx);
             bound_tree->insert_element(n,TOP_BORDER);
             
             bound_tree->add_lroot_tree(tn,to_merge->idx,this->get_data());
@@ -260,7 +260,7 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
             }
             
             tn = this->get_levelroot(to_merge);
-            boundary_node n(to_merge,to_merge->idx);
+            boundary_node n(to_merge,to_merge->idx,tn->idx);
             bound_tree->insert_element(n,RIGHT_BORDER);
             bound_tree->add_lroot_tree(tn, to_merge->idx, this->get_data());
         }
@@ -275,7 +275,7 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
                 to_merge=neighbour;
             }
             tn = this->get_levelroot(to_merge);
-            boundary_node n(to_merge,to_merge->idx);
+            boundary_node n(to_merge,to_merge->idx,tn->idx);
             bound_tree->insert_element(n,BOTTOM_BORDER);
             bound_tree->add_lroot_tree(tn, to_merge->idx, this->get_data());
             
@@ -418,7 +418,8 @@ boundary_tree *maxtree::get_boundary_tree_no_overlap(uint8_t connectivity){
 /* */ 
 
  
-void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t base_w, uint32_t l_tiles, uint32_t c_tiles, bool verbose){
+void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t base_w, 
+                                uint32_t l_tiles, uint32_t c_tiles, bool verbose){
     VipsRegion *c_region = reg_in.get_region();
     uint64_t global_idx;
     
@@ -461,8 +462,10 @@ void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t
             } */
             int x = this->index_of(l,c);
             //VipsPel *vpel__ = VIPS_IMAGE_ADDR(c_region, c, l);
-            global_idx=this->grid_i * c_tiles * tam_noborder_tile + this->grid_j*tam_noborder_tile ;//global_idx is at start of the tile with no borders
-            global_idx += (l - ini_line)*noborder_w*this->grid_j;
+            //global_idx=this->grid_i * c_tiles * tam_noborder_tile + this->grid_j*tam_noborder_tile ;//global_idx is at start of the tile with no borders
+            //global_idx += (l - ini_line)*noborder_w*this->grid_j + c;
+            global_idx = c+base_w * c_tiles + l+base_h;
+            std::cout << "local:(" << l << "," << c << ") Global:(" << l+base_h << ","<< c+base_w << ")";
             VipsPel *vpel = VIPS_REGION_ADDR(c_region, c+base_w, l+base_h);
             this->data->push_back(new maxtree_node((*vpel),x,global_idx));
         }

@@ -162,7 +162,8 @@ int main(int argc, char *argv[]){
             vips::VRegion reg = in->region(reg_left, reg_top, tile_columns, tile_lines);
             
             reg.prepare(reg_left, reg_top, tile_columns, tile_lines);
-            new_tree->fill_from_VRegion(reg, reg_top, reg_left, verbose);
+            
+            new_tree->fill_from_VRegion(reg, reg_top, reg_left, glines, gcolumns);
             tiles.at(i).push_back(new_tree);
             vips_region_invalidate(reg.get_region());
             

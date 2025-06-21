@@ -152,7 +152,7 @@ Ideia geral:
 */
 maxtree *maxtree_main(VImage *in, int nth = 1){
     maxtree *m = new maxtree(in->height(), in->width());
-    m->fill_from_VImage(*in);
+    m->fill_from_VImage(*in, in->height(), in->height());
     uint64_t tpixel=0;
     component *c;
     int id = 0;

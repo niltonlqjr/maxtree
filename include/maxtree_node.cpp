@@ -8,7 +8,7 @@ maxtree_node::maxtree_node(double g, uint64_t i, Tattribute attr, uint64_t globa
     this->attribute = attr;
     this->label = 0;
     this->parent = -1;
-    this->global_idx = global_idx
+    this->global_idx = global_idx;
     this->visited=false;
 }
 

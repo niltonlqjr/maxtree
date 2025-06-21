@@ -23,9 +23,9 @@ class boundary_node{
         uint64_t origin;
         boundary_node(double gval, uint64_t maxtree_idx, uint64_t origin,
              int64_t maxtree_levelroot, uint64_t global_idx);
-        boundary_node(maxtree_node *n, uint64_t origin, 
-            int64_t maxtree_levelroot);
-);
+        boundary_node(maxtree_node *n, uint64_t origin,
+               int64_t maxtree_levelroot);
+
 
 };
 
