@@ -219,6 +219,9 @@ int main(int argc, char *argv[]){
                 std::cout << t->to_string(LEVELROOT,colored,5);
                 std::cout << "________________ATTRIBUTE________________\n";
                 std::cout << t->to_string(ATTRIBUTE,colored,5);
+                std::cout << "_______________GLOBAL IDX_________________\n";
+                std::cout << t->to_string(GLOBAL_IDX,colored,5);
+
 
                 std::cout << "Levels roots:";
                 for(auto r: *(t->get_levelroots())){

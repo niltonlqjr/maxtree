@@ -462,8 +462,8 @@ void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t
             } */
             int x = this->index_of(l,c);
             //VipsPel *vpel__ = VIPS_IMAGE_ADDR(c_region, c, l);
-            global_idx = (l+base_h) * c_tiles + (c+base_w);
-            std::cout << "local:(" << l << "," << c << ") Global:(" << l+base_h << ","<< c+base_w << ")";
+            global_idx = ((base_h+l) * c_tiles) + (c+base_w);
+            std::cout << "local:(" << l << "," << c << ") Global:(" << l+base_h << ","<< c+base_w << ")\n";
             VipsPel *vpel = VIPS_REGION_ADDR(c_region, c+base_w, l+base_h);
             this->data->push_back(new maxtree_node((*vpel), x, global_idx));
         }
@@ -555,6 +555,16 @@ std::string maxtree::to_string(enum maxtee_node_field field, bool colored, uint8
         for(int i=0; i < this->h; i++){
             for(int j=0; j < this->w; j++){
                 auto point = this->data->at(this->index_of(i,j))->idx;
+                if(colored)
+                    r+=terminal_color_string(point % 8);
+                r += fill(std::to_string(point), spaces-1) + " " ;
+            }
+            r += "\n";
+        }
+    }else if(field == GLOBAL_IDX){
+        for(int i=0; i < this->h; i++){
+            for(int j=0; j < this->w; j++){
+                auto point = this->data->at(this->index_of(i,j))->global_idx;
                 if(colored)
                     r+=terminal_color_string(point % 8);
                 r += fill(std::to_string(point), spaces-1) + " " ;
