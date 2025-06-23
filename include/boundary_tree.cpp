@@ -2,32 +2,31 @@
 
 
 boundary_node::boundary_node(double gval, uint64_t maxtree_idx, uint64_t origin,
-               int64_t maxtree_levelroot, uint64_t global_idx){
-    this->gval=gval;
-    this->maxtree_idx=maxtree_idx;
+                             uint64_t global_idx, int64_t bound_parent){
+    this->gval = gval;
+    this->maxtree_idx = maxtree_idx;
     this->origin = origin;
-    this->maxtree_levelroot = maxtree_levelroot;
     this->global_idx = global_idx;
+    this->boundary_parent = bound_parent;
 
 }
 
 boundary_node::boundary_node(maxtree_node *n, uint64_t origin,
-               int64_t maxtree_levelroot){
-    this->gval=n->gval;
-    //this->in_tree=in_tree;
-    this->maxtree_idx=n->idx;
+                             int64_t bound_parent){
+    this->gval = n->gval;
+    this->maxtree_idx = n->idx;
     this->origin = origin;
-    this->maxtree_levelroot = maxtree_levelroot;
     this->global_idx = n->global_idx;
+    this->boundary_parent = bound_parent;
     
 }
 
 boundary_tree::boundary_tree(uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j){
-    this->h=h;
-    this->w=w;
-    this->grid_i=grid_i;
+    this->h = h;
+    this->w = w;
+    this->grid_i = grid_i;
     this->grid_j = grid_j;
-    this->border_elements=new std::vector<std::unordered_map<uint64_t, boundary_node *>*>();
+    this->border_elements = new std::vector<std::unordered_map<uint64_t, boundary_node *>*>();
     for(auto b : TBordersVector){
         this->border_elements->push_back(new std::unordered_map<uint64_t, boundary_node *>());
     }
@@ -36,9 +35,9 @@ boundary_tree::boundary_tree(uint32_t h, uint32_t w, uint32_t grid_i, uint32_t g
 
 boundary_tree::boundary_tree(std::vector<std::unordered_map<uint64_t, boundary_node *>*> *border_elements,
                              uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j){
-    this->h=h;
-    this->w=w;
-    this->grid_i=grid_i;
+    this->h = h;
+    this->w = w;
+    this->grid_i = grid_i;
     this->grid_j = grid_j;
     this->border_elements=border_elements;
     this->boundary_tree_lroot = new std::unordered_map<uint64_t, boundary_node*>();
@@ -47,7 +46,7 @@ boundary_tree::boundary_tree(std::vector<std::unordered_map<uint64_t, boundary_n
 boundary_tree::~boundary_tree(){
     for(uint32_t i=0;i < this->border_elements->size(); i++){
         for(auto pairs: *this->border_elements->at(i)){
-            uint64_t n=pairs.first;
+            uint64_t n = pairs.first;
             delete pairs.second;
         }
         delete this->border_elements->at(i);
@@ -74,31 +73,36 @@ bool boundary_tree::insert_lroot(boundary_node *n){
     return true;
 }
 
-void boundary_tree::add_lroot_tree(maxtree_node *tn, int64_t origin, std::vector<maxtree_node*> *maxtree_data){
+void boundary_tree::add_lroot_tree(maxtree_node *levelroot, int64_t origin, std::vector<maxtree_node*> *maxtree_data){
     maxtree_node *parent;
     boundary_node *current, *bound_parent;
     int64_t parent_idx;
     int64_t pidx;
     
-    if(this->boundary_tree_lroot->find(tn->idx) != this->boundary_tree_lroot->end()){
-        current=this->get_border_node_lroot(tn->idx);
+    if(this->boundary_tree_lroot->find(levelroot->idx) != this->boundary_tree_lroot->end()){ 
+        // levelroot found on boundary tree, the branch is already added to boundary tree
+        //current = this->get_border_node_lroot(levelroot->idx);
+        return;
     }else{
-        current = new boundary_node(tn, origin, tn->idx);
+        current = new boundary_node(levelroot, origin, -1);
         this->insert_lroot(current);
     }
-    while(current!=NULL){
+    while(current != NULL){
         pidx = maxtree_data->at(current->maxtree_idx)->parent; // get parent idx of current boundary node
         if(this->boundary_tree_lroot->find(pidx) == this->boundary_tree_lroot->end()){// parent isn't in boundary tree
             if(pidx >= 0){// if this node has a parent (not the tile root)
                 parent = maxtree_data->at(pidx);
-                bound_parent = new boundary_node(parent, origin, parent->idx); //create the parent node to add on bondary tree
-                this->insert_lroot(bound_parent);
-            }else{ 
-                pidx = -1;
+                bound_parent = new boundary_node(parent, origin, -1); //create the parent node to add on bondary tree
+                current->boundary_parent = bound_parent->maxtree_idx; //vinculate the idx (used in maxtree) of parent to the current node
+                if(!this->insert_lroot(bound_parent)){ // try to insert parent node 
+                    delete bound_parent; // if isn't possible insert node (the node is alredy in boundary tree) free its memory
+                    break; // stop the insertion process (all the ancestors from current are in boundary tree)
+                }
+            }else{ // parent is in boundary tree, so we can stop the add process
+                break;
             }
         }
-        //current->boundary_parent = pidx; // update the parent of current node
-        current=this->get_border_node_lroot(pidx); // go to the parent and add its ancerstors
+        current = this->get_border_node_lroot(pidx); // go to the parent and add its ancerstors
     }
 }
 
@@ -115,10 +119,18 @@ boundary_node *boundary_tree::get_border_node_lroot(int64_t maxtree_idx){
 void boundary_tree::merge_branches(boundary_node *this_node, boundary_tree *t, boundary_node *t_node){
     boundary_node *x = this->boundary_tree_lroot->at(this_node->maxtree_levelroot);
     boundary_node *y = t->boundary_tree_lroot->at(t_node->maxtree_levelroot);
+
+    while(x->global_idx != y->global_idx){
+        
+    }
     
 }
 
-void boundary_tree::merge(boundary_tree *t, enum merge_directions d){
+void boundary_tree::merge(boundary_tree *t, enum merge_directions d, uint8_t connection){
+    if(connection != 4){
+        std::cerr << "connection != 4 not implemented yet\n";
+        exit(0);
+    }
     std::unordered_map<uint64_t, boundary_node *> *v_this, *v_t;
     if(d == MERGE_HORIZONTAL){
         if(this->grid_i < t->grid_i){
@@ -168,10 +180,6 @@ void boundary_tree::merge(boundary_tree *t, enum merge_directions d){
         exit(0);
     }
 
-/*    for(auto i=0; i< v_this->size(); i++){
-        std::cout << "v_this global idx:" << v_this->at(i)->global_idx 
-                  << "v_t global idx:" << v_t->at(i)->global_idx << "\n";
-    }*/
 
 }
 

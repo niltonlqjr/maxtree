@@ -15,16 +15,17 @@ enum boundary_tree_field{
 
 class boundary_node{
     public:
-        double gval;
+        double gval; // gray value
         //bool in_tree;
-        uint64_t maxtree_idx;
-        uint64_t global_idx;
-        int64_t maxtree_levelroot;
-        uint64_t origin;
+        uint64_t maxtree_idx; //index of node on local tile
+        uint64_t global_idx; // index of node on the whole image
+        int64_t maxtree_levelroot; // 
+        uint64_t origin; // index of node on the border that added the boundary tree branch
+        int64_t boundary_parent; // parent of the node in boundary tree
         boundary_node(double gval, uint64_t maxtree_idx, uint64_t origin,
-             int64_t maxtree_levelroot, uint64_t global_idx);
+                      uint64_t global_idx, int64_t bound_parent = -1);
         boundary_node(maxtree_node *n, uint64_t origin,
-               int64_t maxtree_levelroot);
+                      int64_t bound_parent = -1);
 
 
 };
@@ -45,7 +46,7 @@ class boundary_tree{
         void insert_element(boundary_node &n, enum borders b, int64_t origin=-1);
         boundary_node *get_border_node_lroot(int64_t maxtree_idx);
         std::string to_string(enum boundary_tree_field f=BOUNDARY_PARENT);
-        void merge(boundary_tree *t, enum merge_directions d);
+        void merge(boundary_tree *t, enum merge_directions d, uint8_t connection = 4);
         void add_lroot_tree(maxtree_node *tn, int64_t origin, std::vector<maxtree_node*> *maxtree_data);
         bool insert_lroot(boundary_node *n);
 
