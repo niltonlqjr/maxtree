@@ -49,7 +49,7 @@ class boundary_tree{
         void merge(boundary_tree *t, enum merge_directions d, uint8_t connection = 4);
         void add_lroot_tree(maxtree_node *tn, int64_t origin, std::vector<maxtree_node*> *maxtree_data);
         bool insert_lroot(boundary_node *n);
-
+        bool is_root(uint64_t n_idx);
         void merge_branches(boundary_node *this_node, boundary_tree *t, boundary_node *t_node);
 };
 

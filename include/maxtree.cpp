@@ -457,9 +457,9 @@ void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t
     
     for(int l = 0; l < this->h; l++){
         for(int c = 0; c < this->w; c++){
-/*             if(verbose){
+            if(verbose){
                 std::cout << "accessing:" << "(" << l << "," << c << ")\n";
-            } */
+            }
             int x = this->index_of(l,c);
             //VipsPel *vpel__ = VIPS_IMAGE_ADDR(c_region, c, l);
             global_idx = ((base_h+l) * c_tiles) + (c+base_w);
