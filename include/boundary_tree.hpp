@@ -17,13 +17,14 @@ class boundary_node{
     public:
         double gval; // gray value
         //bool in_tree;
+        Tattribute attr;
         uint64_t maxtree_idx; //index of node on local tile
         uint64_t global_idx; // index of node on the whole image
         int64_t maxtree_levelroot; // 
         uint64_t origin; // index of node on the border that added the boundary tree branch
         int64_t boundary_parent; // parent of the node in boundary tree
         boundary_node(double gval, uint64_t maxtree_idx, uint64_t origin,
-                      uint64_t global_idx, int64_t bound_parent = -1);
+                      uint64_t global_idx, Tattribute a = Tattr_default, int64_t bound_parent = -1);
         boundary_node(maxtree_node *n, uint64_t origin,
                       int64_t bound_parent = -1);
 
@@ -39,6 +40,7 @@ class boundary_tree{
         uint32_t w;
         uint32_t grid_i;
         uint32_t grid_j;
+        int64_t border_lr;
         boundary_tree(uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j);
         boundary_tree(std::vector<std::unordered_map<uint64_t, boundary_node *>*> *border_elements,
              uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j);

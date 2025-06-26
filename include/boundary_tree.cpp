@@ -2,12 +2,13 @@
 
 
 boundary_node::boundary_node(double gval, uint64_t maxtree_idx, uint64_t origin,
-                             uint64_t global_idx, int64_t bound_parent){
+                             uint64_t global_idx, Tattribute a ,int64_t bound_parent){
     this->gval = gval;
     this->maxtree_idx = maxtree_idx;
     this->origin = origin;
     this->global_idx = global_idx;
     this->boundary_parent = bound_parent;
+    this->attr = a;
 
 }
 
@@ -18,6 +19,7 @@ boundary_node::boundary_node(maxtree_node *n, uint64_t origin,
     this->origin = origin;
     this->global_idx = n->global_idx;
     this->boundary_parent = bound_parent;
+    this->attr = n->attribute;
     
 }
 
@@ -31,6 +33,7 @@ boundary_tree::boundary_tree(uint32_t h, uint32_t w, uint32_t grid_i, uint32_t g
         this->border_elements->push_back(new std::unordered_map<uint64_t, boundary_node *>());
     }
     this->boundary_tree_lroot = new std::unordered_map<uint64_t, boundary_node*>();
+    this->border_lr = -1;
 }
 
 boundary_tree::boundary_tree(std::vector<std::unordered_map<uint64_t, boundary_node *>*> *border_elements,
@@ -41,6 +44,7 @@ boundary_tree::boundary_tree(std::vector<std::unordered_map<uint64_t, boundary_n
     this->grid_j = grid_j;
     this->border_elements=border_elements;
     this->boundary_tree_lroot = new std::unordered_map<uint64_t, boundary_node*>();
+    this->border_lr = -1;
 }
 
 boundary_tree::~boundary_tree(){

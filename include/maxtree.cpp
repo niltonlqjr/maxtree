@@ -217,7 +217,6 @@ maxtree_node *maxtree::get_levelroot(maxtree_node *n){
             break;
         }
         n_parent = this->data->at(n_parent->parent);
-        
     }
     return n;
 }
