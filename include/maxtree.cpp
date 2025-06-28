@@ -527,7 +527,7 @@ void maxtree::insert_component(std::vector<int> comp, int64_t parent, double thr
 }
 
 
-std::string maxtree::to_string(enum maxtee_node_field field, bool colored, uint8_t spaces ){
+std::string maxtree::to_string(enum maxtee_node_field field, bool colored, uint8_t spaces, uint8_t decimal ){
     std::string r;
     //a lot of ifs with same for code inside to avoid branches inside for
     if(field == PARENT){
@@ -576,7 +576,7 @@ std::string maxtree::to_string(enum maxtee_node_field field, bool colored, uint8
                 auto dpoint = this->data->at(this->index_of(i,j))->gval;
                 if(colored)
                     r+=terminal_color_string(dpoint / 31);
-                r += fill(std::to_string(dpoint), spaces+5) + " " ;
+                r += fill(std::to_string(dpoint), spaces+decimal) + " " ;
             }
             r += "\n";
         }

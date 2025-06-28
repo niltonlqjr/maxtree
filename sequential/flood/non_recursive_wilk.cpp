@@ -135,12 +135,12 @@ int main(int argc, char *argv[]){
     t = new maxtree(h,w);
     vips::VImage cp = in->copy_memory();
     t->fill_from_VImage(cp);
-    compute_maxtree(t);
+    t->compute_sequential_iterative();
     if(verbose){
         std::cout<<"__________________GVAL________________\n";
-        std::cout << t->to_string(GVAL,5);
+        std::cout << t->to_string(GVAL,false,5);
         std::cout<<"__________________PARENT________________\n";
-        std::cout << t->to_string();
+        std::cout << t->to_string(PARENT,false,5);
     }
     
     

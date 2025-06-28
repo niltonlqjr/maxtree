@@ -224,9 +224,9 @@ int main(int argc, char **argv){
     maxtree *t = new maxtree(tdata, h, w);
     //if(verbose) print_matrix(t, h, w);
     //if(verbose) print_labels(t, h, w);
-    std::cout << "gval\n" << t->to_string(GVAL);
-    std::cout << "label\n" << t->to_string(LABEL);
-    std::cout << "parent\n" << t->to_string(PARENT);
+    std::cout << "gval\n" << t->to_string(GVAL,false);
+    std::cout << "label\n" << t->to_string(LABEL,false);
+    std::cout << "parent\n" << t->to_string(PARENT,false);
     vips_shutdown();
     return 0;
 }
