@@ -1,4 +1,4 @@
-divide_dir = ./parallel
+parallel_dir = ./parallel
 flood_dir = ./sequential/flood
 union_find_dir = ./sequential/union-find
 
@@ -13,11 +13,11 @@ ifdef OPT
 endif
 
 
-all: divide flood union
+all: parallel flood union
 
 
-divide:
-	$(MAKE) -C ${divide_dir} ${MAKE_SUBPROJECTS_ARGS}
+parallel:
+	$(MAKE) -C ${parallel_dir} ${MAKE_SUBPROJECTS_ARGS}
 
 flood:
 	$(MAKE) -C ${flood_dir} ${MAKE_SUBPROJECTS_ARGS}

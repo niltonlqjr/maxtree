@@ -242,7 +242,7 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
                 to_merge=neighbour;
             }
             tn = this->get_levelroot(to_merge);
-            boundary_node n(to_merge,to_merge->idx,this->get_levelroot(to_merge)->idx);
+            boundary_node n(to_merge,to_merge->idx,this->get_levelroot(to_merge)->global_idx);
             bound_tree->insert_element(n,TOP_BORDER);
             
             bound_tree->add_lroot_tree(tn,to_merge->idx,this->get_data());
@@ -259,7 +259,7 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
             }
             
             tn = this->get_levelroot(to_merge);
-            boundary_node n(to_merge,to_merge->idx,this->get_levelroot(to_merge)->idx);
+            boundary_node n(to_merge,to_merge->idx,this->get_levelroot(to_merge)->global_idx);
             bound_tree->insert_element(n,RIGHT_BORDER);
             bound_tree->add_lroot_tree(tn, to_merge->idx, this->get_data());
         }
@@ -274,7 +274,7 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
                 to_merge = neighbour;
             }
             tn = this->get_levelroot(to_merge);
-            boundary_node n(to_merge,to_merge->idx,this->get_levelroot(to_merge)->idx);
+            boundary_node n(to_merge,to_merge->idx,this->get_levelroot(to_merge)->global_idx);
             bound_tree->insert_element(n, BOTTOM_BORDER);
             bound_tree->add_lroot_tree(tn, to_merge->idx, this->get_data());
             
@@ -290,7 +290,7 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
                 to_merge=neighbour;
             }
             tn = this->get_levelroot(to_merge);
-            boundary_node n(to_merge,to_merge->idx,this->get_levelroot(to_merge)->idx);
+            boundary_node n(to_merge,to_merge->idx,this->get_levelroot(to_merge)->global_idx);
             bound_tree->insert_element(n,LEFT_BORDER);
             bound_tree->add_lroot_tree(tn, to_merge->idx, this->get_data());
         }
@@ -456,13 +456,13 @@ void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t
     
     for(int l = 0; l < this->h; l++){
         for(int c = 0; c < this->w; c++){
-            if(verbose){
+            if(verbose)
                 std::cout << "accessing:" << "(" << l << "," << c << ")\n";
-            }
             int x = this->index_of(l,c);
             //VipsPel *vpel__ = VIPS_IMAGE_ADDR(c_region, c, l);
             global_idx = ((base_h+l) * c_tiles) + (c+base_w);
-            std::cout << "local:(" << l << "," << c << ") Global:(" << l+base_h << ","<< c+base_w << ")\n";
+            if(verbose)
+                std::cout << "local:(" << l << "," << c << ") Global:(" << l+base_h << ","<< c+base_w << ")\n";
             VipsPel *vpel = VIPS_REGION_ADDR(c_region, c+base_w, l+base_h);
             this->data->push_back(new maxtree_node((*vpel), x, global_idx));
         }

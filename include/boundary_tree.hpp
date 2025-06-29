@@ -3,6 +3,7 @@
 #include <sstream>
 #include <iostream>
 #include <unordered_map>
+#include <sysexits.h>
 
 #include "maxtree_node.hpp"
 
@@ -10,7 +11,7 @@
 #define __BOUNDARY_TREE__
 
 enum boundary_tree_field{
-    BOUNDARY_PARENT, MAXTREE_IDX, BOUNDARY_IDX, BOUNDARY_GVAL, BOUNDARY_LEVELROOT
+    BOUNDARY_PARENT, MAXTREE_IDX, BOUNDARY_IDX, BOUNDARY_GVAL, BOUNDARY_LEVELROOT, BOUNDARY_GLOBAL_IDX
 };
 
 class boundary_node{
@@ -47,12 +48,14 @@ class boundary_tree{
         ~boundary_tree();
         void insert_element(boundary_node &n, enum borders b, int64_t origin=-1);
         boundary_node *get_border_node_lroot(int64_t maxtree_idx);
-        std::string to_string(enum boundary_tree_field f=BOUNDARY_PARENT);
-        void merge(boundary_tree *t, enum merge_directions d, uint8_t connection = 4);
+        boundary_tree *merge(boundary_tree *t, enum merge_directions d, uint8_t connection = 4);
         void add_lroot_tree(maxtree_node *tn, int64_t origin, std::vector<maxtree_node*> *maxtree_data);
         bool insert_lroot(boundary_node *n);
         bool is_root(uint64_t n_idx);
         void merge_branches(boundary_node *this_node, boundary_tree *t, boundary_node *t_node);
+        uint64_t index_of(uint32_t i, uint32_t j);
+        std::tuple<uint32_t,uint32_t> lin_col(uint64_t index);
+        std::string to_string(enum boundary_tree_field f=BOUNDARY_PARENT);
 };
 
 

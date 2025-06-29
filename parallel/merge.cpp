@@ -179,7 +179,7 @@ int main(int argc, char *argv[]){
     /*
     computing tiles maxtree
     */
-
+    std::cout << "computing tiles trees\n";
     for(int i=0; i < glines; i++){
         for(int j=0;j<gcolumns; j++){
             t = tiles.at(i).at(j);
@@ -200,11 +200,14 @@ int main(int argc, char *argv[]){
     /*
     computing boundary trees
     */
+    std::cout << "computing boundary trees\n";
     std::vector<std::vector<boundary_tree *> > tiles_table;
     for(i=0; i < glines; i++){
         tiles_table.push_back(std::vector<boundary_tree *>());
         for(j=0;j<gcolumns; j++){
             t = tiles.at(i).at(j);
+            if(verbose)
+                std::cout << "Boundary Tile:(" << i << "," << j <<")\n";
             boundary_tree *bt = t->get_boundary_tree();
             tiles_table.at(i).push_back(bt);
             if(verbose){

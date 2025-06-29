@@ -63,17 +63,17 @@ void boundary_tree::insert_element(boundary_node &n, enum borders b, int64_t ori
     boundary_node *new_n;
     auto border = this->border_elements->at(b);
     new_n = new boundary_node(n);
-    border->emplace(n.maxtree_idx, new_n);
-    if(this->boundary_tree_lroot->find(n.maxtree_idx) != this->boundary_tree_lroot->end()){
-        this->boundary_tree_lroot->emplace(new_n->maxtree_idx, new_n);
+    border->emplace(n.global_idx, new_n);
+    if(this->boundary_tree_lroot->find(n.global_idx) != this->boundary_tree_lroot->end()){
+        this->boundary_tree_lroot->emplace(new_n->global_idx, new_n);
     }
 }
 
 bool boundary_tree::insert_lroot(boundary_node *n){
-    if(this->boundary_tree_lroot->find(n->maxtree_idx) != this->boundary_tree_lroot->end()){
+    if(this->boundary_tree_lroot->find(n->global_idx) != this->boundary_tree_lroot->end()){
         return false;
     }
-    this->boundary_tree_lroot->emplace(n->maxtree_idx, n);
+    this->boundary_tree_lroot->emplace(n->global_idx, n);
     return true;
 }
 
@@ -83,7 +83,7 @@ void boundary_tree::add_lroot_tree(maxtree_node *levelroot, int64_t origin, std:
     int64_t parent_idx;
     int64_t pidx;
     
-    if(this->boundary_tree_lroot->find(levelroot->idx) != this->boundary_tree_lroot->end()){ 
+    if(this->boundary_tree_lroot->find(levelroot->global_idx) != this->boundary_tree_lroot->end()){ 
         // levelroot found on boundary tree, the branch is already added to boundary tree
         //current = this->get_border_node_lroot(levelroot->idx);
         return;
@@ -97,7 +97,7 @@ void boundary_tree::add_lroot_tree(maxtree_node *levelroot, int64_t origin, std:
             if(pidx >= 0){// if this node has a parent (not the tile root)
                 parent = maxtree_data->at(pidx);
                 bound_parent = new boundary_node(parent, origin, -1); //create the parent node to add on bondary tree
-                current->boundary_parent = bound_parent->maxtree_idx; //vinculate the idx (used in maxtree) of parent to the current node
+                current->boundary_parent = bound_parent->global_idx; //vinculate the idx (used in maxtree) of parent to the current node
                 if(!this->insert_lroot(bound_parent)){ // try to insert parent node 
                     delete bound_parent; // if isn't possible insert node (the node is alredy in boundary tree) free its memory
                     break; // stop the insertion process (all the ancestors from current are in boundary tree)
@@ -106,14 +106,14 @@ void boundary_tree::add_lroot_tree(maxtree_node *levelroot, int64_t origin, std:
                 break;
             }
         }
-        current = this->get_border_node_lroot(pidx); // go to the parent and add its ancerstors
+        current = this->get_border_node_lroot(parent->global_idx); // go to the parent and add its ancerstors
     }
 }
 
-boundary_node *boundary_tree::get_border_node_lroot(int64_t maxtree_idx){
+boundary_node *boundary_tree::get_border_node_lroot(int64_t global_idx){
     boundary_node *ret;
-    if (maxtree_idx >= 0){
-        return this->boundary_tree_lroot->at(maxtree_idx);
+    if (global_idx >= 0){
+        return this->boundary_tree_lroot->at(global_idx);
     }
     return NULL;
 }
@@ -168,27 +168,129 @@ void boundary_tree::merge_branches(boundary_node *this_node, boundary_tree *t, b
     
 }
 
-void boundary_tree::merge(boundary_tree *t, enum merge_directions d, uint8_t connection){
+boundary_tree *boundary_tree::merge(boundary_tree *t, enum merge_directions d, uint8_t connection){
     if(connection != 4){
         std::cerr << "connection != 4 not implemented yet\n";
         exit(0);
     }
-    std::unordered_map<uint64_t, boundary_node *> *v_this, *v_t;
-    if(d == MERGE_HORIZONTAL){
+    uint64_t i ;
+    std::unordered_map<uint64_t, boundary_node *> *v_this, *v_t, *aux_border;
+    boundary_tree *ret_tree;
+
+    if(d == MERGE_HORIZONTAL){    
         if(this->grid_i < t->grid_i){
+            ret_tree = new boundary_tree(this->h + t->h - 2, this->w, this->grid_i, this->grid_j);
             v_this = this->border_elements->at(BOTTOM_BORDER);
             v_t = t->border_elements->at(TOP_BORDER);
+
+            if(v_t->size() != v_this->size()){
+                std::cerr << "invalid borders for tiles (" << this->grid_i << ", " << this->grid_j
+                        << ") and (" << t->grid_i  << ", " << t->grid_j << "\n";
+                exit(0);
+            }            
+
+            /* ============== copy this tree top border ============== */
+            aux_border = this->border_elements->at(TOP_BORDER);
+            for(auto n : *aux_border){
+                i = n.second->global_idx;
+                ret_tree->insert_element(*(aux_border->at(i)),TOP_BORDER);
+            }
+            /* ============== copy t tree bottom border ============== */
+            aux_border = t->border_elements->at(BOTTOM_BORDER);
+            for(auto n : *aux_border){
+                i = n.second->global_idx;
+                ret_tree->insert_element(*(aux_border->at(i)),BOTTOM_BORDER);
+            }
+            /* ============== concatenate this tree left border with t left border ============== */
+            aux_border = this->border_elements->at(LEFT_BORDER);
+            for(auto n : *aux_border){
+                i = n.second->global_idx;
+                ret_tree->insert_element(*(aux_border->at(i)),LEFT_BORDER);
+            }
+            aux_border = t->border_elements->at(LEFT_BORDER);
+            // the two last elements of this left border are the same of
+            // the two first elements of t left border
+            for(auto n : *aux_border){
+                i = n.second->global_idx;
+                ret_tree->insert_element(*(aux_border->at(i)),LEFT_BORDER);
+            }
+            /* ============== concatenate this tree right border with t right border ============== */
+            aux_border = this->border_elements->at(RIGHT_BORDER);
+            for(auto n : *aux_border){
+                i = n.second->global_idx;
+                ret_tree->insert_element(*(aux_border->at(i)), RIGHT_BORDER);
+            }
+            aux_border = t->border_elements->at(RIGHT_BORDER);
+            // the two last elements of this right border are the same of
+            // the two first elements of t right border
+            for(auto n : *aux_border){
+                i = n.second->global_idx;
+                ret_tree->insert_element(*(aux_border->at(i)), RIGHT_BORDER);
+            }
+
+
         }else{
-            v_this = this->border_elements->at(TOP_BORDER);
-            v_t = t->border_elements->at(BOTTOM_BORDER);
+            std::cerr << "Invalid merge call: destiny tree is in the postion ("
+                      << this->grid_i << ", " << this->grid_j << ") and the merged tree is in the position("
+                      << t->grid_i << ", " << t->grid_j << "). The destiny tree must be at top left of merged tree.";
+            exit(EX_DATAERR);
         }
     }else if(d == MERGE_VERTICAL){
         if(this->grid_j < t->grid_j){
+            ret_tree = new boundary_tree(this->h, this->w + t->w - 2, this->grid_i, this->grid_j);
             v_this = this->border_elements->at(RIGHT_BORDER);
             v_t = t->border_elements->at(LEFT_BORDER);
+
+            if(v_t->size() != v_this->size()){
+                std::cerr << "invalid borders for tiles (" << this->grid_i << ", " << this->grid_j
+                        << ") and (" << t->grid_i  << ", " << t->grid_j << "\n";
+                exit(0);
+            }
+
+             /* ============== copy this tree left border ============== */
+            aux_border = this->border_elements->at(LEFT_BORDER);
+            for(auto n : *aux_border){
+                i = n.second->global_idx;
+                ret_tree->insert_element(*(aux_border->at(i)),LEFT_BORDER);
+            }
+            /* ============== copy t tree right border ============== */
+            aux_border = t->border_elements->at(RIGHT_BORDER);
+            for(auto n : *aux_border){
+                i = n.second->global_idx;
+                ret_tree->insert_element(*(aux_border->at(i)),RIGHT_BORDER);
+            }
+            /* ============== concatenate this tree top border with t top border ============== */
+            aux_border = this->border_elements->at(TOP_BORDER);
+            for(auto n : *aux_border){
+                i = n.second->global_idx;
+                ret_tree->insert_element(*(aux_border->at(i)),TOP_BORDER);
+            }
+            aux_border = t->border_elements->at(TOP_BORDER);
+            // the two last elements of this top border are the same of
+            // the two first elements of t top border
+            for(auto n : *aux_border){
+                i = n.second->global_idx;
+                ret_tree->insert_element(*(aux_border->at(i)),TOP_BORDER);
+            }
+            /* ============== concatenate this tree bottom border with t bottom border ============== */
+            aux_border = this->border_elements->at(BOTTOM_BORDER);
+            for(auto n : *aux_border){
+                i = n.second->global_idx;
+                ret_tree->insert_element(*(aux_border->at(i)),BOTTOM_BORDER);
+            }
+            aux_border = t->border_elements->at(BOTTOM_BORDER);
+            // the two last elements of this bottom border are the same of
+            // the two first elements of t bottom border
+            for(auto n : *aux_border){
+                i = n.second->global_idx;
+                ret_tree->insert_element(*(aux_border->at(i)), BOTTOM_BORDER);
+            }
+
         }else{
-            v_this = this->border_elements->at(LEFT_BORDER);
-            v_t = t->border_elements->at(RIGHT_BORDER);
+            std::cerr << "Invalid merge call: destiny tree is in the postion ("
+                      << this->grid_i << ", " << this->grid_j << ") and the merged tree is in the position("
+                      << t->grid_i << ", " << t->grid_j << "). The destiny tree must be at top left of merged tree.";
+            exit(EX_DATAERR);
         }
     }
 
@@ -216,13 +318,17 @@ void boundary_tree::merge(boundary_tree *t, enum merge_directions d, uint8_t con
     std::cout << "\n";
     
     
-    if(v_t->size() != v_this->size()){
-        std::cerr << "invalid borders for tiles (" << this->grid_i << ", " << this->grid_j
-                  << ") and (" << t->grid_i  << ", " << t->grid_j << "\n";
-        exit(0);
-    }
+    return ret_tree;
 
 
+}
+
+uint64_t boundary_tree::index_of(uint32_t l, uint32_t c){
+    return l * this->w + c;
+}
+
+std::tuple<uint32_t,uint32_t> boundary_tree::lin_col(uint64_t index){
+    return std::make_tuple(index / this->w, index % this->w);
 }
 
 std::string boundary_tree::to_string(enum boundary_tree_field f){
@@ -244,6 +350,8 @@ std::string boundary_tree::to_string(enum boundary_tree_field f){
                 ss << bn->maxtree_idx;
             }else if(f == BOUNDARY_GVAL){
                 ss << bn->gval;
+            }else if(f==BOUNDARY_GLOBAL_IDX){
+                ss << bn->global_idx;
             }
             ss << " ";
         }
