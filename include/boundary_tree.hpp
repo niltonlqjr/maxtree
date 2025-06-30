@@ -10,9 +10,12 @@
 #ifndef __BOUNDARY_TREE__
 #define __BOUNDARY_TREE__
 
+#define NO_BORDER_LEVELROOT -1
+
 enum boundary_tree_field{
     BOUNDARY_PARENT, MAXTREE_IDX, BOUNDARY_IDX, BOUNDARY_GVAL, BOUNDARY_LEVELROOT, BOUNDARY_GLOBAL_IDX
 };
+
 
 class boundary_node{
     public:

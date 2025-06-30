@@ -125,7 +125,7 @@ bool boundary_tree::is_root(uint64_t n_idx){
     return this->get_border_node_lroot(n_idx)->boundary_parent == -1;
 }
 
-void boundary_tree::merge_branches(boundary_node *this_node, boundary_tree *t, boundary_node *t_node){
+void boundary_tree::merge_branches(boundary_node *this_node, boundary_tree *t, boundary_node *t_node, boundary_tree *ret_tree){
     boundary_tree *x_tree = this;
     boundary_tree *y_tree = t;
     boundary_tree *z_tree = this;
@@ -141,15 +141,19 @@ void boundary_tree::merge_branches(boundary_node *this_node, boundary_tree *t, b
             z_tree = x_tree;
         }else{
             if(x->gval == y->gval && x_tree != y_tree){
-                if(/* verificar se já existe um levelroot formado pelo par (x,y) */ false){    
-                    //conectar x e y ao levelroot formado pelo par (x,y) (o novo levelroot global desta área)
+                if(y_tree->border_lr != NO_BORDER_LEVELROOT){// check if y_tree has border levelroot
+                    x_tree->border_lr = y_tree->border_lr;
+                    x->boundary_parent = x_tree->border_lr;
+                }else if(x_tree->border_lr != NO_BORDER_LEVELROOT){ // check if 
+                    y_tree->border_lr = x_tree->border_lr;
+                    y->boundary_parent = y_tree->border_lr
                 }else{
                     // cria o levelroot global desta área como sendo o par (x,y)
-                    x->boundary_parent = y->maxtree_idx;
+                    x->boundary_parent = y->global_idx;
                     //add y in x tree here
                 }
             }else{
-                x->boundary_parent = y->maxtree_idx;
+                x->boundary_parent = y->global_idx;
                 //add y in x tree here
             }
             // manipulate atributes here
@@ -317,6 +321,8 @@ boundary_tree *boundary_tree::merge(boundary_tree *t, enum merge_directions d, u
     }
     std::cout << "\n";
     
+
+
     
     return ret_tree;
 
