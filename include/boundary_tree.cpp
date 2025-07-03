@@ -81,7 +81,7 @@ void boundary_tree::add_lroot_tree(maxtree_node *levelroot, int64_t origin, std:
     maxtree_node *parent;
     boundary_node *current, *bound_parent;
     int64_t parent_idx;
-    int64_t pidx;
+    int64_t global_pidx, local_pidx;
     
     if(this->boundary_tree_lroot->find(levelroot->global_idx) != this->boundary_tree_lroot->end()){ 
         // levelroot found on boundary tree, the branch is already added to boundary tree
@@ -92,10 +92,15 @@ void boundary_tree::add_lroot_tree(maxtree_node *levelroot, int64_t origin, std:
         this->insert_lroot(current);
     }
     while(current != NULL){
-        pidx = maxtree_data->at(current->maxtree_idx)->parent; // get parent idx of current boundary node
-        if(this->boundary_tree_lroot->find(pidx) == this->boundary_tree_lroot->end()){// parent isn't in boundary tree
-            if(pidx >= 0){// if this node has a parent (not the tile root)
-                parent = maxtree_data->at(pidx);
+        local_pidx = maxtree_data->at(current->maxtree_idx)->parent; // get parent idx of current boundary node
+        if(local_pidx == -1){
+            global_pidx = -1;   
+        }else{
+            global_pidx = maxtree_data->at(local_pidx)->global_idx;
+        }
+        if(this->boundary_tree_lroot->find(global_pidx) == this->boundary_tree_lroot->end()){// parent isn't in boundary tree
+            if(global_pidx >= 0){// if this node has a parent (not the tile root)
+                parent = maxtree_data->at(local_pidx);
                 bound_parent = new boundary_node(parent, origin, -1); //create the parent node to add on bondary tree
                 current->boundary_parent = bound_parent->global_idx; //vinculate the idx (used in maxtree) of parent to the current node
                 if(!this->insert_lroot(bound_parent)){ // try to insert parent node 
@@ -133,9 +138,9 @@ void boundary_tree::merge_branches(boundary_node *this_node, boundary_tree *t, b
     boundary_node *y = t->boundary_tree_lroot->at(t_node->maxtree_levelroot);
     boundary_node *z;
 
-    while(x->global_idx != y->global_idx && !y_tree->is_root(y->maxtree_idx) ){
-        z = z_tree->get_border_node_lroot(x->maxtree_idx);
-        if(!z_tree->is_root(z->maxtree_idx) && z->gval >= y->gval){
+    while(x->global_idx != y->global_idx && !y_tree->is_root(y->global_idx) ){
+        z = z_tree->get_border_node_lroot(x->global_idx);
+        if(!z_tree->is_root(z->global_idx) && z->gval >= y->gval){
             // merge attributes
             z = x;
             z_tree = x_tree;
@@ -146,7 +151,7 @@ void boundary_tree::merge_branches(boundary_node *this_node, boundary_tree *t, b
                     x->boundary_parent = x_tree->border_lr;
                 }else if(x_tree->border_lr != NO_BORDER_LEVELROOT){ // check if 
                     y_tree->border_lr = x_tree->border_lr;
-                    y->boundary_parent = y_tree->border_lr
+                    y->boundary_parent = y_tree->border_lr;
                 }else{
                     // cria o levelroot global desta área como sendo o par (x,y)
                     x->boundary_parent = y->global_idx;
@@ -163,10 +168,10 @@ void boundary_tree::merge_branches(boundary_node *this_node, boundary_tree *t, b
             y_tree = z_tree;
         }
     }
-    if(y_tree->is_root(y->maxtree_idx)){
-        while(!x_tree->is_root(x->maxtree_idx)){
+    if(y_tree->is_root(y->global_idx)){
+        while(!x_tree->is_root(x->global_idx)){
             //merge data here
-            z = x_tree->boundary_tree_lroot->at(x->maxtree_idx);
+            z = x_tree->boundary_tree_lroot->at(x->global_idx);
         }
     }
     

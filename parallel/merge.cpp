@@ -208,29 +208,29 @@ int main(int argc, char *argv[]){
             t = tiles.at(i).at(j);
             if(verbose)
                 std::cout << "Boundary Tile:(" << i << "," << j <<")\n";
-            boundary_tree *bt = t->get_boundary_tree();
-            tiles_table.at(i).push_back(bt);
-            if(verbose){
-                std::cout << ">>>>> tile:" << i << " " << j << "\n";
-                std::cout << ">>> maxtree: grid_i = " << t->grid_i << " grid_j = " << t->grid_j << "\n";
-
-                std::cout << "__________________GVAL________________\n";
-                std::cout << t->to_string(GVAL,colored,5);
-                std::cout << "_________________PARENT________________\n";
-                std::cout << t->to_string(PARENT,colored);
-                std::cout << "________________LEVELROOT________________\n";
-                std::cout << t->to_string(LEVELROOT,colored,5);
-                std::cout << "________________ATTRIBUTE________________\n";
-                std::cout << t->to_string(ATTRIBUTE,colored,5);
-                std::cout << "_______________GLOBAL IDX_________________\n";
-                std::cout << t->to_string(GLOBAL_IDX,colored,5);
-
-
-                std::cout << "Levels roots:";
-                for(auto r: *(t->get_levelroots())){
-                    std::cout << r->idx << " ";
+                if(verbose){
+                    std::cout << ">>>>> tile:" << i << " " << j << "\n";
+                    std::cout << ">>> maxtree: grid_i = " << t->grid_i << " grid_j = " << t->grid_j << "\n";
+                    
+                    std::cout << "__________________GVAL________________\n";
+                    std::cout << t->to_string(GVAL,colored,5);
+                    std::cout << "_________________PARENT________________\n";
+                    std::cout << t->to_string(PARENT,colored);
+                    std::cout << "________________LEVELROOT________________\n";
+                    std::cout << t->to_string(LEVELROOT,colored,5);
+                    std::cout << "________________ATTRIBUTE________________\n";
+                    std::cout << t->to_string(ATTRIBUTE,colored,5);
+                    std::cout << "_______________GLOBAL IDX_________________\n";
+                    std::cout << t->to_string(GLOBAL_IDX,colored,5);
+                    
+                    
+                    std::cout << "Levels roots:";
+                    for(auto r: *(t->get_levelroots())){
+                        std::cout << r->idx << " ";
                 }
             }
+            boundary_tree *bt = t->get_boundary_tree();
+            tiles_table.at(i).push_back(bt);
             if(verbose){
                 std::cout << "\n";
                 std::cout << "borders:" <<t->string_borders() << "\n";

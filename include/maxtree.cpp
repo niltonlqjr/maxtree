@@ -234,6 +234,7 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
     }
 
     bound_tree = new boundary_tree(this->h, this->w, this->grid_i, this->grid_j);
+
     if(this->tile_borders->at(TOP_BORDER)){
         for(j=0; j<this->w; j++){
             to_merge = this->at_pos(1,j);    
@@ -421,7 +422,7 @@ void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t
                                 uint32_t l_tiles, uint32_t c_tiles, bool verbose){
     VipsRegion *c_region = reg_in.get_region();
     uint64_t global_idx;
-    
+    Tattribute attr_ini;
     this->h = vips_region_height(c_region);
     this->w = vips_region_width(c_region);
     
@@ -443,16 +444,14 @@ void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t
     if(this->tile_borders->at(BOTTOM_BORDER)){
         noborder_w--;
     }
-    auto tam_noborder_tile = noborder_h * noborder_w;
 
-
-   /*  if(verbose){
+    if(verbose){
         std::cout << "filling: " << base_h << "," << base_w << "..." << base_h+this->h << "," << base_w+this->w <<"\n";
-    } */
+    }
     
-    char aux_enum_c[][50] = {"VIPS_FORMAT_UCHAR", "VIPS_FORMAT_CHAR", "VIPS_FORMAT_USHORT","VIPS_FORMAT_SHORT",
+    /*char aux_enum_c[][50] = {"VIPS_FORMAT_UCHAR", "VIPS_FORMAT_CHAR", "VIPS_FORMAT_USHORT","VIPS_FORMAT_SHORT",
          "VIPS_FORMAT_UINT"," VIPS_FORMAT_INT"," VIPS_FORMAT_FLOAT"," VIPS_FORMAT_COMPLEX"," VIPS_FORMAT_DOUBLE",
-         "VIPS_FORMAT_DPCOMPLEX","VIPS_FORMAT_LAST"};
+         "VIPS_FORMAT_DPCOMPLEX","VIPS_FORMAT_LAST"};*/
     
     for(int l = 0; l < this->h; l++){
         for(int c = 0; c < this->w; c++){
@@ -464,7 +463,16 @@ void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t
             if(verbose)
                 std::cout << "local:(" << l << "," << c << ") Global:(" << l+base_h << ","<< c+base_w << ")\n";
             VipsPel *vpel = VIPS_REGION_ADDR(c_region, c+base_w, l+base_h);
-            this->data->push_back(new maxtree_node((*vpel), x, global_idx));
+            /* check if it is a border pixel, so this attr should not be computed */
+            if((this->tile_borders->at(LEFT_BORDER)  && c == 0)           ||
+              (this->tile_borders->at(RIGHT_BORDER)  && c == this->w - 1) ||
+              (this->tile_borders->at(TOP_BORDER)    && l == 0)           ||
+              (this->tile_borders->at(BOTTOM_BORDER) && l == this->h - 1)){
+                attr_ini = Tattr_NULL;
+            }else{
+                attr_ini = Tattr_default;
+            }
+            this->data->push_back(new maxtree_node((*vpel), x, global_idx, attr_ini));
         }
     }
 } 

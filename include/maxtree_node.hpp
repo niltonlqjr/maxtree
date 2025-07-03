@@ -10,6 +10,7 @@ enum maxtee_node_field {
 
 #define Tattribute uint64_t
 #define Tattr_default 1
+#define Tattr_NULL 0
 
 enum borders{
     LEFT_BORDER,
