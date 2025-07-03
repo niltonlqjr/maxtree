@@ -464,15 +464,15 @@ void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t
                 std::cout << "local:(" << l << "," << c << ") Global:(" << l+base_h << ","<< c+base_w << ")\n";
             VipsPel *vpel = VIPS_REGION_ADDR(c_region, c+base_w, l+base_h);
             /* check if it is a border pixel, so this attr should not be computed */
-            if((this->tile_borders->at(LEFT_BORDER)  && c == 0)           ||
+            /*if((this->tile_borders->at(LEFT_BORDER)  && c == 0)           ||
               (this->tile_borders->at(RIGHT_BORDER)  && c == this->w - 1) ||
               (this->tile_borders->at(TOP_BORDER)    && l == 0)           ||
               (this->tile_borders->at(BOTTOM_BORDER) && l == this->h - 1)){
                 attr_ini = Tattr_NULL;
             }else{
                 attr_ini = Tattr_default;
-            }
-            this->data->push_back(new maxtree_node((*vpel), x, global_idx, attr_ini));
+            } */
+            this->data->push_back(new maxtree_node((*vpel), x, global_idx));
         }
     }
 } 

@@ -59,6 +59,8 @@ class boundary_tree{
         uint64_t index_of(uint32_t i, uint32_t j);
         std::tuple<uint32_t,uint32_t> lin_col(uint64_t index);
         std::string to_string(enum boundary_tree_field f=BOUNDARY_PARENT);
+        uint64_t get_lroot_tree_size();
+        uint64_t get_border_size();
 };
 
 
