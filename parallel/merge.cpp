@@ -77,6 +77,9 @@ int main(int argc, char *argv[]){
         exit(EX_CONFIG);
     }
 
+
+    uint8_t pixel_connection = 4;
+
     uint32_t glines = std::stoi(configs->at("glines"));
     uint32_t gcolumns = std::stoi(configs->at("gcolumns"));
 
@@ -220,6 +223,8 @@ int main(int argc, char *argv[]){
                     std::cout << t->to_string(LEVELROOT,colored,5);
                     std::cout << "________________ATTRIBUTE________________\n";
                     std::cout << t->to_string(ATTRIBUTE,colored,5);
+                    std::cout << "________________LOCAL IDX________________\n";
+                    std::cout << t->to_string(IDX, colored, 5);
                     std::cout << "_______________GLOBAL IDX_________________\n";
                     std::cout << t->to_string(GLOBAL_IDX,colored,5);
                     
@@ -234,7 +239,7 @@ int main(int argc, char *argv[]){
             if(verbose){
                 std::cout << "\n";
                 std::cout << "borders:" <<t->string_borders() << "\n";
-                std::cout << "boundary tree nodes:\n" << bt->to_string(MAXTREE_IDX) << "\n";
+                std::cout << "boundary tree nodes:\n" << bt->to_string(BOUNDARY_GLOBAL_IDX) << "\n";
                 std::cout << "\n==========================================================================================================\n\n\n";
             }
             //delete bt;
@@ -263,7 +268,7 @@ int main(int argc, char *argv[]){
             for(j = 0; j+grid_col_inc/2 < gcolumns; j+=grid_col_inc){
                 boundary_tree *base_bt = tiles_table[i][j];
                 boundary_tree *to_merge = tiles_table[i][j+grid_col_inc/2]; 
-                base_bt->merge(to_merge,MERGE_VERTICAL);
+                base_bt->merge(to_merge,MERGE_VERTICAL,pixel_connection,verbose);
                 ntrees--;
                 if(verbose){
                     std::cout << "Merge tiles: (" << base_bt->grid_i << ", " << base_bt->grid_j << ") <===> "
@@ -274,7 +279,9 @@ int main(int argc, char *argv[]){
             }
         }
         grid_col_inc*=2;
-        std::cout << "+++++++++++++++++++++++++++++++++++\n";
+        if(verbose){
+            std::cout << "+++++++++++++++++++++++++++++++++++\n";
+        }
     }
     uint32_t grid_lin_inc = 2; 
     if(verbose){
@@ -284,7 +291,7 @@ int main(int argc, char *argv[]){
         for(i=0; i + grid_lin_inc/2 < glines; i+=grid_lin_inc){
             boundary_tree *base_bt = tiles_table[i][0];
             boundary_tree *to_merge = tiles_table[i+grid_lin_inc/2][0];
-            base_bt->merge(to_merge,MERGE_HORIZONTAL);
+            base_bt->merge(to_merge,MERGE_HORIZONTAL,pixel_connection,verbose);
             ntrees--;
             if(verbose){
                 std::cout << "Merge tiles: (" << base_bt->grid_i << ", " << base_bt->grid_j << ") <===> "
@@ -294,7 +301,9 @@ int main(int argc, char *argv[]){
             }
         }
         grid_lin_inc*=2;
-        std::cout << "+++++++++++++++++++++++++++++++++++\n";
+        if(verbose){
+            std::cout << "+++++++++++++++++++++++++++++++++++\n";
+        }
     }
     
 

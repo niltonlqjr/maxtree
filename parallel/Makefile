@@ -31,7 +31,7 @@ dest_grow=exec/${grow_name}
 dest_divide = exec/${divide_name}
 dest_merge = exec/${merge_name}
 
-all: merge grow divide
+all: merge 
 
 merge: base
 	mkdir -p exec

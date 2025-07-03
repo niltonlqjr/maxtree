@@ -244,7 +244,7 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
             }
             tn = this->get_levelroot(to_merge);
             boundary_node n(to_merge,to_merge->idx,this->get_levelroot(to_merge)->global_idx);
-            bound_tree->insert_element(n,TOP_BORDER);
+            bound_tree->insert_border_element(n,TOP_BORDER);
             
             bound_tree->add_lroot_tree(tn,to_merge->idx,this->get_data());
             
@@ -261,7 +261,7 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
             
             tn = this->get_levelroot(to_merge);
             boundary_node n(to_merge,to_merge->idx,this->get_levelroot(to_merge)->global_idx);
-            bound_tree->insert_element(n,RIGHT_BORDER);
+            bound_tree->insert_border_element(n,RIGHT_BORDER);
             bound_tree->add_lroot_tree(tn, to_merge->idx, this->get_data());
         }
     }
@@ -276,7 +276,7 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
             }
             tn = this->get_levelroot(to_merge);
             boundary_node n(to_merge,to_merge->idx,this->get_levelroot(to_merge)->global_idx);
-            bound_tree->insert_element(n, BOTTOM_BORDER);
+            bound_tree->insert_border_element(n, BOTTOM_BORDER);
             bound_tree->add_lroot_tree(tn, to_merge->idx, this->get_data());
             
         }
@@ -292,7 +292,7 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
             }
             tn = this->get_levelroot(to_merge);
             boundary_node n(to_merge,to_merge->idx,this->get_levelroot(to_merge)->global_idx);
-            bound_tree->insert_element(n,LEFT_BORDER);
+            bound_tree->insert_border_element(n,LEFT_BORDER);
             bound_tree->add_lroot_tree(tn, to_merge->idx, this->get_data());
         }
     }
@@ -328,14 +328,14 @@ boundary_tree *maxtree::get_boundary_tree_no_overlap(uint8_t connectivity){
         tn = this->at_pos(0,j); // get the maxtree node at position 0,j
         tn = this->get_levelroot(tn); // find for the levelroot of this node
         boundary_node n(tn, -1); // create boundary tree
-        if(bonud_tree->insert_element(n)){
+        if(bonud_tree->insert_border_element(n)){
             //adding ancestors of tn
             current=bonud_tree->get_border_node(tn->idx);//get the added node
             while(current!=NULL){
                 parent = this->get_parent(current->maxtree_idx); // get parent (stored in maxtree) of current boundary node
                 if(parent != NULL){// if this node has a parent (not the tile root)
                     boundary_node bound_parent(parent,-1); // create the parent node to add on bondary tree
-                    bonud_tree->insert_element(bound_parent);
+                    bonud_tree->insert_border_element(bound_parent);
                     pidx = parent->idx;
                 }else{
                     pidx = -1;
@@ -350,13 +350,13 @@ boundary_tree *maxtree::get_boundary_tree_no_overlap(uint8_t connectivity){
         tn = this->at_pos(i, this->w-1);
         tn = this->get_levelroot(tn);
         boundary_node n(tn,-1);
-        if(bonud_tree->insert_element(n)){
+        if(bonud_tree->insert_border_element(n)){
             current=bonud_tree->get_border_node(tn->idx);
             while(current!=NULL){
                 parent = this->get_parent(current->maxtree_idx);
                 if(parent != NULL){
                     boundary_node bound_parent(parent,-1);
-                    bonud_tree->insert_element(bound_parent);
+                    bonud_tree->insert_border_element(bound_parent);
                     pidx = parent->idx;
                 }else{
                     pidx = -1;
@@ -373,13 +373,13 @@ boundary_tree *maxtree::get_boundary_tree_no_overlap(uint8_t connectivity){
         tn = this->at_pos(this->h-1,j);
         tn = this->get_levelroot(tn);
         boundary_node n(tn, -1);
-        if(bonud_tree->insert_element(n)){
+        if(bonud_tree->insert_border_element(n)){
             current=bonud_tree->get_border_node(tn->idx);
             while(current!=NULL){
                 parent = this->get_parent(current->maxtree_idx);
                 if(parent != NULL){
                     boundary_node bound_parent(parent,-1);
-                    bonud_tree->insert_element(bound_parent);
+                    bonud_tree->insert_border_element(bound_parent);
                     pidx = parent->idx;
                 }else{
                     pidx = -1;
@@ -395,14 +395,14 @@ boundary_tree *maxtree::get_boundary_tree_no_overlap(uint8_t connectivity){
         tn = this->at_pos(i,0);
         tn = this->get_levelroot(tn);
         boundary_node n(tn, -1);
-        if(bonud_tree->insert_element(n)){
+        if(bonud_tree->insert_border_element(n)){
             //adding ancestors
             current=bonud_tree->get_border_node(tn->idx);
             while(current!=NULL){
                 parent = this->get_parent(current->maxtree_idx);
                 if(parent != NULL){
                     boundary_node bound_parent(parent,-1);
-                    bonud_tree->insert_element(bound_parent);
+                    bonud_tree->insert_border_element(bound_parent);
                     pidx = parent->idx;
                 }else{
                     pidx = -1;
