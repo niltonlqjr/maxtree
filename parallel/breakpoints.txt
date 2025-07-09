@@ -1,9 +1,2 @@
-b ../parallel/merge.cpp:211
-b ../include/maxtree.cpp:248
-b ../include/maxtree.cpp:264
-b ../include/maxtree.cpp:279
-b ../include/maxtree.cpp:295
-b ../include/boundary_tree.cpp:63
-b ../include/boundary_tree.cpp:73
-b ../include/boundary_tree.cpp:114
+b ../include/boundary_tree.cpp:380
 

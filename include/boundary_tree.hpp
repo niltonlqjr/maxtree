@@ -59,6 +59,7 @@ class boundary_tree{
         bool is_root(uint64_t n_idx);
         void merge_branches(boundary_node *this_node, boundary_tree *t, boundary_node *t_node, boundary_tree *ret_tree);
         uint64_t index_of(uint32_t i, uint32_t j);
+        void change_border(std::vector<boundary_node *> *new_border, enum borders b);
         std::tuple<uint32_t,uint32_t> lin_col(uint64_t index);
         std::string border_to_string(enum boundary_tree_field f=BOUNDARY_GLOBAL_IDX);
         std::string lroot_to_string(enum boundary_tree_field f=BOUNDARY_PARENT);
