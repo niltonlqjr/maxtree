@@ -55,7 +55,7 @@ class boundary_tree{
         boundary_node *get_border_node_lroot(int64_t maxtree_idx);
         boundary_tree *merge(boundary_tree *t, enum merge_directions d, uint8_t connection = 4, bool verbose=false);
         void add_lroot_tree(maxtree_node *tn, int64_t origin, std::vector<maxtree_node*> *maxtree_data);
-        bool insert_lroot(boundary_node *n);
+        bool insert_bnode_lroot_tree(boundary_node *n);
         bool is_root(uint64_t n_idx);
         void merge_branches(boundary_node *this_node, boundary_tree *t, boundary_node *t_node, boundary_tree *ret_tree);
         uint64_t index_of(uint32_t i, uint32_t j);

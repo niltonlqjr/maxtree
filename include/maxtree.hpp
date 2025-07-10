@@ -85,8 +85,6 @@ class maxtree{
         boundary_tree *get_boundary_tree(uint8_t connectivity=4);
         boundary_tree *get_boundary_tree_no_overlap(uint8_t connectivity=4);
         
-
-        
         std::string to_string(enum maxtee_node_field field = PARENT,bool colored = true, uint8_t spaces = 5, uint8_t decimal = 0);
         std::string string_borders();
 
