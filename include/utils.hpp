@@ -9,6 +9,7 @@
 #include <fstream>
 #include <algorithm>
 #include <cinttypes>
+#include <cmath>
 
 #include "maxtree_node.hpp"
 
@@ -75,6 +76,7 @@ std::string rtrim(std::string s, const std::string b = std::string(" \t\n\r"));
 
 std::string fill(std::string s, int size);
 
+std::string double_to_string(double n, uint32_t c);
 
 maxtree_node *min_gval(std::vector<maxtree_node*> *t);
 

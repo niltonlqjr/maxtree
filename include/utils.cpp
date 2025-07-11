@@ -85,7 +85,22 @@ bool is_blank(std::string s, std::vector<char> b){
     return true;
 }
 
+double round_decimal(double d, uint32_t c){
+    auto m = std::pow(10,c);
+    d *= m;
+    d = std::round(d);
+    d /= m;
+    return d;
+}
 
+std::string double_to_string(double d, uint32_t c){
+    std::string ret = std::to_string(round_decimal(d,c));
+    
+    auto p = ret.find(".");
+    c = c==0? c : c+1; // if no decimal part, so we exclude the '.' symbol
+    ret = ret.substr(0,p+c);
+    return ret;
+}
 
 
 std::string fill(std::string s, int size){

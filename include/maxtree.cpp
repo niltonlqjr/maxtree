@@ -584,7 +584,8 @@ std::string maxtree::to_string(enum maxtee_node_field field, bool colored, uint8
                 auto dpoint = this->data->at(this->index_of(i,j))->gval;
                 if(colored)
                     r+=terminal_color_string(dpoint / 31);
-                r += fill(std::to_string(dpoint), spaces+decimal) + " " ;
+                auto ds = double_to_string(dpoint,decimal);
+                r += fill(ds, spaces-1) + " " ;
             }
             r += "\n";
         }

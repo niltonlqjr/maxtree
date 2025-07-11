@@ -216,7 +216,7 @@ int main(int argc, char *argv[]){
                     std::cout << ">>> maxtree: grid_i = " << t->grid_i << " grid_j = " << t->grid_j << "\n";
                     
                     std::cout << "__________________GVAL________________\n";
-                    std::cout << t->to_string(GVAL,colored,11);
+                    std::cout << t->to_string(GVAL,colored,7,2);
                     std::cout << "_________________PARENT________________\n";
                     std::cout << t->to_string(PARENT,colored);
                     std::cout << "________________LEVELROOT________________\n";
