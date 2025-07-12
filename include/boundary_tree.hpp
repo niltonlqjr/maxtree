@@ -11,6 +11,7 @@
 #define __BOUNDARY_TREE__
 
 #define NO_BORDER_LEVELROOT -1
+#define NO_BOUNDARY_PARENT -1
 
 enum boundary_tree_field{
     BOUNDARY_PARENT, MAXTREE_IDX, BOUNDARY_IDX, BOUNDARY_GVAL, BOUNDARY_LEVELROOT, BOUNDARY_GLOBAL_IDX
@@ -24,13 +25,14 @@ class boundary_node{
         Tattribute attr;
         uint64_t maxtree_idx; //index of node on local tile
         uint64_t global_idx; // index of node on the whole image
-        int64_t maxtree_levelroot; // levelroot 
+        int64_t border_lr; // levelroot of mergeed boundary trees (when nodes are merged)
         uint64_t origin; // index of node on the border that added the boundary tree branch
         int64_t boundary_parent; // parent of the node in boundary tree
         boundary_node(double gval, uint64_t maxtree_idx, uint64_t origin,
-                      uint64_t global_idx, Tattribute a = Tattr_default, int64_t bound_parent = -1);
+                      uint64_t global_idx, Tattribute a = Tattr_default,
+                      int64_t bound_parent = NO_BOUNDARY_PARENT, int64_t border_lr = NO_BORDER_LEVELROOT);
         boundary_node(maxtree_node *n, uint64_t origin,
-                      int64_t bound_parent = -1);
+                      int64_t bound_parent = NO_BOUNDARY_PARENT, int64_t border_lr = NO_BORDER_LEVELROOT);
 
 
 };
@@ -46,7 +48,7 @@ class boundary_tree{
         uint32_t w;
         uint32_t grid_i;
         uint32_t grid_j;
-        int64_t border_lr;
+        //int64_t border_lr;
         boundary_tree(uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j);
         /*boundary_tree(std::vector<std::unordered_map<uint64_t, boundary_node *>*> *border_elements,
              uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j);*/
