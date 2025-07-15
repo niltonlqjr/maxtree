@@ -548,6 +548,24 @@ std::string maxtree::to_string(enum maxtee_node_field field, bool colored, uint8
             }
             r += "\n";
         }
+    }else if(field == PARENT_IJ){
+        uint32_t pi,pj;
+        for(int i=0; i < this->h; i++){
+            for(int j=0; j < this->w; j++){
+                auto point = this->data->at(this->index_of(i,j))->parent;
+                std::tuple <uint32_t, uint32_t> parent_lc = this->lin_col(point);
+                if(colored)
+                    r+=terminal_color_string(point % 8);
+                if(point != -1){
+                    pi = std::get<0>(parent_lc);
+                    pj = std::get<1>(parent_lc);    
+                    r += fill("("+std::to_string(pi) + "," + std::to_string(pj) + ")", (spaces-1)) + " ";
+                }else{
+                    r += fill("("+std::to_string(-1) + "," + std::to_string(-1) + ")", (spaces-1)) + " ";
+                }
+            }
+            r += "\n";
+        }
     }else if(field == LABEL){
         for(int i=0; i < this->h; i++){
             for(int j=0; j < this->w; j++){
@@ -565,6 +583,16 @@ std::string maxtree::to_string(enum maxtee_node_field field, bool colored, uint8
                 if(colored)
                     r+=terminal_color_string(point % 8);
                 r += fill(std::to_string(point), spaces-1) + " " ;
+            }
+            r += "\n";
+        }
+    }else if(field == IDX_IJ){
+        for(int i=0; i < this->h; i++){
+            for(int j=0; j < this->w; j++){
+                auto point = this->data->at(this->index_of(i,j))->idx;
+                if(colored)
+                    r+=terminal_color_string(point % 8);
+                r += "("+fill(std::to_string(j), (spaces-4)/2) + "," + fill(std::to_string(j), (spaces-4)/2) + ") ";
             }
             r += "\n";
         }
@@ -596,7 +624,7 @@ std::string maxtree::to_string(enum maxtee_node_field field, bool colored, uint8
                 auto dpoint = lroot->idx;
                 if(colored)
                     r+=terminal_color_string(dpoint % 8);
-                r += fill(std::to_string(dpoint), spaces+5) + " " ;
+                r += fill(std::to_string(dpoint), spaces-1) + " " ;
             }
             r += "\n";
         }
@@ -606,7 +634,7 @@ std::string maxtree::to_string(enum maxtee_node_field field, bool colored, uint8
                 auto dpoint = this->data->at(this->index_of(i,j))->attribute;
                 if(colored)
                     r+=terminal_color_string(dpoint % 8);
-                r += fill(std::to_string(dpoint), spaces+5) + " " ;
+                r += fill(std::to_string(dpoint), spaces-1) + " " ;
             }
             r += "\n";
         }

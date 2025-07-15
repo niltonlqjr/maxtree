@@ -5,7 +5,7 @@
 #define __MAXTREE_NODE_HPP__
 
 enum maxtee_node_field {
-    PARENT, LABEL, IDX, GVAL, LEVELROOT, ATTRIBUTE, GLOBAL_IDX
+    PARENT, PARENT_IJ, LABEL, IDX, IDX_IJ, GVAL, LEVELROOT, ATTRIBUTE, GLOBAL_IDX
 };
 
 #define Tattribute uint64_t
