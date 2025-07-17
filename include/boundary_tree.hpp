@@ -20,18 +20,16 @@ enum boundary_tree_field{
 
 class boundary_node{
     public:
-        double gval; // gray value
         //bool in_tree;
-        Tattribute attr;
-        uint64_t maxtree_idx; //index of node on local tile
-        uint64_t global_idx; // index of node on the whole image
         int64_t border_lr; // levelroot of mergeed boundary trees (when nodes are merged)
         uint64_t origin; // index of node on the border that added the boundary tree branch
         int64_t boundary_parent; // parent of the node in boundary tree
-        boundary_node(double gval, uint64_t maxtree_idx, uint64_t origin,
+        maxtree_node *ptr_node;
+        
+        /* boundary_node(double gval, uint64_t maxtree_idx, uint64_t origin,
                       uint64_t global_idx, Tattribute a = Tattr_default,
                       int64_t bound_parent = NO_BOUNDARY_PARENT,
-                      int64_t border_lr = NO_BORDER_LEVELROOT);
+                      int64_t border_lr = NO_BORDER_LEVELROOT); */
         boundary_node(maxtree_node *n, uint64_t origin,
                       int64_t bound_parent = NO_BOUNDARY_PARENT, 
                       int64_t border_lr = NO_BORDER_LEVELROOT);
