@@ -13,7 +13,7 @@ ifdef OPT
 endif
 
 
-all: parallel flood union
+all: parallel flood 
 
 
 parallel:

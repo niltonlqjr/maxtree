@@ -13,6 +13,8 @@
 #define NO_BORDER_LEVELROOT -1
 #define NO_BOUNDARY_PARENT -1
 
+#define Tboundary_tree_lroot std::unordered_map<uint64_t, boundary_node*>
+
 enum boundary_tree_field{
     BOUNDARY_PARENT, MAXTREE_IDX, BOUNDARY_IDX, BOUNDARY_GVAL, BOUNDARY_LEVELROOT, BOUNDARY_GLOBAL_IDX
 };
@@ -34,6 +36,7 @@ class boundary_node{
                       int64_t bound_parent = NO_BOUNDARY_PARENT, 
                       int64_t border_lr = NO_BORDER_LEVELROOT);
         void accumulate_attr(boundary_node *merged);
+        void accumulate_attr(Tattribute value);
 };
 
 class boundary_tree{
@@ -63,11 +66,11 @@ class boundary_tree{
         /* add a levelroot to tree structure (boundary_tree_lroot) */
         void add_lroot_tree(maxtree_node *levelroot, int64_t origin, std::vector<maxtree_node*> *maxtree_data);
         /* add a levelroot to tree structure (boundary_tree_lroot) */
-        void add_lroot_tree(boundary_node *levelroot, boundary_tree *t_levelroot);
+        void add_lroot_tree(boundary_node *levelroot, boundary_tree *t_levelroot, bool copy = false);
         /* check if a node with n_idx is root of the tree */
         bool is_root(uint64_t n_idx);
         /* merge two branches started at nodes this_node(from this tree) and t_node (from t tree) */
-        void merge_branches(boundary_node *this_node, boundary_tree *t, boundary_node *t_node, boundary_tree *ret_tree);
+        void merge_branches(boundary_node *this_node, boundary_tree *t, boundary_node *t_node);
         /* get index given a position */
         uint64_t index_of(uint32_t i, uint32_t j);
         /* change vector of one border (top, left, bottom or right) */
