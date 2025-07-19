@@ -19,7 +19,7 @@ class component{
         std::vector<int> pixels;
         int parent;
         int attribute;
-        std::vector<double> adjacents;
+        std::vector<Tpixel_value> adjacents;
 
 
     public:
@@ -47,8 +47,8 @@ class maxtree{
         // std::unordered_map<int, maxtree_node*> *data;
         std::vector<maxtree_node *> *data;
         std::vector<maxtree_node *> *levelroots;
-        std::unordered_map<double, std::vector<component>> components;
-        std::unordered_map<double, std::mutex> threshold_locks;
+        std::unordered_map<Tpixel_value, std::vector<component>> components;
+        std::unordered_map<Tpixel_value, std::mutex> threshold_locks;
         std::mutex data_lock;
         maxtree_node *get_levelroot(maxtree_node *n);
         std::vector<bool> *tile_borders;
@@ -75,11 +75,11 @@ class maxtree{
         void fill_from_VImage(vips::VImage &img, uint32_t global_nlines=0, uint32_t global_ncols=0, bool verbose=false);
         void fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t base_w,
                                uint32_t l_tiles, uint32_t c_tiles, bool verbose=false);
-        void insert_component(std::vector<int> component, int64_t parent, double threshold, uint64_t id=-1);
-        void insert_component(component c, double threshold);
+        void insert_component(std::vector<int> component, int64_t parent, Tpixel_value threshold, uint64_t id=-1);
+        void insert_component(component c, Tpixel_value threshold);
         
-        std::vector<component> components_at(double threshold);
-        std::vector<double> all_thresholds();
+        std::vector<component> components_at(Tpixel_value threshold);
+        std::vector<Tpixel_value> all_thresholds();
         std::vector<maxtree_node *> *get_levelroots();
         
         boundary_tree *get_boundary_tree(uint8_t connectivity=4);

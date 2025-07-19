@@ -12,6 +12,8 @@ enum maxtee_node_field {
 #define Tattr_default 1
 #define Tattr_NULL 0
 
+#define Tpixel_value double
+
 enum borders{
     LEFT_BORDER,
     TOP_BORDER, 
@@ -45,11 +47,11 @@ class maxtree_node{
         int64_t label;
         uint64_t idx;//local index
         uint64_t global_idx;
-        double gval;
+        Tpixel_value gval;
         bool visited;
         Tattribute attribute;
 
-        maxtree_node(double g, uint64_t i, uint64_t global_idx = 0, Tattribute attr = Tattr_default);
+        maxtree_node(Tpixel_value g, uint64_t i, uint64_t global_idx = 0, Tattribute attr = Tattr_default);
         void compute_attribute(Tattribute);
 
         bool operator>(const maxtree_node &r);

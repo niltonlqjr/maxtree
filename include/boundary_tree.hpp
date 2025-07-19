@@ -33,8 +33,7 @@ class boundary_node{
         boundary_node(maxtree_node *n, uint64_t origin,
                       int64_t bound_parent = NO_BOUNDARY_PARENT, 
                       int64_t border_lr = NO_BORDER_LEVELROOT);
-
-
+        void accumulate_attr(boundary_node *merged);
 };
 
 class boundary_tree{

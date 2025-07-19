@@ -27,6 +27,10 @@ boundary_node::boundary_node(maxtree_node *n, uint64_t origin,
     
 }
 
+void boundary_node::accumulate_attr(boundary_node *merged){
+    this->ptr_node->compute_attribute(merged->ptr_node->attribute);
+}
+
 boundary_tree::boundary_tree(uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j){
     this->h = h;
     this->w = w;
@@ -229,6 +233,7 @@ void boundary_tree::merge_branches(boundary_node *this_node, boundary_tree *t, b
                 if(y->border_lr != NO_BORDER_LEVELROOT){// check if y has border levelroot
                     x->border_lr = y->border_lr;
                     x->boundary_parent = y->ptr_node->global_idx;
+
                 }else if(x->border_lr != NO_BORDER_LEVELROOT){ // check if x has border levelroot
                     y->border_lr = x->border_lr;
                     y->boundary_parent = x->ptr_node->global_idx;
@@ -255,6 +260,7 @@ void boundary_tree::merge_branches(boundary_node *this_node, boundary_tree *t, b
     }
     /*
     Merge attributes
+    */
     if(y_tree->is_root(y->ptr_node->global_idx)){
         while(!x_tree->is_root(x->ptr_node->global_idx)){
     
@@ -262,7 +268,7 @@ void boundary_tree::merge_branches(boundary_node *this_node, boundary_tree *t, b
             std::cout << " going to: " << x->boundary_parent;
             x = x_tree->boundary_tree_lroot->at(x->boundary_parent);
         }
-    }*/
+    }
 }
 
 

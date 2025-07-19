@@ -105,7 +105,6 @@ uint64_t maxtree::get_size(){
     return this->data->size();
 }
 
-
 std::vector<maxtree_node *> *maxtree::get_levelroots(){
     return this->levelroots;
 }
@@ -478,7 +477,7 @@ void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t
 } 
 
 
-void maxtree::insert_component(component c, double gval){
+void maxtree::insert_component(component c, Tpixel_value gval){
     auto comps = this->components.find(gval);
     if(comps == this->components.end()){
         this->components[gval] = std::vector<component>();
@@ -488,7 +487,7 @@ void maxtree::insert_component(component c, double gval){
 
 }
 
-void maxtree::insert_component(std::vector<int> comp, int64_t parent, double threshold, uint64_t id){
+void maxtree::insert_component(std::vector<int> comp, int64_t parent, Tpixel_value threshold, uint64_t id){
     auto comps = this->components.find(threshold);
     if(comps == this->components.end()){
         this->threshold_locks[threshold].lock();
@@ -639,8 +638,8 @@ std::string maxtree::to_string(enum maxtee_node_field field, bool colored, uint8
             r += "\n";
         }
     }
-
-    r+=terminal_color_string(RESET);
+    if(colored)
+        r+=terminal_color_string(RESET);
     return r;
 }
 
@@ -655,11 +654,11 @@ std::string maxtree::string_borders(){
 }
 
 
-std::vector<component> maxtree::components_at(double threshold){
+std::vector<component> maxtree::components_at(Tpixel_value threshold){
     return this->components[threshold];
 }
-std::vector<double> maxtree::all_thresholds(){
-    std::vector<double> ret;
+std::vector<Tpixel_value> maxtree::all_thresholds(){
+    std::vector<Tpixel_value> ret;
     for(auto t: this->components){
         ret.push_back(t.first);
     }
