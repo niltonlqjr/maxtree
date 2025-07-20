@@ -55,14 +55,16 @@ class boundary_tree{
         /*boundary_tree(std::vector<std::unordered_map<uint64_t, boundary_node *>*> *border_elements,
              uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j);*/
         ~boundary_tree();
-        /* insert the node at border structure (border_elements) */
-        void insert_border_element(boundary_node &n, enum borders b, int64_t origin=-1);
+        /* create a copy of n and insert it at border structure (border_elements). Return the pointer of the created copy */
+        boundary_node *insert_border_element(boundary_node &n, enum borders b, int64_t origin=-1);
         /* insert the node at boundary tree structure */
         bool insert_bnode_lroot_tree(boundary_node *n);
         /* get node with global_idx at tree structure (boundary_tree_lroot)*/
         boundary_node *get_border_node_lroot(int64_t global_idx);
         /* merge the calling tree with t */
-        boundary_tree *merge(boundary_tree *t, enum merge_directions d, uint8_t connection = 4, bool verbose=false);
+        boundary_tree *merge(boundary_tree *t, enum merge_directions d, uint8_t connection = 4);
+        /* return a copy of the of this boundary tree (copy boundary nodes but keeps maxtree_nodes references)*/
+        boundary_tree *get_copy();
         /* add a levelroot to tree structure (boundary_tree_lroot) */
         void add_lroot_tree(maxtree_node *levelroot, int64_t origin, std::vector<maxtree_node*> *maxtree_data);
         /* add a levelroot to tree structure (boundary_tree_lroot) */

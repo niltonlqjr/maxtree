@@ -4,6 +4,8 @@
 #ifndef __MAXTREE_NODE_HPP__
 #define __MAXTREE_NODE_HPP__
 
+extern bool verbose;
+
 enum maxtee_node_field {
     PARENT, PARENT_IJ, LABEL, IDX, IDX_IJ, GVAL, LEVELROOT, ATTRIBUTE, GLOBAL_IDX
 };

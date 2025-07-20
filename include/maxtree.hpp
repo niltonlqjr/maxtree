@@ -72,9 +72,9 @@ class maxtree{
 
         maxtree_node *get_parent(uint64_t node_idx);
 
-        void fill_from_VImage(vips::VImage &img, uint32_t global_nlines=0, uint32_t global_ncols=0, bool verbose=false);
+        void fill_from_VImage(vips::VImage &img, uint32_t global_nlines=0, uint32_t global_ncols=0);
         void fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t base_w,
-                               uint32_t l_tiles, uint32_t c_tiles, bool verbose=false);
+                               uint32_t l_tiles, uint32_t c_tiles);
         void insert_component(std::vector<int> component, int64_t parent, Tpixel_value threshold, uint64_t id=-1);
         void insert_component(component c, Tpixel_value threshold);
         

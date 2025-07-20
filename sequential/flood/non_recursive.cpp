@@ -15,7 +15,7 @@
 
 using namespace vips;
 
-
+bool verbose;
 
 template<typename T, typename cmp>
 class custom_priority_queue : public std::priority_queue<T, std::vector<T>, cmp>

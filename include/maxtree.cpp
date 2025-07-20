@@ -175,7 +175,7 @@ void maxtree::compute_sequential_iterative(){
     root->parent = -1;
 }
 
-void maxtree::fill_from_VImage(vips::VImage &img_in, uint32_t global_nlines, uint32_t global_ncols, bool verbose){
+void maxtree::fill_from_VImage(vips::VImage &img_in, uint32_t global_nlines, uint32_t global_ncols){
     this->h = img_in.height();
     this->w = img_in.width();
     vips::VImage img = img_in.copy_memory();
@@ -418,7 +418,7 @@ boundary_tree *maxtree::get_boundary_tree_no_overlap(uint8_t connectivity){
 
  
 void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t base_w, 
-                                uint32_t l_tiles, uint32_t c_tiles, bool verbose){
+                                uint32_t l_tiles, uint32_t c_tiles){
     VipsRegion *c_region = reg_in.get_region();
     uint64_t global_idx;
     Tattribute attr_ini;

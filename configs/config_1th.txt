@@ -9,3 +9,6 @@ threads=1
 glines=4
 # grid columns
 gcolumns=4
+#do not print processing info on screen
+verbose=false
+

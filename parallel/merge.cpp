@@ -18,6 +18,8 @@
 
 using namespace vips;
 
+bool verbose;
+
 void print_pq(std::priority_queue<maxtree_node*, std::vector<maxtree_node*> ,cmp_maxtree_nodes> pq){
     std::cout <<"===========QUEUE=============\n";
     while(!pq.empty()){
@@ -51,7 +53,7 @@ int main(int argc, char *argv[]){
     /*
         Reading configuration file
     */
-    bool verbose=false;
+    verbose=false;
 
     in = new vips::VImage(vips::VImage::new_from_file(argv[1],
         VImage::option ()->set ("access", VIPS_ACCESS_SEQUENTIAL)));
@@ -268,8 +270,9 @@ int main(int argc, char *argv[]){
         for(i = 0; i < glines; i++){
             for(j = 0; j+grid_col_inc/2 < gcolumns; j+=grid_col_inc){
                 boundary_tree *base_bt = tiles_table[i][j];
-                boundary_tree *to_merge = tiles_table[i][j+grid_col_inc/2]; 
-                base_bt->merge(to_merge,MERGE_VERTICAL,pixel_connection,verbose);
+                boundary_tree *to_merge = tiles_table[i][j+grid_col_inc/2];
+                boundary_tree *del_bt = base_bt;
+                base_bt=base_bt->merge(to_merge,MERGE_VERTICAL,pixel_connection);
                 ntrees--;
                 if(verbose){
                     std::cout << "Merge tiles: (" << base_bt->grid_i << ", " << base_bt->grid_j << ") <===> "
@@ -292,12 +295,15 @@ int main(int argc, char *argv[]){
         for(i=0; i + grid_lin_inc/2 < glines; i+=grid_lin_inc){
             boundary_tree *base_bt = tiles_table[i][0];
             boundary_tree *to_merge = tiles_table[i+grid_lin_inc/2][0];
-            base_bt->merge(to_merge,MERGE_HORIZONTAL,pixel_connection,verbose);
+            boundary_tree *del_bt = base_bt;
+            base_bt=base_bt->merge(to_merge,MERGE_HORIZONTAL,pixel_connection);
             ntrees--;
             if(verbose){
                 std::cout << "Merge tiles: (" << base_bt->grid_i << ", " << base_bt->grid_j << ") <===> "
                           << "(" << to_merge->grid_i << ", " << to_merge->grid_j << ")\n";
                 std::cout << "ntrees:" << ntrees << " glines:"  << glines << " gcol:" <<  gcolumns <<"\n";
+                std::cout << "base new tree:" << base_bt->lroot_to_string() << "\n";
+                std::cout << "to merge new tree:" << to_merge->lroot_to_string() << "\n";
                 std::cout << "================\n";
             }
         }

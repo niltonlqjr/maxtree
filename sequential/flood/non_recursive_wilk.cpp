@@ -15,7 +15,7 @@
 
 using namespace vips;
 
-
+bool verbose;
 
 void print_pq(std::priority_queue<maxtree_node*, std::vector<maxtree_node*> ,cmp_maxtree_nodes> pq){
     std::cout <<"===========QUEUE=============\n";
