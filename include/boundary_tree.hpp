@@ -65,6 +65,10 @@ class boundary_tree{
         boundary_tree *merge(boundary_tree *t, enum merge_directions d, uint8_t connection = 4);
         /* return a copy of the of this boundary tree (copy boundary nodes but keeps maxtree_nodes references)*/
         boundary_tree *get_copy();
+        /* combine borders of t1 and t2 into this tree borders. 
+        Its assume that t1 is on the left (when direction is horizontal) 
+        or on the top (when direction is vertical) */
+        void combine_borders(boundary_tree *t1, boundary_tree *t2, enum merge_directions d);
         /* add a levelroot to tree structure (boundary_tree_lroot) */
         void add_lroot_tree(maxtree_node *levelroot, int64_t origin, std::vector<maxtree_node*> *maxtree_data);
         /* add a levelroot to tree structure (boundary_tree_lroot) */
