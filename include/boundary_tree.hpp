@@ -91,6 +91,7 @@ class boundary_tree{
         uint64_t get_lroot_tree_size();
         /* return number of nodes in all borders*/
         uint64_t get_border_size();
+        void print_tree();
 };
 
 

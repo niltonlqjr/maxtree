@@ -272,7 +272,17 @@ int main(int argc, char *argv[]){
                 boundary_tree *base_bt = tiles_table[i][j];
                 boundary_tree *to_merge = tiles_table[i][j+grid_col_inc/2];
                 boundary_tree *del_bt = base_bt;
+
+                std::cout << "base before merge: "<< i << " " << j <<"\n";
+                base_bt->print_tree();
+                std::cout << "to merge before merge: "<< i << " " << j+grid_col_inc/2 <<"\n";
+                to_merge->print_tree();
+                
                 base_bt=base_bt->merge(to_merge,MERGE_VERTICAL,pixel_connection);
+                
+                std::cout << "after merge: "<< i << " " << j <<"\n";
+                base_bt->print_tree();
+                
                 ntrees--;
                 if(verbose){
                     std::cout << "Merge tiles: (" << base_bt->grid_i << ", " << base_bt->grid_j << ") <===> "
@@ -296,8 +306,18 @@ int main(int argc, char *argv[]){
             boundary_tree *base_bt = tiles_table[i][0];
             boundary_tree *to_merge = tiles_table[i+grid_lin_inc/2][0];
             boundary_tree *del_bt = base_bt;
+            
+            std::cout << "base before merge: "<< i << " " << 0 <<"\n";
+            base_bt->print_tree();
+            std::cout << "to merge before merge: "<< i+grid_lin_inc/2 << " " << 0 <<"\n";
+            to_merge->print_tree();
+            
             base_bt=base_bt->merge(to_merge,MERGE_HORIZONTAL,pixel_connection);
+            
+            std::cout << "after merge: "<< i << " " << j <<"\n";
+            base_bt->print_tree();
             ntrees--;
+
             if(verbose){
                 std::cout << "Merge tiles: (" << base_bt->grid_i << ", " << base_bt->grid_j << ") <===> "
                           << "(" << to_merge->grid_i << ", " << to_merge->grid_j << ")\n";

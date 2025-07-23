@@ -316,9 +316,7 @@ void boundary_tree::merge_branches(boundary_node *this_node, boundary_tree *t, b
 void boundary_tree::combine_borders(boundary_tree *t1, boundary_tree *t2, enum merge_directions d){
     std::vector<boundary_node *> *v_t1, *v_t2, *new_border;
     enum borders first_border, second_border, third_border, fourth_border;
-    for(auto b: TBordersVector){
-        delete this->border_elements->at(b);
-    }
+
     if(d == MERGE_HORIZONTAL){
         first_border=LEFT_BORDER; second_border=RIGHT_BORDER; 
         third_border=TOP_BORDER; fourth_border=BOTTOM_BORDER;
@@ -356,8 +354,8 @@ void boundary_tree::combine_borders(boundary_tree *t1, boundary_tree *t2, enum m
     this->change_border(new_border,third_border);
     
     new_border = new std::vector<boundary_node *>();
-    v_t1 = t1->border_elements->at(third_border);
-    v_t2 = t2->border_elements->at(third_border);
+    v_t1 = t1->border_elements->at(fourth_border);
+    v_t2 = t2->border_elements->at(fourth_border);
 
     for(uint64_t i = 0; i < v_t1->size(); i++){
         new_border->push_back(v_t1->at(i));
@@ -365,7 +363,7 @@ void boundary_tree::combine_borders(boundary_tree *t1, boundary_tree *t2, enum m
     for(uint64_t i = 2; i < v_t2->size(); i++){
         new_border->push_back(v_t2->at(i));
     }
-    this->change_border(new_border,third_border);
+    this->change_border(new_border,fourth_border);
     
 }
 
@@ -413,7 +411,7 @@ boundary_tree *boundary_tree::merge(boundary_tree *t, enum merge_directions d, u
         }else{
             std::cerr << "Invalid merge call: destiny tree is in the postion ("
                       << this->grid_i << ", " << this->grid_j << ") and the merged tree is in the position("
-                      << t->grid_i << ", " << t->grid_j << "). The destiny tree must be at top left of merged tree.";
+                      << t->grid_i << ", " << t->grid_j << "). The destiny tree must be at top left of merged tree.\n";
             exit(EX_DATAERR);
         }
     }else if(d == MERGE_VERTICAL){
@@ -433,7 +431,7 @@ boundary_tree *boundary_tree::merge(boundary_tree *t, enum merge_directions d, u
             << this->grid_i << ", " << this->grid_j
             << ") and the merged tree is in the position("
             << t->grid_i << ", " << t->grid_j 
-            << "). The destiny tree must be at top left of merged tree.";
+            << "). The destiny tree must be at top left of merged tree.\n";
             exit(EX_DATAERR);
         }
     }
@@ -565,3 +563,9 @@ std::string boundary_tree::border_to_string(enum boundary_tree_field f){
 }
 
 
+void boundary_tree::print_tree(){
+    std::cout << "\n____________________________________________________\n";
+    std::cout << ">>>>>>>>> All borders: <<<<<<<<<<<\n" << this->border_to_string();
+    std::cout << ">>>>>>>>> Tree: <<<<<<<<<\n" << this->lroot_to_string();
+    std::cout << "\n_____________________________________________________\n";
+}
