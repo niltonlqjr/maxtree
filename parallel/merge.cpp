@@ -14,7 +14,7 @@
 
 #include "utils.hpp"
 
-#define INQUEUE -2
+#define INQUEUE -1
 
 using namespace vips;
 

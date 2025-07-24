@@ -44,6 +44,7 @@ class boundary_tree{
         //std::vector< std::unordered_map<uint64_t, boundary_node *> *> *border_elements;
         std::vector<std::vector<boundary_node *> *> *border_elements;
         std::unordered_map<uint64_t, boundary_node*> *boundary_tree_lroot;
+        std::vector<bool> *tile_borders;
         
     public:
         uint32_t h;
@@ -61,6 +62,8 @@ class boundary_tree{
         bool insert_bnode_lroot_tree(boundary_node *n);
         /* get node with global_idx at tree structure (boundary_tree_lroot)*/
         boundary_node *get_border_node_lroot(int64_t global_idx);
+        /* get a border from boundary tree*/
+        std::vector<boundary_node *> *get_border(enum borders b);
         /* merge the calling tree with t */
         boundary_tree *merge(boundary_tree *t, enum merge_directions d, uint8_t connection = 4);
         /* return a copy of the of this boundary tree (copy boundary nodes but keeps maxtree_nodes references)*/

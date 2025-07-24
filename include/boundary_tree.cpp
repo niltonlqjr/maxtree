@@ -46,6 +46,10 @@ boundary_tree::boundary_tree(uint32_t h, uint32_t w, uint32_t grid_i, uint32_t g
         //this->border_elements->push_back(new std::unordered_map<uint64_t, boundary_node *>());
         this->border_elements->push_back(new std::vector<boundary_node *>());
     }
+    this->tile_borders = new std::vector<bool>();
+    for(int i=0;i<4;i++){
+        this->tile_borders->push_back(false);
+    }
     this->boundary_tree_lroot = new std::unordered_map<uint64_t, boundary_node*>();
     //this->border_lr = -1;
 }
@@ -76,6 +80,7 @@ boundary_tree::~boundary_tree(){
 boundary_node *boundary_tree::insert_border_element(boundary_node &n, enum borders b, int64_t origin){
     boundary_node *new_n;
     auto border = this->border_elements->at(b);
+    this->tile_borders->at(b) = true;
     new_n = new boundary_node(n);
     border->push_back(new_n);
     return new_n;
@@ -207,6 +212,9 @@ boundary_node *boundary_tree::get_border_node_lroot(int64_t global_idx){
         return this->boundary_tree_lroot->at(global_idx);
     return NULL;
 }
+std::vector<boundary_node *> *boundary_tree::get_border(enum borders b){
+    return this->border_elements->at(b);
+}
 
 uint64_t boundary_tree::get_lroot_tree_size(){
     return this->boundary_tree_lroot->size();
@@ -324,31 +332,37 @@ void boundary_tree::combine_borders(boundary_tree *t1, boundary_tree *t2, enum m
         first_border=TOP_BORDER; second_border=BOTTOM_BORDER; 
         third_border=LEFT_BORDER; fourth_border=RIGHT_BORDER;
     }
-    
+    bool has_border[] = {false,false,false,false};
     //first_border comes from t1,second_border comes from t2, third_border (and fourth) are merged first half from t1, second half from t2
-
+    
+    /*copy first border from t1*/
     new_border = new std::vector<boundary_node *>();
-    v_t1 = t1->border_elements->at(first_border);
+    v_t1 = t1->get_border(first_border);
+    
     for(uint64_t i = 0; i < v_t1->size(); i++){
         new_border->push_back(v_t1->at(i));
     }
     this->change_border(new_border,first_border);
 
+    /*copy second border from t2*/
     new_border = new std::vector<boundary_node *>();
-    v_t2 = t2->border_elements->at(second_border);
+    v_t2 = t2->get_border(second_border);
+    
     for(uint64_t i = 0; i < v_t2->size(); i++){
         new_border->push_back(v_t2->at(i));
     }
     this->change_border(new_border,second_border);
 
+    /*merge third border, first half from t1, second from t2*/
     new_border = new std::vector<boundary_node *>();
-    v_t1 = t1->border_elements->at(third_border);
-    v_t2 = t2->border_elements->at(third_border);
+    v_t1 = t1->get_border(third_border);
+    v_t2 = t2->get_border(third_border);
 
     for(uint64_t i = 0; i < v_t1->size(); i++){
         new_border->push_back(v_t1->at(i));
     }
-    for(uint64_t i = 2; i < v_t2->size(); i++){
+    uint64_t ini = 0;
+    for(uint64_t i = ini; i < v_t2->size(); i++){
         new_border->push_back(v_t2->at(i));
     }
     this->change_border(new_border,third_border);
@@ -360,7 +374,10 @@ void boundary_tree::combine_borders(boundary_tree *t1, boundary_tree *t2, enum m
     for(uint64_t i = 0; i < v_t1->size(); i++){
         new_border->push_back(v_t1->at(i));
     }
-    for(uint64_t i = 2; i < v_t2->size(); i++){
+
+    ini = 0;
+
+    for(uint64_t i = ini; i < v_t2->size(); i++){
         new_border->push_back(v_t2->at(i));
     }
     this->change_border(new_border,fourth_border);
