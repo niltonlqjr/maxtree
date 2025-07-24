@@ -173,7 +173,10 @@ void maxtree::compute_sequential_iterative(){
     maxtree_node *root = pixel_stack.top();
     this->levelroots->push_back(root);
     root->parent = -1;
+    this->root = root;
 }
+
+
 
 void maxtree::fill_from_VImage(vips::VImage &img_in, uint32_t global_nlines, uint32_t global_ncols){
     this->h = img_in.height();
@@ -511,26 +514,6 @@ void maxtree::insert_component(std::vector<int> comp, int64_t parent, Tpixel_val
             lower_idx = pidx;
         }
     }
-    //try to speedup putting one lock per node, if necessary;
-    /*this->data_lock.lock();
-    for(int pidx: comp){
-        
-        int lbl_atu = this->data->at(pidx)->label;
-        if(this->data->at(lbl_atu)->gval < this->data->at(lower_idx)->gval){
-            this->data->at(pidx)->label = lower_idx;
-        }
-    }
-
-    this->data->at(lower_idx)->parent = parent;
-    for(int pidx: comp){
-        int par_atu = this->data->at(pidx)->parent;
-        if(par_atu > 0 && this->data->at(par_atu)->gval < this->data->at(lower_idx)->gval && pidx != lower_idx){
-            this->data->at(pidx)->parent = lower_idx;
-        } 
-    }
-    
-    this->data_lock.unlock();*/
-
 }
 
 
@@ -568,10 +551,11 @@ std::string maxtree::to_string(enum maxtee_node_field field, bool colored, uint8
     }else if(field == LABEL){
         for(int i=0; i < this->h; i++){
             for(int j=0; j < this->w; j++){
-                auto point = this->data->at(this->index_of(i,j))->label;
+                auto dpoint = this->data->at(this->index_of(i,j))->label;
                 if(colored)
-                    r+=terminal_color_string(point % 8);
-                r += fill(std::to_string(point), spaces-1) + " " ;
+                    r+=terminal_color_string(dpoint / 31);
+                auto ds = double_to_string(dpoint,decimal);
+                r += fill(ds, spaces-1) + " " ;
             }
             r += "\n";
         }
@@ -643,6 +627,7 @@ std::string maxtree::to_string(enum maxtee_node_field field, bool colored, uint8
     return r;
 }
 
+
 std::string maxtree::string_borders(){
     std::string ret="";
     if(this->tile_borders->at(LEFT_BORDER)) ret+="Left ";
@@ -709,8 +694,89 @@ std::vector<maxtree_node*> maxtree::get_neighbours(uint64_t pixel, uint8_t con){
 }
 
 
+void maxtree::filter(Tattribute lambda){
+    /*
+    maxtree_node *p,*q,*r = this->root;
+    for(auto n: *this->get_levelroots()){
+        std::cout  << "(" << n->idx << ", " << n->parent << ", " << n->attribute  << " ) ";
+    }
+    */
+    //std::cout << "\n";
+/*     auto lroots = this->get_levelroots();
+    
+    if(r->attribute < lambda){
+        r->label = 0;
+    } else {
+        r->label = r->gval;
+    }
+    for( int64_t i = lroots->size()-1; i >= 0; i--){
+        p = lroots->at(i);
+        if(p->parent < 0){
+            continue;
+        }
+        q = this->at_pos(p->parent);
+        if(q->gval == p->gval){
+            std::cout << "acho q nao deveria entrar aqui.\n";
+            p->label = q->label;
+        }else if(p->gval < lambda){
+            p->label = q->label;
+        }else{
+            p->label = p->gval;
+        }
+    } */
+    maxtree_node *aux, *p,*q,*r = this->root;
 
-void maxtree::filter(Tattribute a){
-    //todo
+    std::vector<maxtree_node *> stack;
+
+    if(r->attribute < lambda){
+        r->label = 0;
+    } else {
+        r->label = r->gval;
+    }
+    r->labeled = true;
+    for(uint64_t i=0; i < this->get_size(); i++){
+        p = this->at_pos(i);
+        stack.push_back(p);
+        while(!stack.empty()){
+            p = stack.back();
+            if(p->attribute > lambda){
+                p->label = p->gval;
+                p->labeled = true;
+                stack.pop_back();
+            }else{
+                q = this->get_parent(p->idx);
+                if(q){ 
+                    //if(q->gval == p->gval){
+                        if(q->labeled){
+                            p->labeled = true;
+                            p->label = q->label;
+                            stack.pop_back();
+                        }else{
+                            stack.push_back(q);
+                        }
+                    //}
+                }
+            }
+        }
+        
+    }
 }
 
+
+void maxtree::save(std::string name, enum maxtee_node_field f){
+    
+    std::vector<uint8_t> data;
+    if(f == LABEL){
+        for(uint64_t i=0; i < this->get_size(); i++){
+            data.push_back((uint8_t) this->at_pos(i)->label);
+        }
+    }else if(f == GVAL){
+        for(uint64_t i=0; i < this->get_size(); i++){
+            data.push_back((uint8_t)this->at_pos(i)->gval);
+        }
+    }
+    vips::VImage out = vips::VImage::new_from_memory(data.data(), this->w * this->h * sizeof(uint8_t),this->w, this->h, 1, VIPS_FORMAT_UCHAR);
+
+    out.write_to_file(name.c_str());
+    
+}

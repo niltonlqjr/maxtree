@@ -46,11 +46,12 @@ enum merge_directions{
 class maxtree_node{
     public:
         int64_t parent;
-        int64_t label;
+        Tpixel_value label;
         uint64_t idx;//local index
         uint64_t global_idx;
         Tpixel_value gval;
         bool visited;
+        bool labeled;
         Tattribute attribute;
 
         maxtree_node(Tpixel_value g, uint64_t i, uint64_t global_idx = 0, Tattribute attr = Tattr_default);

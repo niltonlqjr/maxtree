@@ -19,7 +19,7 @@
 using namespace vips;
 
 bool verbose;
-
+/* 
 void print_pq(std::priority_queue<maxtree_node*, std::vector<maxtree_node*> ,cmp_maxtree_nodes> pq){
     std::cout <<"===========QUEUE=============\n";
     while(!pq.empty()){
@@ -30,7 +30,7 @@ void print_pq(std::priority_queue<maxtree_node*, std::vector<maxtree_node*> ,cmp
     }
     std::cout<<"\n";
     std::cout <<"============================\n";
-}
+} */
 
 int main(int argc, char *argv[]){
     vips::VImage *in;
@@ -54,9 +54,13 @@ int main(int argc, char *argv[]){
         Reading configuration file
     */
     verbose=false;
+    Tattribute lambda=2;
 
-    in = new vips::VImage(vips::VImage::new_from_file(argv[1],
-        VImage::option ()->set ("access", VIPS_ACCESS_SEQUENTIAL)));
+    in = new vips::VImage(
+                vips::VImage::new_from_file(argv[1],
+                VImage::option ()->set ("access", VIPS_ACCESS_SEQUENTIAL)
+            )
+        );
     auto configs = parse_config(argv[2]);
 
     if (configs->find("verbose") != configs->end()){
@@ -69,6 +73,9 @@ int main(int argc, char *argv[]){
         if(configs->at("colored") == "true"){
             colored = true;
         }
+    }
+    if(configs->find("lambda") != configs->end()){
+        lambda = std::stod(configs->at("lambda"));
     }
 
     if(configs->find("glines") == configs->end() || configs->find("gcolumns") == configs->end()){
@@ -194,9 +201,55 @@ int main(int argc, char *argv[]){
                 std::cout << "i:" << i << " j:" << j << "\n";
             }
             t->compute_sequential_iterative();
-            
         }
     }
+
+    if(verbose){
+        for(i=0; i<glines; i++){
+            for(j=0; j<gcolumns;j++){
+                t = tiles.at(i).at(j);
+                std::cout << "Boundary Tile:(" << i << "," << j <<")\n";
+                std::cout << ">>>>> tile:" << i << " " << j << "\n";
+                std::cout << ">>> maxtree: grid_i = " << t->grid_i << " grid_j = " << t->grid_j << "\n";
+                
+                std::cout << "__________________GVAL________________\n";
+                std::cout << t->to_string(GVAL,colored,8,2);
+                std::cout << "_________________PARENT_IJ_______________\n";
+                std::cout << t->to_string(PARENT_IJ,colored,10);
+                std::cout << "________________LEVELROOT________________\n";
+                std::cout << t->to_string(LEVELROOT,colored,5);
+                std::cout << "________________ATTRIBUTE________________\n";
+                std::cout << t->to_string(ATTRIBUTE,colored,5);
+                std::cout << "________________LOCAL IDX________________\n";
+                std::cout << t->to_string(IDX, colored, 5);
+                std::cout << "_______________GLOBAL IDX_________________\n";
+                std::cout << t->to_string(GLOBAL_IDX,colored,5);
+
+                std::cout << "Levels roots:";
+                for(auto r: *(t->get_levelroots())){
+                    std::cout << r->idx << " ";
+                }
+                std::cout << "\n";
+                
+            }
+        }
+    }
+
+    /* 
+    for(i=0; i<glines; i++){
+        for(j=0; j<gcolumns;j++){
+            t = tiles.at(i).at(j);
+            t->filter(lambda);
+            if(verbose){  
+                std::cout << "_______________LABELS_________________\n";
+                std::cout << t->to_string(LABEL,colored,8,2);
+            }
+            t->save(std::string(argv[1]) + std::to_string(i) + std::to_string(j) + ".png");
+        }
+    }
+
+    exit(0);
+ */
     if(verbose){
         std::cout <<"\n===============BOUNDARY TREES=================\n";
         std::cout <<"==============================================\n";
@@ -211,31 +264,7 @@ int main(int argc, char *argv[]){
         tiles_table.push_back(std::vector<boundary_tree *>());
         for(j=0;j<gcolumns; j++){
             t = tiles.at(i).at(j);
-            if(verbose)
-                std::cout << "Boundary Tile:(" << i << "," << j <<")\n";
-                if(verbose){
-                    std::cout << ">>>>> tile:" << i << " " << j << "\n";
-                    std::cout << ">>> maxtree: grid_i = " << t->grid_i << " grid_j = " << t->grid_j << "\n";
-                    
-                    std::cout << "__________________GVAL________________\n";
-                    std::cout << t->to_string(GVAL,colored,8,2);
-                    std::cout << "_________________PARENT_IJ_______________\n";
-                    std::cout << t->to_string(PARENT_IJ,colored,10);
-                    std::cout << "________________LEVELROOT________________\n";
-                    std::cout << t->to_string(LEVELROOT,colored,5);
-                    std::cout << "________________ATTRIBUTE________________\n";
-                    std::cout << t->to_string(ATTRIBUTE,colored,5);
-                    std::cout << "________________LOCAL IDX________________\n";
-                    std::cout << t->to_string(IDX, colored, 5);
-                    std::cout << "_______________GLOBAL IDX_________________\n";
-                    std::cout << t->to_string(GLOBAL_IDX,colored,5);
-                    
-                    
-                    std::cout << "Levels roots:";
-                    for(auto r: *(t->get_levelroots())){
-                        std::cout << r->idx << " ";
-                }
-            }
+            
             boundary_tree *bt = t->get_boundary_tree();
             tiles_table.at(i).push_back(bt);
             if(verbose){
@@ -248,6 +277,12 @@ int main(int argc, char *argv[]){
             //delete bt;
         }
     }
+
+
+
+
+
+
     /*
         realizar o merge:
         1. montar uma tabela de boundary trees fazendo um mapeamento de "linha/coluna"

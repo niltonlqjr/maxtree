@@ -18,3 +18,5 @@ glines=1
 # grid columns(integer value)
 gcolumns=2
 
+#atribute value to filter
+lambda=10

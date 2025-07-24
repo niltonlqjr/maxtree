@@ -45,6 +45,8 @@ class component{
 class maxtree{
     private:
         // std::unordered_map<int, maxtree_node*> *data;
+        maxtree_node *root;
+        
         std::vector<maxtree_node *> *data;
         std::vector<maxtree_node *> *levelroots;
         std::unordered_map<Tpixel_value, std::vector<component>> components;
@@ -52,6 +54,7 @@ class maxtree{
         std::mutex data_lock;
         maxtree_node *get_levelroot(maxtree_node *n);
         std::vector<bool> *tile_borders;
+
         
     public:
         
@@ -75,6 +78,8 @@ class maxtree{
         void fill_from_VImage(vips::VImage &img, uint32_t global_nlines=0, uint32_t global_ncols=0);
         void fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t base_w,
                                uint32_t l_tiles, uint32_t c_tiles);
+        void save(std::string name, enum maxtee_node_field f = LABEL);
+
         void insert_component(std::vector<int> component, int64_t parent, Tpixel_value threshold, uint64_t id=-1);
         void insert_component(component c, Tpixel_value threshold);
         
@@ -87,6 +92,9 @@ class maxtree{
         
         std::string to_string(enum maxtee_node_field field = PARENT,bool colored = true, uint8_t spaces = 5, uint8_t decimal = 0);
         std::string string_borders();
+        
+        
+        void filter(Tattribute a);
 
         uint64_t get_size();
         
@@ -97,7 +105,6 @@ class maxtree{
         //std::vector<maxtree_node*> get_neighbours(int l, int c, int con=4);
         
         void compute_sequential_iterative();
-        void filter(Tattribute a);
 
 };
 
