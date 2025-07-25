@@ -6,6 +6,7 @@
 #include <sysexits.h>
 
 #include "maxtree_node.hpp"
+#include "utils.hpp"
 
 #ifndef __BOUNDARY_TREE__
 #define __BOUNDARY_TREE__

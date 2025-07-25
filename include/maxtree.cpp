@@ -446,24 +446,24 @@ void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t
     if(this->tile_borders->at(BOTTOM_BORDER)){
         noborder_w--;
     }
-
+     
     if(verbose){
         std::cout << "filling: " << base_h << "," << base_w << "..." << base_h+this->h << "," << base_w+this->w <<"\n";
     }
-    
+     
     /*char aux_enum_c[][50] = {"VIPS_FORMAT_UCHAR", "VIPS_FORMAT_CHAR", "VIPS_FORMAT_USHORT","VIPS_FORMAT_SHORT",
          "VIPS_FORMAT_UINT"," VIPS_FORMAT_INT"," VIPS_FORMAT_FLOAT"," VIPS_FORMAT_COMPLEX"," VIPS_FORMAT_DOUBLE",
          "VIPS_FORMAT_DPCOMPLEX","VIPS_FORMAT_LAST"};*/
     
     for(int l = 0; l < this->h; l++){
         for(int c = 0; c < this->w; c++){
-            if(verbose)
-                std::cout << "accessing:" << "(" << l << "," << c << ")\n";
+/*             if(verbose)
+                std::cout << "accessing:" << "(" << l << "," << c << ")\n"; */
             int x = this->index_of(l,c);
             //VipsPel *vpel__ = VIPS_IMAGE_ADDR(c_region, c, l);
             global_idx = ((base_h+l) * c_tiles) + (c+base_w);
-            if(verbose)
-                std::cout << "local:(" << l << "," << c << ") Global:(" << l+base_h << ","<< c+base_w << ")\n";
+/*             if(verbose)
+                std::cout << "local:(" << l << "," << c << ") Global:(" << l+base_h << ","<< c+base_w << ")\n"; */
             VipsPel *vpel = VIPS_REGION_ADDR(c_region, c+base_w, l+base_h);
             /* check if it is a border pixel, so this attr should not be computed */
             if((this->tile_borders->at(LEFT_BORDER)  && c == 0)           ||

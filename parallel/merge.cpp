@@ -315,8 +315,9 @@ int main(int argc, char *argv[]){
                 
                 base_bt=base_bt->merge(to_merge,MERGE_VERTICAL,pixel_connection);
                 
-                std::cout << "after merge: "<< i << " " << j <<"\n";
+                std::cout << "<><><><><><><><><> AFTER MERGE: "<< i << " " << j <<" <><><><><><><><><> \n";
                 base_bt->print_tree();
+                
                 
                 ntrees--;
                 if(verbose){
@@ -349,7 +350,7 @@ int main(int argc, char *argv[]){
             
             base_bt=base_bt->merge(to_merge,MERGE_HORIZONTAL,pixel_connection);
             
-            std::cout << "after merge: "<< i << " " << j <<"\n";
+            std::cout << "<><><><><><><><><> AFTER MERGE: "<< i << " " << j <<" <><><><><><><><><> \n";
             base_bt->print_tree();
             ntrees--;
 

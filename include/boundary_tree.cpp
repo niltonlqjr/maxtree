@@ -324,11 +324,11 @@ void boundary_tree::merge_branches(boundary_node *this_node, boundary_tree *t, b
 void boundary_tree::combine_borders(boundary_tree *t1, boundary_tree *t2, enum merge_directions d){
     std::vector<boundary_node *> *v_t1, *v_t2, *new_border;
     enum borders first_border, second_border, third_border, fourth_border;
-
-    if(d == MERGE_HORIZONTAL){
+    uint64_t ini ;
+    if(d == MERGE_VERTICAL){
         first_border=LEFT_BORDER; second_border=RIGHT_BORDER; 
         third_border=TOP_BORDER; fourth_border=BOTTOM_BORDER;
-    }else if(d == MERGE_VERTICAL){
+    }else if(d == MERGE_HORIZONTAL){
         first_border=TOP_BORDER; second_border=BOTTOM_BORDER; 
         third_border=LEFT_BORDER; fourth_border=RIGHT_BORDER;
     }
@@ -352,16 +352,17 @@ void boundary_tree::combine_borders(boundary_tree *t1, boundary_tree *t2, enum m
         new_border->push_back(v_t2->at(i));
     }
     this->change_border(new_border,second_border);
-
+    
     /*merge third border, first half from t1, second from t2*/
     new_border = new std::vector<boundary_node *>();
     v_t1 = t1->get_border(third_border);
     v_t2 = t2->get_border(third_border);
-
+    
     for(uint64_t i = 0; i < v_t1->size(); i++){
         new_border->push_back(v_t1->at(i));
     }
-    uint64_t ini = 0;
+
+    ini = 0 + t2->tile_borders->at(first_border) + t1->tile_borders->at(second_border);
     for(uint64_t i = ini; i < v_t2->size(); i++){
         new_border->push_back(v_t2->at(i));
     }
@@ -375,7 +376,7 @@ void boundary_tree::combine_borders(boundary_tree *t1, boundary_tree *t2, enum m
         new_border->push_back(v_t1->at(i));
     }
 
-    ini = 0;
+    ini = 0 + t2->tile_borders->at(first_border) + t1->tile_borders->at(second_border);
 
     for(uint64_t i = ini; i < v_t2->size(); i++){
         new_border->push_back(v_t2->at(i));
@@ -552,9 +553,10 @@ std::string boundary_tree::lroot_to_string(enum boundary_tree_field f){
 }
 
 std::string boundary_tree::border_to_string(enum boundary_tree_field f){
+    
     std::ostringstream ss;
     for(int i=0; i<NamesBordersVector.size();i++){
-        ss << NamesBordersVector[i] << ":";
+        ss << fill(NamesBordersVector[i],16) << ": ";
         auto v = *(this->border_elements->at(i));
         /*for(auto pairs: v){
             auto bn = pairs.second;*/
