@@ -231,6 +231,11 @@ uint64_t boundary_tree::get_border_size(){
 void boundary_tree::change_border(std::vector<boundary_node *> *new_border, enum borders b){
     delete this->border_elements->at(b);
     this->border_elements->at(b) = new_border;
+    if(new_border->size() <= 0){
+        this->tile_borders->at(b) = false;
+    }else{
+        this->tile_borders->at(b) = true;
+    }
     if(b == LEFT_BORDER || b == RIGHT_BORDER){
         this->h = new_border->size();
     }else if(b == TOP_BORDER || b == BOTTOM_BORDER){
