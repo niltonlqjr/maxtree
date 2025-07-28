@@ -286,11 +286,26 @@ void boundary_tree::merge_branches(boundary_node *this_node, boundary_tree *t, b
                     y->boundary_parent = x->ptr_node->global_idx;
                 }else{
                     // cria o levelroot global desta área como sendo o par (x,y)
+                    // para manter o levelroot global da area na arvore que chamou o procedimento de merge
+                    if(y_tree != this){
+                        boundary_node *aux = y;
+                        y = x;
+                        x = aux;
+                        boundary_tree *aux_tree = y_tree;
+                        y_tree = x_tree;
+                        x_tree = aux_tree;
+                    }
                     x->border_lr = y->ptr_node->global_idx;
-                    y->border_lr = y->ptr_node->global_idx;
-                    x->boundary_parent = y->boundary_parent;
-                    x_tree->insert_bnode_lroot_tree(y);
+                    y->border_lr = y->boundary_parent;
+                    x->boundary_parent = y->ptr_node->global_idx;
                     x_tree->add_lroot_tree(y,y_tree,true);
+                    x_tree->insert_bnode_lroot_tree(y);
+                    if(verbose){
+                        std::cout << "Nodes: "
+                                  << x->ptr_node->global_idx << " and " 
+                                  << y->ptr_node->global_idx << " merged into: "
+                                  << y->ptr_node->global_idx << "\n";
+                    }
                 }
             }else{
                 x->boundary_parent = y->ptr_node->global_idx;
@@ -540,10 +555,14 @@ std::string boundary_tree::lroot_to_string(enum boundary_tree_field f){
     for(auto bn: *(this->boundary_tree_lroot)){
         if(f == BOUNDARY_PARENT){
             ss << "(" << bn.first << "," << bn.second->boundary_parent << ")";
-/*         }else if(f == BOUNDARY_LEVELROOT){
-            //ss << bn->boundary_levelroot;
+         }else if(f == BOUNDARY_BORDER_LR){
+            if(bn.second->border_lr != NO_BORDER_LEVELROOT){
+                ss << "(" << bn.first << "," << bn.second->border_lr << ")";
+            }else{
+                ss << "(" << bn.first << "," << bn.second->boundary_parent << ")";
+            }
         }else if(f == BOUNDARY_IDX){
-            //ss << bn->boundary_idx; */
+            //ss << "(" << bn.first << "," << bn.second->boundary_idx << ")"; 
         }else if(f == MAXTREE_IDX){
             ss << "(" << bn.first << "," << bn.second->ptr_node->idx << ")";
         }else if(f == BOUNDARY_GVAL){
@@ -566,10 +585,14 @@ std::string boundary_tree::border_to_string(enum boundary_tree_field f){
         for(auto bn: v){
             if(f == BOUNDARY_PARENT){
                 ss << bn->boundary_parent;
-/*             }else if(f == BOUNDARY_LEVELROOT){
-                //ss << bn->boundary_levelroot;
+             }else if(f == BOUNDARY_BORDER_LR){
+                if(bn->border_lr != NO_BORDER_LEVELROOT){
+                    ss << bn->border_lr;
+                }else{
+                    ss << bn->boundary_parent;
+                }
             }else if(f == BOUNDARY_IDX){
-                //ss << bn->boundary_idx; */
+                //ss << bn->boundary_idx; 
             }else if(f == MAXTREE_IDX){
                 ss << bn->ptr_node->idx;
             }else if(f == BOUNDARY_GVAL){
@@ -585,9 +608,9 @@ std::string boundary_tree::border_to_string(enum boundary_tree_field f){
 }
 
 
-void boundary_tree::print_tree(){
+void boundary_tree::print_tree(enum boundary_tree_field lrootf, enum boundary_tree_field borderf){
     std::cout << "\n____________________________________________________\n";
-    std::cout << ">>>>>>>>> All borders: <<<<<<<<<<<\n" << this->border_to_string();
-    std::cout << ">>>>>>>>> Tree: <<<<<<<<<\n" << this->lroot_to_string();
+    std::cout << ">>>>>>>>> All borders: <<<<<<<<<<<\n" << this->border_to_string(borderf);
+    std::cout << ">>>>>>>>> Tree: <<<<<<<<<\n" << this->lroot_to_string(lrootf);
     std::cout << "\n_____________________________________________________\n";
 }

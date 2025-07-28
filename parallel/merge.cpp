@@ -342,15 +342,16 @@ int main(int argc, char *argv[]){
             boundary_tree *to_merge = tiles_table[i+grid_lin_inc/2][0];
             boundary_tree *del_bt = base_bt;
             
-            std::cout << "base before merge: "<< i << " " << 0 <<"\n";
+            /* std::cout << "base before merge: "<< i << " " << 0 <<"\n";
             base_bt->print_tree();
             std::cout << "to merge before merge: "<< i+grid_lin_inc/2 << " " << 0 <<"\n";
             to_merge->print_tree();
             
             base_bt=base_bt->merge(to_merge,MERGE_HORIZONTAL,pixel_connection);
             
-            std::cout << "after merge: "<< i << " " << j <<"\n";
+            std::cout << "after merge: "<< i << " " << 0 <<"\n";
             base_bt->print_tree();
+             */
             ntrees--;
 
             if(verbose){
