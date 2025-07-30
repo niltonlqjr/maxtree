@@ -17,7 +17,7 @@
 #define Tboundary_tree_lroot std::unordered_map<uint64_t, boundary_node*>
 
 enum boundary_tree_field{
-    BOUNDARY_PARENT, MAXTREE_IDX, BOUNDARY_IDX, BOUNDARY_GVAL, BOUNDARY_LEVELROOT, BOUNDARY_GLOBAL_IDX
+    BOUNDARY_PARENT, MAXTREE_IDX, BOUNDARY_IDX, BOUNDARY_GVAL,  BOUNDARY_BORDER_LR, BOUNDARY_GLOBAL_IDX
 };
 
 
@@ -90,12 +90,12 @@ class boundary_tree{
         /* convert all border_elements to string  */
         std::string border_to_string(enum boundary_tree_field f=BOUNDARY_GLOBAL_IDX);
         /* print all nodes from the boundary_tree_lroot */
-        std::string lroot_to_string(enum boundary_tree_field f=BOUNDARY_PARENT);
+        std::string lroot_to_string(enum boundary_tree_field f=BOUNDARY_BORDER_LR);
         /* return number of nodes in boundary_tree_lroot */
         uint64_t get_lroot_tree_size();
         /* return number of nodes in all borders*/
         uint64_t get_border_size();
-        void print_tree();
+        void print_tree(enum boundary_tree_field lrootf= BOUNDARY_BORDER_LR, enum boundary_tree_field borderf=BOUNDARY_GLOBAL_IDX);
 };
 
 

@@ -1,7 +1,15 @@
 # comments will be ignored, and every comment must start the line with # (no blank chars before)
 # blank lines also be ignored
 
-# print some information(true/false)
+# main server 
+server=10.1.1.2
+# number of threads for the process 
+threads=1
+# grid lines
+glines=3
+# grid columns
+gcolumns=5
+#do not print processing info on screen
 verbose=false
 # print information with colors (true/false)
 colored = false
