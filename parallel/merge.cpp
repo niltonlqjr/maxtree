@@ -295,27 +295,29 @@ int main(int argc, char *argv[]){
     */
     int64_t ntrees = glines * gcolumns;
     
+
     if(verbose){
         std::cout << ">>>>>>>>> merge columns <<<<<<<<\n";
     }
 
     uint32_t grid_col_inc = 2; 
-    while(ntrees > glines){ /* merge horizontal --- creating "big lines"*/ 
+    while(ntrees > glines){ /* merge horizontal --- creating "big lines"*/     
+        
         for(i = 0; i < glines; i++){
             for(j = 0; j+grid_col_inc/2 < gcolumns; j+=grid_col_inc){
                 boundary_tree *base_bt = tiles_table[i][j];
                 boundary_tree *to_merge = tiles_table[i][j+grid_col_inc/2];
                 boundary_tree *del_bt = base_bt;
 
-                std::cout << "base before merge: "<< i << " " << j <<"\n";
-                base_bt->print_tree();
+                std::cout << "base before merge: " << i << " " << j << "\n";
+                //base_bt->print_tree();
                 std::cout << "to merge before merge: "<< i << " " << j+grid_col_inc/2 <<"\n";
-                to_merge->print_tree();
+                //to_merge->print_tree();
                 
                 base_bt=base_bt->merge(to_merge,MERGE_VERTICAL,pixel_connection);
                 
                 std::cout << "after merge: "<< i << " " << j <<"\n";
-                base_bt->print_tree();
+                //base_bt->print_tree();
                 
                 ntrees--;
                 if(verbose){
@@ -335,22 +337,23 @@ int main(int argc, char *argv[]){
     if(verbose){
         std::cout << ">>>>>>>>> merge lines <<<<<<<<\n";
     }
+    
     while(ntrees > 1){/* Merge lines "recreating maxtree of the whole image"*/
         for(i=0; i + grid_lin_inc/2 < glines; i+=grid_lin_inc){
             boundary_tree *base_bt = tiles_table[i][0];
             boundary_tree *to_merge = tiles_table[i+grid_lin_inc/2][0];
             boundary_tree *del_bt = base_bt;
             
-            /* std::cout << "base before merge: "<< i << " " << 0 <<"\n";
-            base_bt->print_tree();
+            std::cout << "base before merge: "<< i << " " << 0 <<"\n";
+            //base_bt->print_tree();
             std::cout << "to merge before merge: "<< i+grid_lin_inc/2 << " " << 0 <<"\n";
-            to_merge->print_tree();
+            //to_merge->print_tree();
             
             base_bt=base_bt->merge(to_merge,MERGE_HORIZONTAL,pixel_connection);
             
             std::cout << "after merge: "<< i << " " << 0 <<"\n";
-            base_bt->print_tree();
-             */
+            //base_bt->print_tree();
+            
             ntrees--;
 
             if(verbose){
