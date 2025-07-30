@@ -89,7 +89,7 @@ boundary_node *boundary_tree::insert_border_element(boundary_node &n, enum borde
 bool boundary_tree::insert_bnode_lroot_tree(boundary_node *n){
     //if(this->boundary_tree_lroot->find(n->ptr_node->global_idx) != this->boundary_tree_lroot->end()){
     if(this->get_border_node_lroot(n->ptr_node->global_idx) != NULL){
-        if(verbose) std::cout << "fail to inset: " << n->ptr_node->global_idx << "\n";
+        if(verbose) std::cout << "fail to inset: " << n->ptr_node->global_idx << " at border \n";
         return false;
     }
     this->boundary_tree_lroot->emplace(n->ptr_node->global_idx, n);
@@ -287,6 +287,8 @@ void boundary_tree::merge_branches(boundary_node *this_node, boundary_tree *t, b
                 }else{
                     // cria o levelroot global desta área como sendo o par (x,y)
                     // para manter o levelroot global da area na arvore que chamou o procedimento de merge
+                    
+                    /*............................CORRIGIR AQUI............................*/
                     if(y_tree != this){
                         boundary_node *aux = y;
                         y = x;
@@ -295,17 +297,23 @@ void boundary_tree::merge_branches(boundary_node *this_node, boundary_tree *t, b
                         y_tree = x_tree;
                         x_tree = aux_tree;
                     }
-                    x->border_lr = y->ptr_node->global_idx;
-                    y->border_lr = y->boundary_parent;
-                    x->boundary_parent = y->ptr_node->global_idx;
-                    x_tree->add_lroot_tree(y,y_tree,true);
-                    x_tree->insert_bnode_lroot_tree(y);
+                    // here y_tree is this tree and y is in it
+                    // so i need to make x as boundary levelroot and add it on y_tree
+
+
+                    y->border_lr = x->ptr_node->global_idx;
+                    x->border_lr = x->boundary_parent;
+                    y->boundary_parent = x->ptr_node->global_idx;
+                    y_tree->add_lroot_tree(x,x_tree,true);
+                    y_tree->insert_bnode_lroot_tree(x);
+                    
                     if(verbose){
                         std::cout << "Nodes: "
                                   << x->ptr_node->global_idx << " and " 
                                   << y->ptr_node->global_idx << " merged into: "
                                   << y->ptr_node->global_idx << "\n";
                     }
+                    /*............................CORRIGIR AQUI............................*/
                 }
             }else{
                 x->boundary_parent = y->ptr_node->global_idx;
@@ -561,9 +569,9 @@ std::string boundary_tree::lroot_to_string(enum boundary_tree_field f){
             ss << "(" << bn.first << "," << bn.second->boundary_parent << ")";
          }else if(f == BOUNDARY_BORDER_LR){
             if(bn.second->border_lr != NO_BORDER_LEVELROOT){
-                ss << "(" << bn.first << "," << bn.second->border_lr << ")";
+                ss << "(" << bn.first << ", bl: " << bn.second->border_lr << ")";
             }else{
-                ss << "(" << bn.first << "," << bn.second->boundary_parent << ")";
+                ss << "(" << bn.first << ", bp: " << bn.second->boundary_parent << ")";
             }
         }else if(f == BOUNDARY_IDX){
             //ss << "(" << bn.first << "," << bn.second->boundary_idx << ")"; 

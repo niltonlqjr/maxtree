@@ -12,14 +12,12 @@ ifdef OPT
 	MAKE_SUBPROJECTS_ARGS:=${MAKE_SUBPROJECTS_ARGS} OPT=${OPT}
 endif
 
+all: parallel_execs flood_execs
 
-all: parallel flood 
-
-
-parallel:
+parallel_execs:
 	$(MAKE) -C ${parallel_dir} ${MAKE_SUBPROJECTS_ARGS}
 
-flood:
+flood_execs:
 	$(MAKE) -C ${flood_dir} ${MAKE_SUBPROJECTS_ARGS}
 
 union:
