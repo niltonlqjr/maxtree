@@ -346,7 +346,7 @@ void boundary_tree::combine_borders(boundary_tree *t1, boundary_tree *t2, enum m
     enum borders first_border, second_border, third_border, fourth_border;
 
     if(d == MERGE_HORIZONTAL){
-        first_border=LEFT_BORDER; second_border=RIGHT_BORDER; 
+        first_border=LEFT_BORDER; second_border=RIGHT_BORDER;
         third_border=TOP_BORDER; fourth_border=BOTTOM_BORDER;
     }else if(d == MERGE_VERTICAL){
         first_border=TOP_BORDER; second_border=BOTTOM_BORDER; 
