@@ -317,6 +317,7 @@ void boundary_tree::merge_branches(boundary_node *this_node, boundary_tree *t, b
                 }
             }else{
                 x->boundary_parent = y->ptr_node->global_idx;
+                x->border_lr = y->ptr_node->global_idx;
             }
             // manipulate atributes here
             y->accumulate_attr(attrx);
