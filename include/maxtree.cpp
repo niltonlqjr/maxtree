@@ -162,9 +162,6 @@ void maxtree::compute_sequential_iterative(){
                         pixel_stack.top()->compute_attribute(st->attribute);
                     }
                 }
-                if(pixel_stack.empty() || pixel_stack.top()->gval < nextpix->gval){
-                    pixel_stack.push(nextpix);
-                }
             }
 
         }

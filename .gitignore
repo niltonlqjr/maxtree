@@ -1,4 +1,5 @@
 **/*.o
 **/saidas/*
 **/**/saidas/*
+outros/*
 

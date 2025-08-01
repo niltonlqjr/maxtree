@@ -98,6 +98,9 @@ void compute_maxtree(maxtree *t){
 int main(int argc, char *argv[]){
     vips::VImage *in;
     maxtree *t;
+    std::string out_name;
+    Tattribute lambda;
+    
     std::cout << "argc: " << argc << " argv:" ;
     for(int i=0;i<argc;i++){
         std::cout << argv[i] << " ";
@@ -125,6 +128,16 @@ int main(int argc, char *argv[]){
                 verbose=true;
             }
         }
+        if (configs->find("output") != configs->end()){
+            out_name = configs->at("output");
+        }else{
+            out_name = "output.png";
+        }
+        if (configs->find("lambda") != configs->end()){
+            lambda = std::atoi(configs->at("lambda").c_str());
+        }else{
+            lambda = 2;
+        }
     }
 
     std::cout << "start\n";
@@ -142,7 +155,9 @@ int main(int argc, char *argv[]){
         std::cout<<"__________________PARENT________________\n";
         std::cout << t->to_string(PARENT,false,5);
     }
-    
+
+    t->filter(lambda);
+    t->save(out_name, LABEL);
     
     return 0;
 }
