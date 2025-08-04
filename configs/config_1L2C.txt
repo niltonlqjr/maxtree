@@ -19,7 +19,7 @@ glines=1
 gcolumns=2
 
 #atribute value to filter
-lambda=50000
+lambda=10
 
 #output filename
-output=output/lambda_50000.png
+output=output/teste_lambda_10.png

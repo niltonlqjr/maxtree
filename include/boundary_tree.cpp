@@ -290,7 +290,8 @@ void boundary_tree::merge_branches(boundary_node *this_node, boundary_tree *t, b
                     y->boundary_parent = x->ptr_node->global_idx;
                 }else{
                     // Cria o levelroot global desta área como sendo o par (x,y). Y eh o no principal do par (ou seja, y eh levelroot).
-                    // Para manter o levelroot global da area na arvore que chamou o procedimento de merge
+                    // Para manter o levelroot global da area na arvore que chamou o procedimento de merge é feita a troca entre x e y, então y
+                    // sempre estará na árvore que chamou o merge
                     
                     /*............................CORRIGIR AQUI - INICIO.........................*/
                     if(y_tree != this){
@@ -310,8 +311,8 @@ void boundary_tree::merge_branches(boundary_node *this_node, boundary_tree *t, b
                     x->border_lr = y->ptr_node->global_idx;
                     y->border_lr = y->boundary_parent;
                     
-                    y_tree->add_lroot_tree(x,x_tree,true);
-                    y_tree->insert_bnode_lroot_tree(x);
+                    //y_tree->add_lroot_tree(x,x_tree,true);
+                    //y_tree->insert_bnode_lroot_tree(x);
                     
                     if(verbose){
                         std::cout << "Nodes: "
