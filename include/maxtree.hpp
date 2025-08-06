@@ -13,6 +13,7 @@
 #ifndef __MAXTREE_HPP__
 #define __MAXTREE_HPP__
 
+#define INQUEUE -2
 
 class component{
     private:
@@ -54,6 +55,8 @@ class maxtree{
         std::mutex data_lock;
         maxtree_node *get_levelroot(maxtree_node *n);
         std::vector<bool> *tile_borders;
+
+        int flood(int lambda, maxtree_node *r, std::vector<std::deque<maxtree_node*>> *hqueue, std::vector<maxtree_node *> *levelroot);
 
         
     public:
@@ -105,6 +108,7 @@ class maxtree{
         //std::vector<maxtree_node*> get_neighbours(int l, int c, int con=4);
         
         void compute_sequential_iterative();
+        void compute_sequential_recursive(int gl=256);
 
 };
 

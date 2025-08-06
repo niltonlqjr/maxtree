@@ -16,7 +16,7 @@
 using namespace vips;
 
 bool verbose;
-
+/* 
 void print_pq(std::priority_queue<maxtree_node*, std::vector<maxtree_node*> ,cmp_maxtree_nodes> pq){
     std::cout <<"===========QUEUE=============\n";
     while(!pq.empty()){
@@ -46,7 +46,7 @@ void compute_maxtree(maxtree *t){
         p = nextpix;
         auto N = t->get_neighbours(p->idx);
         for(auto q: N){
-            if(q->parent == -1){/* if q not visited */
+            if(q->parent == -1){// if q not visited 
                 q->parent = INQUEUE;
                 pixel_pq.push(q);
                 if(q->gval > p->gval){
@@ -94,7 +94,7 @@ void compute_maxtree(maxtree *t){
     std::cout <<"____________________________________\n";
 }
 
-
+ */
 int main(int argc, char *argv[]){
     vips::VImage *in;
     maxtree *t;
@@ -154,6 +154,13 @@ int main(int argc, char *argv[]){
         std::cout << t->to_string(GVAL,false,5);
         std::cout<<"__________________PARENT________________\n";
         std::cout << t->to_string(PARENT,false,5);
+        std::cout << "________________LEVELROOT________________\n";
+        std::cout << t->to_string(LEVELROOT,false,5);
+        std::cout<<"__________________IDX________________\n";
+        std::cout << t->to_string(IDX,false,5);
+        std::cout<<"_________________ATTRIBUTE________________\n";
+        std::cout << t->to_string(ATTRIBUTE,false,5);
+        
     }
 
     t->filter(lambda);

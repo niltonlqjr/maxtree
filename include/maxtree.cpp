@@ -110,7 +110,6 @@ std::vector<maxtree_node *> *maxtree::get_levelroots(){
 }
 
 void maxtree::compute_sequential_iterative(){
-    #define INQUEUE -2
     std::priority_queue<maxtree_node*, std::vector<maxtree_node*> ,cmp_maxtree_nodes> pixel_pq;
     std::stack<maxtree_node*> pixel_stack;
     maxtree_node *xm, *nextpix, *p;
@@ -138,11 +137,15 @@ void maxtree::compute_sequential_iterative(){
 
         if(nextpix->gval > p->gval){
             pixel_stack.push(nextpix);
-        }else{
+        }else if (nextpix->gval == p->gval){
+            p=pixel_pq.top();
             pixel_pq.pop();
             if(p!=pixel_stack.top()){
                 p->parent = pixel_stack.top()->idx;
                 pixel_stack.top()->compute_attribute(p->attribute);
+                if(verbose){
+                    std::cout << "computing attributes of:" << p->global_idx << "\n";
+                }
             }
             
             if(pixel_pq.empty()){
@@ -152,28 +155,110 @@ void maxtree::compute_sequential_iterative(){
             }
 
             if(nextpix->gval < p->gval){
-                
-                while(!pixel_stack.empty() && nextpix->gval < pixel_stack.top()->gval){
+                do{
+                //while(!pixel_stack.empty() && nextpix->gval < pixel_stack.top()->gval){
                     auto st = pixel_stack.top();
                     pixel_stack.pop();
                     this->levelroots->push_back(st);
                     if(!pixel_stack.empty()){
-                        st->parent = pixel_stack.top()->idx;
                         pixel_stack.top()->compute_attribute(st->attribute);
+                        if(verbose){
+                            std::cout << "computing attributes of:" << st->global_idx << ": <-------LEVELROOT\n";
+                        }
+                        st->parent = pixel_stack.top()->idx;
                     }
-                }
+                }while(!pixel_stack.empty() && nextpix->gval < pixel_stack.top()->gval);
+                if(pixel_stack.top()->gval < nextpix->gval){
+                    pixel_stack.push(nextpix);
+                } 
             }
 
         }
 
     }while(!pixel_pq.empty());
+
+    while(!pixel_stack.empty()){
+        p = pixel_stack.top();
+        pixel_stack.pop();
+        if(!pixel_stack.empty()){
+            p->parent = pixel_stack.top()->idx;
+            pixel_stack.top()->compute_attribute(p->attribute);
+        }else{
+            pixel_stack.push(p);
+            break;
+        }
+    }
+
     maxtree_node *root = pixel_stack.top();
     this->levelroots->push_back(root);
     root->parent = -1;
     this->root = root;
 }
 
+int maxtree::flood(int lambda, maxtree_node *r, std::vector<std::deque<maxtree_node*>> *hqueue, std::vector<maxtree_node *> *levelroot){
+    maxtree_node *p;
+    while (!hqueue->at(lambda).empty()){
+        p=hqueue->at(lambda).front();
+        hqueue->at(lambda).pop_front();
+        p->parent = r->idx;
+        auto N = this->get_neighbours(p->idx);
+        for(auto n: N){
+            if(n->parent == -1){
+                int l = n->gval;
+                if(levelroot->at(l) == NULL){
+                    levelroot->at(l)=n;
+                }
+                hqueue->at(l).push_back(n);
+                n->parent = INQUEUE;
+                while(l>lambda){
+                    l=this->flood(l,levelroot->at(l),hqueue, levelroot);
+                }
+            }
+        }
+    
+    }
+    levelroot->at(lambda) = NULL;
 
+    int lpar = lambda-1;
+    while(lpar >= 0 && levelroot->at(lpar) == NULL){
+        lpar--;
+    }
+    if(lpar != -1){
+        r->parent = levelroot->at(lpar)->idx;
+    }
+    return lpar;
+    
+}
+
+void maxtree::compute_sequential_recursive(int gl){
+    std::vector<maxtree_node*> *levelroot = new std::vector<maxtree_node*>(gl, NULL);
+    std::vector<std::deque<maxtree_node*>> *hqueue = new std::vector<std::deque<maxtree_node*>>(gl);
+    maxtree_node *pmin = min_gval(this->data);
+    double lmin = pmin->gval;
+    this->root = pmin;
+    hqueue->at(lmin).push_back(pmin);
+    levelroot->at(lmin) = pmin;
+    this->flood(lmin,pmin,hqueue,levelroot);
+
+    this->root->parent = -1;
+
+    
+    std::vector<Tattribute> attrs(this->get_size(),0); // = new std::vector<Tattribute>(this->get_size(),Tattr_NULL);
+    for(auto p: *this->data){
+        auto lr = this->get_levelroot(p);
+        if(p->idx != lr->idx){
+            attrs[p->idx] = p->attribute;
+            attrs[lr->idx] += p->attribute;   
+        }
+    }
+    for(auto p: *this->data){
+        p->compute_attribute(attrs[p->idx]);
+    }
+        
+    delete levelroot;
+    delete hqueue;
+
+}
 
 void maxtree::fill_from_VImage(vips::VImage &img_in, uint32_t global_nlines, uint32_t global_ncols){
     this->h = img_in.height();
@@ -356,7 +441,7 @@ void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t
         }
     }
 } 
-
+//this code is to "divide" strategy
 void maxtree::insert_component(component c, Tpixel_value gval){
     auto comps = this->components.find(gval);
     if(comps == this->components.end()){
@@ -565,43 +650,67 @@ std::vector<maxtree_node*> maxtree::get_neighbours(uint64_t pixel, uint8_t con){
     return v;
 }
 
-
+ 
 void maxtree::filter(Tattribute lambda){
-    /*
-    maxtree_node *p,*q,*r = this->root;
-    for(auto n: *this->get_levelroots()){
-        std::cout  << "(" << n->idx << ", " << n->parent << ", " << n->attribute  << " ) ";
-    }
-    */
-    //std::cout << "\n";
-/*     auto lroots = this->get_levelroots();
-    
+    maxtree_node *aux, *p, *lr ,*q,*r = this->root;
+
+    std::vector<maxtree_node *> stack;
+
     if(r->attribute < lambda){
-        r->label = 0;
+        r->label = 0;//this->get_levelroot(this->at_pos(r->parent))->gval;
     } else {
         r->label = r->gval;
     }
-    for( int64_t i = lroots->size()-1; i >= 0; i--){
-        p = lroots->at(i);
-        if(p->parent < 0){
-            continue;
-        }
-        q = this->at_pos(p->parent);
-        if(q->gval == p->gval){
-            std::cout << "acho q nao deveria entrar aqui.\n";
-            p->label = q->label;
-        }else if(p->gval < lambda){
-            p->label = q->label;
-        }else{
+    r->labeled = true;
+    uint64_t tot_labeled = 1;
+    uint64_t first_not_labeled=0;
+    p=this->at_pos(first_not_labeled);
+    while(first_not_labeled < this->get_size()){
+        p=this->at_pos(first_not_labeled);
+        if(p->attribute >= lambda){ 
             p->label = p->gval;
+            p->labeled = true;
+        }else{ // p->atrribute < lambda and p is not labeled
+            lr = this->get_levelroot(p);
+            if(!lr->labeled){
+                if(lr->attribute >= lambda){
+                    lr->label = lr->gval;
+                    lr->labeled = true;
+                }else{// levelroot has no label and must be filtered off (attribute of component is not greater than lambda)
+                    while(!lr->labeled && lr->attribute < lambda){
+                        stack.push_back(lr);
+                        lr=this->get_parent(lr->idx);
+                    }
+                    //levelroot that pass on filter or labeled found in backward path
+                    if(!lr->labeled){
+                        lr->label = lr->gval;
+                        lr->labeled = true;
+                    }
+                    while(!stack.empty()){
+                        aux=stack.back();
+                        stack.pop_back();
+                        aux->label = lr->label;
+                        aux->labeled = true;
+
+                    }
+                }
+            }
+            p->label = lr->label;
+            p->labeled = true;
         }
-    } */
+        first_not_labeled++;
+    }
+}
+
+
+/* void maxtree::filter(Tattribute lambda){
+    
     maxtree_node *aux, *p,*q,*r = this->root;
 
     std::vector<maxtree_node *> stack;
 
     if(r->attribute < lambda){
-        r->label = 0;
+        r->label = 0//this->get_levelroot(this->at_pos(r->parent))->gval;
     } else {
         r->label = r->gval;
     }
@@ -618,7 +727,8 @@ void maxtree::filter(Tattribute lambda){
             }else{
                 q = this->get_parent(p->idx);
                 if(q){ 
-                    //if(q->gval == p->gval){
+                    q = this->get_levelroot(q);
+                    if(q->gval <= p->gval){
                         if(q->labeled){
                             p->labeled = true;
                             p->label = q->label;
@@ -626,13 +736,13 @@ void maxtree::filter(Tattribute lambda){
                         }else{
                             stack.push_back(q);
                         }
-                    //}
+                    }
                 }
             }
         }
         
     }
-}
+} */
 
 
 void maxtree::save(std::string name, enum maxtee_node_field f){

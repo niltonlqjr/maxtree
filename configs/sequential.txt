@@ -4,19 +4,15 @@
 # the args names (lvalue) and values (rvalue) are preprocessed by a right trim and left trim
 
 # print some information(true/false)
-verbose=true
+verbose=false
 # print information with colors (true/false)
 colored = false
 
 # main server (IP address)
 server = 10.1.1.2
-# number of threads for the process (integer value)
-threads=  1
-
-# grid lines (integer value)
-glines=1
-# grid columns(integer value)
-gcolumns=2
 
 #atribute value to filter
-lambda=15
+lambda=10000
+
+#output filename
+output=output/lambda_10000.png
