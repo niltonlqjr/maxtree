@@ -56,7 +56,8 @@ class maxtree{
         maxtree_node *get_levelroot(maxtree_node *n);
         std::vector<bool> *tile_borders;
 
-        int flood(int lambda, maxtree_node *r, std::vector<std::deque<maxtree_node*>> *hqueue, std::vector<maxtree_node *> *levelroot);
+        int flood(int lambda, maxtree_node *r, std::vector<std::deque<maxtree_node*>> *hqueue, 
+            std::vector<maxtree_node *> *levelroot, std::vector<maxtree_node*> &S);
 
         
     public:

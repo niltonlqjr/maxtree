@@ -14,7 +14,7 @@ enum maxtee_node_field {
 #define Tattr_default 1
 #define Tattr_NULL 0
 
-#define Tpixel_value double
+#define Tpixel_value uint8_t
 
 enum borders{
     LEFT_BORDER,

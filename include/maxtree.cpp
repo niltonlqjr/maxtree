@@ -195,12 +195,17 @@ void maxtree::compute_sequential_iterative(){
     this->root = root;
 }
 
-int maxtree::flood(int lambda, maxtree_node *r, std::vector<std::deque<maxtree_node*>> *hqueue, std::vector<maxtree_node *> *levelroot){
+int maxtree::flood(int lambda, maxtree_node *r, std::vector<std::deque<maxtree_node*>> *hqueue, 
+                   std::vector<maxtree_node *> *levelroot, std::vector<maxtree_node*> &S){
     maxtree_node *p;
+    
     while (!hqueue->at(lambda).empty()){
         p=hqueue->at(lambda).front();
         hqueue->at(lambda).pop_front();
         p->parent = r->idx;
+        if(p->idx!=r->idx){
+            S.push_back(p);
+        }
         auto N = this->get_neighbours(p->idx);
         for(auto n: N){
             if(n->parent == -1){
@@ -211,12 +216,13 @@ int maxtree::flood(int lambda, maxtree_node *r, std::vector<std::deque<maxtree_n
                 hqueue->at(l).push_back(n);
                 n->parent = INQUEUE;
                 while(l>lambda){
-                    l=this->flood(l,levelroot->at(l),hqueue, levelroot);
+                    l=this->flood(l, levelroot->at(l), hqueue, levelroot, S);
                 }
             }
         }
     
     }
+    
     levelroot->at(lambda) = NULL;
 
     int lpar = lambda-1;
@@ -226,35 +232,42 @@ int maxtree::flood(int lambda, maxtree_node *r, std::vector<std::deque<maxtree_n
     if(lpar != -1){
         r->parent = levelroot->at(lpar)->idx;
     }
-    return lpar;
-    
+    S.push_back(r);
+    return lpar;   
 }
 
 void maxtree::compute_sequential_recursive(int gl){
     std::vector<maxtree_node*> *levelroot = new std::vector<maxtree_node*>(gl, NULL);
     std::vector<std::deque<maxtree_node*>> *hqueue = new std::vector<std::deque<maxtree_node*>>(gl);
+    std::vector<maxtree_node*> S;
     maxtree_node *pmin = min_gval(this->data);
-    double lmin = pmin->gval;
+    Tpixel_value lmin = pmin->gval;
     this->root = pmin;
     hqueue->at(lmin).push_back(pmin);
     levelroot->at(lmin) = pmin;
-    this->flood(lmin,pmin,hqueue,levelroot);
+    
+    this->flood(lmin,pmin,hqueue,levelroot,S);
 
     this->root->parent = -1;
 
-    
-    std::vector<Tattribute> attrs(this->get_size(),0); // = new std::vector<Tattribute>(this->get_size(),Tattr_NULL);
+    for(auto p: S){
+        if(p->idx !=this->root->idx){
+            auto q = this->get_parent(p->idx);
+            q->compute_attribute(p->attribute);
+        }
+    }
+/*     std::vector<Tattribute> attrs(this->get_size(),0); // = new std::vector<Tattribute>(this->get_size(),Tattr_NULL);
     for(auto p: *this->data){
         auto lr = this->get_levelroot(p);
         if(p->idx != lr->idx){
-            attrs[p->idx] = p->attribute;
+            //attrs[p->idx] = p->attribute;
             attrs[lr->idx] += p->attribute;   
         }
     }
     for(auto p: *this->data){
         p->compute_attribute(attrs[p->idx]);
     }
-        
+         */
     delete levelroot;
     delete hqueue;
 

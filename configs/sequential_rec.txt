@@ -12,7 +12,7 @@ colored = false
 server = 10.1.1.2
 
 #atribute value to filter
-lambda=10000
+lambda=3000000
 
 #output filename
-output=output/lambda_10000_rec.png
+output=output/lambda_3000000_rec.png
