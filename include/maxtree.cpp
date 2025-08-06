@@ -118,14 +118,14 @@ void maxtree::compute_sequential_iterative(){
 
     xm = min_gval(this->get_data());
     pixel_pq.push(xm);
+    xm->parent = INQUEUE;
     pixel_stack.push(xm);
     nextpix = xm;
-
     do{
         p = nextpix;
         auto N = this->get_neighbours(p->idx);
         for(auto q: N){
-            if(q->parent == -1){/* if q not visited */
+            if(q->parent == -1){// if q not visited 
                 q->parent = INQUEUE;
                 pixel_pq.push(q);
                 if(q->gval > p->gval){
@@ -137,9 +137,11 @@ void maxtree::compute_sequential_iterative(){
 
         if(nextpix->gval > p->gval){
             pixel_stack.push(nextpix);
-        }else if (nextpix->gval == p->gval){
+        }else if(nextpix->global_idx != p->global_idx) {
+            std::cerr << "nextpix and p are not the same!!!! it should not happen!!!\n";
+        }else{// p and nextpix are the same.
             p=pixel_pq.top();
-            pixel_pq.pop();
+            pixel_pq.pop(); //remove  from queue
             if(p!=pixel_stack.top()){
                 p->parent = pixel_stack.top()->idx;
                 pixel_stack.top()->compute_attribute(p->attribute);
@@ -148,11 +150,12 @@ void maxtree::compute_sequential_iterative(){
                 }
             }
             
-            if(pixel_pq.empty()){
+            /* if(pixel_pq.empty()){
                 nextpix=p;
             }else{
                 nextpix = pixel_pq.top();
-            }
+            } */
+            nextpix = pixel_pq.top();
 
             if(nextpix->gval < p->gval){
                 do{
