@@ -14,7 +14,7 @@
 
 #include "utils.hpp"
 
-#define INQUEUE -1
+
 
 using namespace vips;
 
@@ -200,7 +200,8 @@ int main(int argc, char *argv[]){
                 std::cout << "=> computing tile (stored in maxtree):" << t->grid_i << ", " << t->grid_j << " size:" << t->h << ", " <<  t->w << "\n";
                 std::cout << "i:" << i << " j:" << j << "\n";
             }
-            t->compute_sequential_iterative();
+            //t->compute_sequential_iterative();
+            t->compute_sequential_recursive();
         }
     }
 
@@ -218,12 +219,14 @@ int main(int argc, char *argv[]){
                 std::cout << t->to_string(PARENT_IJ,colored,10);
                 std::cout << "________________LEVELROOT________________\n";
                 std::cout << t->to_string(LEVELROOT,colored,5);
-                std::cout << "________________ATTRIBUTE________________\n";
-                std::cout << t->to_string(ATTRIBUTE,colored,5);
+                std::cout << "_______________PARENT_________________\n";
+                std::cout << t->to_string(PARENT,colored,5);
                 std::cout << "________________LOCAL IDX________________\n";
                 std::cout << t->to_string(IDX, colored, 5);
                 std::cout << "_______________GLOBAL IDX_________________\n";
                 std::cout << t->to_string(GLOBAL_IDX,colored,5);
+                std::cout << "________________ATTRIBUTE________________\n";
+                std::cout << t->to_string(ATTRIBUTE,colored,5);
 
                 std::cout << "Levels roots:";
                 for(auto r: *(t->get_levelroots())){
