@@ -15,6 +15,9 @@
 #define NO_BOUNDARY_PARENT -1
 
 #define Tboundary_tree_lroot std::unordered_map<uint64_t, boundary_node*>
+class boundary_node;
+class boundary_tree;
+
 
 enum boundary_tree_field{
     BOUNDARY_PARENT, MAXTREE_IDX, BOUNDARY_IDX, BOUNDARY_GVAL,  BOUNDARY_BORDER_LR, BOUNDARY_GLOBAL_IDX
@@ -28,12 +31,14 @@ class boundary_node{
         uint64_t origin; // index of node on the border that added the boundary tree branch
         int64_t boundary_parent; // parent of the node in boundary tree
         maxtree_node *ptr_node;
+        boundary_tree *bound_tree_ptr;
         
         /* boundary_node(double gval, uint64_t maxtree_idx, uint64_t origin,
                       uint64_t global_idx, Tattribute a = Tattr_default,
                       int64_t bound_parent = NO_BOUNDARY_PARENT,
                       int64_t border_lr = NO_BORDER_LEVELROOT); */
         boundary_node(maxtree_node *n, uint64_t origin,
+                      boundary_tree *bound_tree_ptr,
                       int64_t bound_parent = NO_BOUNDARY_PARENT, 
                       int64_t border_lr = NO_BORDER_LEVELROOT);
         void accumulate_attr(boundary_node *merged);
@@ -92,7 +97,7 @@ class boundary_tree{
         bool is_root(uint64_t n_idx);
         
         /* merge two branches started at nodes this_node(from this tree) and t_node (from t tree) */
-        void merge_branches(boundary_node *this_node, boundary_tree *t, boundary_node *t_node);
+        void merge_branches(boundary_node *this_node, boundary_node *t_node);
         /* get index given a position */
 
         /* update the boundary tree post merge */
