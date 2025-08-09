@@ -46,12 +46,12 @@ enum merge_directions{
 class maxtree_node{
     public:
         int64_t parent;
-        Tpixel_value label;
+        Tpixel_value label; // greylevel at output
         uint64_t idx;//local index
-        uint64_t global_idx;
-        Tpixel_value gval;
+        uint64_t global_idx;// global index
+        Tpixel_value gval; // input greylevel
         bool visited;
-        bool labeled;
+        bool labeled; // already get its output label? (its greylevel in filtered image)
         Tattribute attribute;
 
         maxtree_node(Tpixel_value g, uint64_t i, uint64_t global_idx = 0, Tattribute attr = Tattr_default);

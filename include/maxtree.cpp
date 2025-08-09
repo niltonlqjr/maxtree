@@ -33,7 +33,7 @@ maxtree::maxtree(uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j){
     // this->data = new std::unordered_map<int, maxtree_node*>();
     this->data = new std::vector<maxtree_node*>();
     this->levelroots = new std::vector<maxtree_node*>();
-    this->tile_borders = new std::vector<bool>(4,false);
+    this->tile_borders = new std::vector<bool>(4, false);
 }
 
 // maxtree::maxtree(std::unordered_map<int, maxtree_node*> *data, int32_t h, int32_t w){
@@ -44,7 +44,7 @@ maxtree::maxtree(std::vector<maxtree_node*> *data, uint32_t h, uint32_t w, uint3
     this->grid_j = grid_j;
     this->data = data;
     this->levelroots = new std::vector<maxtree_node*>();
-    this->tile_borders = new std::vector<bool>(4,false);
+    this->tile_borders = new std::vector<bool>(4, false);
 }
 
 maxtree::maxtree(std::vector <bool> borders, uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j){
@@ -72,7 +72,7 @@ uint64_t maxtree::index_of(uint32_t l, uint32_t c){
     return l * this->w + c;
 }
 
-std::tuple<uint32_t,uint32_t> maxtree::lin_col(uint64_t index){
+std::tuple<uint32_t, uint32_t> maxtree::lin_col(uint64_t index){
     return std::make_tuple(index / this->w, index % this->w);
 }
 
@@ -110,7 +110,7 @@ std::vector<maxtree_node *> *maxtree::get_levelroots(){
 }
 
 void maxtree::compute_sequential_iterative(){
-    std::priority_queue<maxtree_node*, std::vector<maxtree_node*> ,cmp_maxtree_nodes> pixel_pq;
+    std::priority_queue<maxtree_node*, std::vector<maxtree_node*> , cmp_maxtree_nodes> pixel_pq;
     std::stack<maxtree_node*> pixel_stack;
     maxtree_node *xm, *nextpix, *p;
     uint64_t idx=0;
@@ -249,7 +249,7 @@ void maxtree::compute_sequential_recursive(int gl){
     hqueue->at(lmin).push_back(pmin);
     levelroot->at(lmin) = pmin;
     
-    this->flood(lmin,pmin,hqueue,levelroot,S);
+    this->flood(lmin, pmin, hqueue, levelroot, S);
 
     this->root->parent = -1;
 
@@ -259,7 +259,7 @@ void maxtree::compute_sequential_recursive(int gl){
             q->compute_attribute(p->attribute);
         }
     }
-/*     std::vector<Tattribute> attrs(this->get_size(),0); // = new std::vector<Tattribute>(this->get_size(),Tattr_NULL);
+/*     std::vector<Tattribute> attrs(this->get_size(), 0); // = new std::vector<Tattribute>(this->get_size(), Tattr_NULL);
     for(auto p: *this->data){
         auto lr = this->get_levelroot(p);
         if(p->idx != lr->idx){
@@ -282,9 +282,9 @@ void maxtree::fill_from_VImage(vips::VImage &img_in, uint32_t global_nlines, uin
     vips::VImage img = img_in.copy_memory();
     auto img_pels = img.get_image();
     
-    char aux_enum_c[][50] = {"VIPS_FORMAT_UCHAR", "VIPS_FORMAT_CHAR", "VIPS_FORMAT_USHORT","VIPS_FORMAT_SHORT",
-         "VIPS_FORMAT_UINT"," VIPS_FORMAT_INT"," VIPS_FORMAT_FLOAT"," VIPS_FORMAT_COMPLEX"," VIPS_FORMAT_DOUBLE",
-         "VIPS_FORMAT_DPCOMPLEX","VIPS_FORMAT_LAST"};
+    char aux_enum_c[][50] = {"VIPS_FORMAT_UCHAR", "VIPS_FORMAT_CHAR", "VIPS_FORMAT_USHORT", "VIPS_FORMAT_SHORT", 
+         "VIPS_FORMAT_UINT", " VIPS_FORMAT_INT", " VIPS_FORMAT_FLOAT", " VIPS_FORMAT_COMPLEX", " VIPS_FORMAT_DOUBLE", 
+         "VIPS_FORMAT_DPCOMPLEX", "VIPS_FORMAT_LAST"};
     if(verbose){
         std::cout << "pixel format: ";
         if (img_pels->BandFmt > 0){
@@ -297,9 +297,9 @@ void maxtree::fill_from_VImage(vips::VImage &img_in, uint32_t global_nlines, uin
     
     for(int l = 0; l < this->h; l++){
         for(int c = 0; c < this->w; c++){
-            int x = this->index_of(l,c);
+            int x = this->index_of(l, c);
             VipsPel *vpel = VIPS_IMAGE_ADDR(img_pels, c, l);
-            this->data->push_back(new maxtree_node((*vpel),x));
+            this->data->push_back(new maxtree_node((*vpel), x));
         }
     }
 }
@@ -337,16 +337,16 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
 
     if(this->tile_borders->at(TOP_BORDER)){
         for(j=0; j<this->w; j++){
-            to_merge = this->at_pos(1,j);    
-            neighbour = this->at_pos(0,j);
+            to_merge = this->at_pos(1, j);    
+            neighbour = this->at_pos(0, j);
             if(neighbour->gval < to_merge->gval){
                 to_merge=neighbour;
             }
             tn = this->get_levelroot(to_merge);
-            boundary_node n(to_merge,to_merge->global_idx,bound_tree,this->get_levelroot(to_merge)->global_idx);
-            bound_tree->insert_border_element(n,TOP_BORDER);
+            boundary_node n(to_merge, NULL, bound_tree, this->get_levelroot(to_merge)->global_idx);
+            bound_tree->insert_border_element(n, TOP_BORDER);
 
-            bound_tree->add_lroot_tree(tn,to_merge->global_idx,this->get_data());
+            bound_tree->add_lroot_tree(tn, this->get_data());
             
         }
     }
@@ -360,24 +360,24 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
             }
             
             tn = this->get_levelroot(to_merge);
-            boundary_node n(to_merge,to_merge->global_idx,bound_tree,this->get_levelroot(to_merge)->global_idx);
-            bound_tree->insert_border_element(n,RIGHT_BORDER);
-            bound_tree->add_lroot_tree(tn, to_merge->global_idx, this->get_data());
+            boundary_node n(to_merge, NULL, bound_tree, this->get_levelroot(to_merge)->global_idx);
+            bound_tree->insert_border_element(n, RIGHT_BORDER);
+            bound_tree->add_lroot_tree(tn, this->get_data());
         }
     }
 
     if(this->tile_borders->at(BOTTOM_BORDER)){
         //for(j = this->w-1; (int32_t)j >= 0; j--){
         for(j=0; j < this->w; j++){
-            to_merge = this->at_pos(this->h-2,j);
-            neighbour = this->at_pos(this->h-1,j);
+            to_merge = this->at_pos(this->h-2, j);
+            neighbour = this->at_pos(this->h-1, j);
             if(neighbour->gval < to_merge->gval){
                 to_merge = neighbour;
             }
             tn = this->get_levelroot(to_merge);
-            boundary_node n(to_merge,to_merge->global_idx,bound_tree,this->get_levelroot(to_merge)->global_idx);
+            boundary_node n(to_merge, NULL, bound_tree, this->get_levelroot(to_merge)->global_idx);
             bound_tree->insert_border_element(n, BOTTOM_BORDER);
-            bound_tree->add_lroot_tree(tn, to_merge->global_idx, this->get_data());
+            bound_tree->add_lroot_tree(tn, this->get_data());
             
         }
     }
@@ -391,9 +391,9 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
                 to_merge=neighbour;
             }
             tn = this->get_levelroot(to_merge);
-            boundary_node n(to_merge,to_merge->global_idx,bound_tree,this->get_levelroot(to_merge)->global_idx);
-            bound_tree->insert_border_element(n,LEFT_BORDER);
-            bound_tree->add_lroot_tree(tn, to_merge->global_idx, this->get_data());
+            boundary_node n(to_merge, NULL, bound_tree, this->get_levelroot(to_merge)->global_idx);
+            bound_tree->insert_border_element(n, LEFT_BORDER);
+            bound_tree->add_lroot_tree(tn, this->get_data());
         }
     }
     return bound_tree;
@@ -427,22 +427,22 @@ void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t
     }
      
     if(verbose){
-        std::cout << "filling: " << base_h << "," << base_w << "..." << base_h+this->h << "," << base_w+this->w <<"\n";
+        std::cout << "filling: " << base_h << ", " << base_w << "..." << base_h+this->h << ", " << base_w+this->w <<"\n";
     }
      
-    /*char aux_enum_c[][50] = {"VIPS_FORMAT_UCHAR", "VIPS_FORMAT_CHAR", "VIPS_FORMAT_USHORT","VIPS_FORMAT_SHORT",
-         "VIPS_FORMAT_UINT"," VIPS_FORMAT_INT"," VIPS_FORMAT_FLOAT"," VIPS_FORMAT_COMPLEX"," VIPS_FORMAT_DOUBLE",
-         "VIPS_FORMAT_DPCOMPLEX","VIPS_FORMAT_LAST"};*/
+    /*char aux_enum_c[][50] = {"VIPS_FORMAT_UCHAR", "VIPS_FORMAT_CHAR", "VIPS_FORMAT_USHORT", "VIPS_FORMAT_SHORT", 
+         "VIPS_FORMAT_UINT", " VIPS_FORMAT_INT", " VIPS_FORMAT_FLOAT", " VIPS_FORMAT_COMPLEX", " VIPS_FORMAT_DOUBLE", 
+         "VIPS_FORMAT_DPCOMPLEX", "VIPS_FORMAT_LAST"};*/
     
     for(int l = 0; l < this->h; l++){
         for(int c = 0; c < this->w; c++){
 /*             if(verbose)
-                std::cout << "accessing:" << "(" << l << "," << c << ")\n"; */
-            int x = this->index_of(l,c);
+                std::cout << "accessing:" << "(" << l << ", " << c << ")\n"; */
+            int x = this->index_of(l, c);
             //VipsPel *vpel__ = VIPS_IMAGE_ADDR(c_region, c, l);
             global_idx = ((base_h+l) * c_tiles) + (c+base_w);
 /*             if(verbose)
-                std::cout << "local:(" << l << "," << c << ") Global:(" << l+base_h << ","<< c+base_w << ")\n"; */
+                std::cout << "local:(" << l << ", " << c << ") Global:(" << l+base_h << ", "<< c+base_w << ")\n"; */
             VipsPel *vpel = VIPS_REGION_ADDR(c_region, c+base_w, l+base_h);
             /* check if it is a border pixel, so this attr should not be computed */
             if((this->tile_borders->at(LEFT_BORDER)  && c == 0)           ||
@@ -453,7 +453,7 @@ void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t
             }else{
                 attr_ini = Tattr_default;
             }
-            this->data->push_back(new maxtree_node((*vpel), x, global_idx,attr_ini));
+            this->data->push_back(new maxtree_node((*vpel), x, global_idx, attr_ini));
         }
     }
 } 
@@ -496,7 +496,7 @@ std::string maxtree::to_string(enum maxtee_node_field field, bool colored, uint8
     if(field == PARENT){
         for(int i=0; i < this->h; i++){
             for(int j=0; j < this->w; j++){
-                auto point = this->data->at(this->index_of(i,j))->parent;
+                auto point = this->data->at(this->index_of(i, j))->parent;
                 if(colored)
                     r+=terminal_color_string(point % 8);
                 r += fill(std::to_string(point), spaces-1) + " " ;
@@ -504,19 +504,19 @@ std::string maxtree::to_string(enum maxtee_node_field field, bool colored, uint8
             r += "\n";
         }
     }else if(field == PARENT_IJ){
-        uint32_t pi,pj;
+        uint32_t pi, pj;
         for(int i=0; i < this->h; i++){
             for(int j=0; j < this->w; j++){
-                auto point = this->data->at(this->index_of(i,j))->parent;
+                auto point = this->data->at(this->index_of(i, j))->parent;
                 std::tuple <uint32_t, uint32_t> parent_lc = this->lin_col(point);
                 if(colored)
                     r+=terminal_color_string(point % 8);
                 if(point != -1){
                     pi = std::get<0>(parent_lc);
                     pj = std::get<1>(parent_lc);    
-                    r += fill("("+std::to_string(pi) + "," + std::to_string(pj) + ")", (spaces-1)) + " ";
+                    r += fill("("+std::to_string(pi) + ", " + std::to_string(pj) + ")", (spaces-1)) + " ";
                 }else{
-                    r += fill("("+std::to_string(-1) + "," + std::to_string(-1) + ")", (spaces-1)) + " ";
+                    r += fill("("+std::to_string(-1) + ", " + std::to_string(-1) + ")", (spaces-1)) + " ";
                 }
             }
             r += "\n";
@@ -524,10 +524,10 @@ std::string maxtree::to_string(enum maxtee_node_field field, bool colored, uint8
     }else if(field == LABEL){
         for(int i=0; i < this->h; i++){
             for(int j=0; j < this->w; j++){
-                auto dpoint = this->data->at(this->index_of(i,j))->label;
+                auto dpoint = this->data->at(this->index_of(i, j))->label;
                 if(colored)
                     r+=terminal_color_string(dpoint / 31);
-                auto ds = double_to_string(dpoint,decimal);
+                auto ds = double_to_string(dpoint, decimal);
                 r += fill(ds, spaces-1) + " " ;
             }
             r += "\n";
@@ -535,7 +535,7 @@ std::string maxtree::to_string(enum maxtee_node_field field, bool colored, uint8
     }else if(field == IDX){
         for(int i=0; i < this->h; i++){
             for(int j=0; j < this->w; j++){
-                auto point = this->data->at(this->index_of(i,j))->idx;
+                auto point = this->data->at(this->index_of(i, j))->idx;
                 if(colored)
                     r+=terminal_color_string(point % 8);
                 r += fill(std::to_string(point), spaces-1) + " " ;
@@ -545,17 +545,17 @@ std::string maxtree::to_string(enum maxtee_node_field field, bool colored, uint8
     }else if(field == IDX_IJ){
         for(int i=0; i < this->h; i++){
             for(int j=0; j < this->w; j++){
-                auto point = this->data->at(this->index_of(i,j))->idx;
+                auto point = this->data->at(this->index_of(i, j))->idx;
                 if(colored)
                     r+=terminal_color_string(point % 8);
-                r += "("+fill(std::to_string(j), (spaces-4)/2) + "," + fill(std::to_string(j), (spaces-4)/2) + ") ";
+                r += "("+fill(std::to_string(j), (spaces-4)/2) + ", " + fill(std::to_string(j), (spaces-4)/2) + ") ";
             }
             r += "\n";
         }
     }else if(field == GLOBAL_IDX){
         for(int i=0; i < this->h; i++){
             for(int j=0; j < this->w; j++){
-                auto point = this->data->at(this->index_of(i,j))->global_idx;
+                auto point = this->data->at(this->index_of(i, j))->global_idx;
                 if(colored)
                     r+=terminal_color_string(point % 8);
                 r += fill(std::to_string(point), spaces-1) + " " ;
@@ -565,10 +565,10 @@ std::string maxtree::to_string(enum maxtee_node_field field, bool colored, uint8
     }else if (field == GVAL){
         for(int i=0; i < this->h; i++){
             for(int j=0; j < this->w; j++){
-                auto dpoint = this->data->at(this->index_of(i,j))->gval;
+                auto dpoint = this->data->at(this->index_of(i, j))->gval;
                 if(colored)
                     r+=terminal_color_string(dpoint / 31);
-                auto ds = double_to_string(dpoint,decimal);
+                auto ds = double_to_string(dpoint, decimal);
                 r += fill(ds, spaces-1) + " " ;
             }
             r += "\n";
@@ -576,7 +576,7 @@ std::string maxtree::to_string(enum maxtee_node_field field, bool colored, uint8
     }else if(field == LEVELROOT){
         for(int i=0; i < this->h; i++){
             for(int j=0; j < this->w; j++){
-                maxtree_node *lroot = this->get_levelroot(this->data->at(this->index_of(i,j)));
+                maxtree_node *lroot = this->get_levelroot(this->data->at(this->index_of(i, j)));
                 auto dpoint = lroot->idx;
                 if(colored)
                     r+=terminal_color_string(dpoint % 8);
@@ -587,7 +587,7 @@ std::string maxtree::to_string(enum maxtee_node_field field, bool colored, uint8
     }else if(field == ATTRIBUTE){
         for(int i=0; i < this->h; i++){
             for(int j=0; j < this->w; j++){
-                auto dpoint = this->data->at(this->index_of(i,j))->attribute;
+                auto dpoint = this->data->at(this->index_of(i, j))->attribute;
                 if(colored)
                     r+=terminal_color_string(dpoint % 8);
                 r += fill(std::to_string(dpoint), spaces-1) + " " ;
@@ -668,7 +668,7 @@ std::vector<maxtree_node*> maxtree::get_neighbours(uint64_t pixel, uint8_t con){
 
  
 void maxtree::filter(Tattribute lambda){
-    maxtree_node *aux, *p, *lr ,*q,*r = this->root;
+    maxtree_node *aux, *p, *lr , *q, *r = this->root;
 
     std::vector<maxtree_node *> stack;
 
@@ -721,7 +721,7 @@ void maxtree::filter(Tattribute lambda){
 
 /* void maxtree::filter(Tattribute lambda){
     
-    maxtree_node *aux, *p,*q,*r = this->root;
+    maxtree_node *aux, *p, *q, *r = this->root;
 
     std::vector<maxtree_node *> stack;
 
@@ -773,7 +773,7 @@ void maxtree::save(std::string name, enum maxtee_node_field f){
             data.push_back((uint8_t)this->at_pos(i)->gval);
         }
     }
-    vips::VImage out = vips::VImage::new_from_memory(data.data(), this->w * this->h * sizeof(uint8_t),this->w, this->h, 1, VIPS_FORMAT_UCHAR);
+    vips::VImage out = vips::VImage::new_from_memory(data.data(), this->w * this->h * sizeof(uint8_t), this->w, this->h, 1, VIPS_FORMAT_UCHAR);
 
     out.write_to_file(name.c_str());
     
