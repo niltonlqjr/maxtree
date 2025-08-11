@@ -55,7 +55,7 @@ class maxtree_node{
         Tattribute attribute;
 
         maxtree_node(Tpixel_value g, uint64_t i, uint64_t global_idx = 0, Tattribute attr = Tattr_default);
-        void compute_attribute(Tattribute);
+        // void compute_attribute(Tattribute);
 
         bool operator>(const maxtree_node &r);
         bool operator>=(const maxtree_node &r);

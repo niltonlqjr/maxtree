@@ -144,7 +144,9 @@ void maxtree::compute_sequential_iterative(){
             pixel_pq.pop(); //remove  from queue
             if(p!=pixel_stack.top()){
                 p->parent = pixel_stack.top()->idx;
-                pixel_stack.top()->compute_attribute(p->attribute);
+                //pixel_stack.top()->compute_attribute(p->attribute);
+                auto top = pixel_stack.top();
+                top->attribute = top->attribute + p->attribute;
                 if(verbose){
                     std::cout << "computing attributes of:" << p->global_idx << "\n";
                 }
@@ -164,7 +166,9 @@ void maxtree::compute_sequential_iterative(){
                     pixel_stack.pop();
                     this->levelroots->push_back(st);
                     if(!pixel_stack.empty()){
-                        pixel_stack.top()->compute_attribute(st->attribute);
+                        //pixel_stack.top()->compute_attribute(st->attribute);
+                        auto top = pixel_stack.top();
+                        top->attribute = top->attribute + st->attribute;
                         if(verbose){
                             std::cout << "computing attributes of:" << st->global_idx << ": <-------LEVELROOT\n";
                         }
@@ -185,7 +189,9 @@ void maxtree::compute_sequential_iterative(){
         pixel_stack.pop();
         if(!pixel_stack.empty()){
             p->parent = pixel_stack.top()->idx;
-            pixel_stack.top()->compute_attribute(p->attribute);
+            //pixel_stack.top()->compute_attribute(p->attribute);
+            auto top = pixel_stack.top();
+            top->attribute = top->attribute + p->attribute;
         }else{
             pixel_stack.push(p);
             break;
@@ -256,7 +262,8 @@ void maxtree::compute_sequential_recursive(int gl){
     for(auto p: S){
         if(p->idx !=this->root->idx){
             auto q = this->get_parent(p->idx);
-            q->compute_attribute(p->attribute);
+            //q->compute_attribute(p->attribute);
+            q->attribute = q->attribute + p->attribute;
         }
     }
 /*     std::vector<Tattribute> attrs(this->get_size(), 0); // = new std::vector<Tattribute>(this->get_size(), Tattr_NULL);

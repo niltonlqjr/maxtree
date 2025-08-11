@@ -13,9 +13,9 @@ maxtree_node::maxtree_node(Tpixel_value g, uint64_t i, uint64_t global_idx, Tatt
     this->visited=false;
 }
 
-void maxtree_node::compute_attribute(Tattribute a){
+/* void maxtree_node::compute_attribute(Tattribute a){
     this->attribute += a;
-}
+} */
 
 /* std::string maxtree_node::to_str(){
     std::string s;

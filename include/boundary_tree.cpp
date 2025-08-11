@@ -27,13 +27,14 @@ boundary_node::boundary_node(maxtree_node *n, boundary_tree *origin, boundary_tr
     
 }
 
-void boundary_node::accumulate_attr(boundary_node *merged){
+/* void boundary_node::accumulate_attr(boundary_node *merged){
     this->ptr_node->compute_attribute(merged->ptr_node->attribute);
-}
-
+} */
+/* 
 void boundary_node::accumulate_attr(Tattribute value){
     this->ptr_node->attribute += value;
 }
+ */
 
 boundary_tree::boundary_tree(uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j){
     this->h = h;
@@ -291,7 +292,8 @@ void boundary_tree::merge_branches(boundary_node *this_node, boundary_node *t_no
         if(verbose) std::cout << "z:" << z->ptr_node->global_idx << " x:" << x->ptr_node->global_idx << " y:" << y->ptr_node->global_idx << "\n";
         if(!z->bound_tree_ptr->is_root(z->ptr_node->global_idx) && z->ptr_node->gval >= y->ptr_node->gval){
             // merge attributes
-            x->accumulate_attr(attr_aux);
+            //x->accumulate_attr(attr_aux);
+            x->ptr_node->attribute = x->ptr_node->attribute + attr_aux;
             x = z;
         }else{
             if(x->ptr_node->gval == y->ptr_node->gval && x->bound_tree_ptr != y->bound_tree_ptr){
@@ -314,7 +316,9 @@ void boundary_tree::merge_branches(boundary_node *this_node, boundary_node *t_no
                     } */
                     // here y_tree is this tree and y is in it
                     // so i need to make x as boundary levelroot and add it on y_tree
-
+                    if(verbose){
+                        std::cout << "-------->>>>> creating paris x:" << x->ptr_node->global_idx << ", y:" << y->ptr_node->global_idx << "<<<<<--------\n";
+                    }
                     x->bound_tree_ptr->add_lroot_tree(y,y->bound_tree_ptr,true);
                     x->border_lr = y->ptr_node->global_idx;
                     y->border_lr = y->boundary_parent;
@@ -364,7 +368,8 @@ void boundary_tree::merge_branches(boundary_node *this_node, boundary_node *t_no
                 std::cout << "_____________________________________________________\n";
                 //getchar();
             }
-            x->accumulate_attr(attr_aux);
+            //x->accumulate_attr(attr_aux);
+            x->ptr_node->attribute = x->ptr_node->attribute + attr_aux;
             x = x->bound_tree_ptr->get_border_node_lroot(x->boundary_parent);
             
         }
@@ -420,8 +425,6 @@ void boundary_tree::combine_borders(boundary_tree *t1, boundary_tree *t2, enum m
     std::vector<boundary_node *> *v_t1, *v_t2, *new_border;
     enum borders first_border, second_border, third_border, fourth_border;
     uint64_t ini ;
-
-    
 
     if(d == MERGE_VERTICAL){
         first_border=LEFT_BORDER; second_border=RIGHT_BORDER; 
@@ -643,12 +646,8 @@ std::string boundary_tree::lroot_to_string(enum boundary_tree_field f){
     for(auto bn: *(this->boundary_tree_lroot)){
         if(f == BOUNDARY_PARENT){
             ss << "(" << bn.first << ", " << bn.second->boundary_parent << ")";
-         }else if(f == BOUNDARY_BORDER_LR){
-            if(bn.second->border_lr != NO_BORDER_LEVELROOT){
-                ss << "(" << bn.first << ", bl: " << bn.second->border_lr << ")";
-            }else{
-                ss << "(" << bn.first << ", bp: " << bn.second->boundary_parent << ")";
-            }
+        }else if(f == BOUNDARY_BORDER_LR){
+            ss << "(" << bn.first << ", global lr: " << bn.second->border_lr << ", local lr: " << bn.second->boundary_parent << ")";            
         }else if(f == BOUNDARY_IDX){
             //ss << "(" << bn.first << ", " << bn.second->boundary_idx << ")"; 
         }else if(f == MAXTREE_IDX){
