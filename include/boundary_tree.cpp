@@ -289,7 +289,7 @@ void boundary_tree::merge_branches(boundary_node *this_node, boundary_node *t_no
             // merge attributes
             //x->accumulate_attr(attr_aux);
             if(verbose){
-                std::cout << "accumulating attr of:" << x->ptr_node->global_idx << " on if z!=root and z->gval >= y->gval\n";
+                std::cout << "accumulating attr of:" << x->ptr_node->global_idx << " on 'if (z!=root) and (z->gval >= y->gval)'\n";
             }
             x->ptr_node->attribute = x->ptr_node->attribute + attr_aux;
             if(x==z){
@@ -352,7 +352,7 @@ void boundary_tree::merge_branches(boundary_node *this_node, boundary_node *t_no
             }
             // manipulate atributes here
             if(verbose){
-                std::cout << "accumulating attr of:" << x->ptr_node->global_idx << " on if z==root or z->gval < y->gval\n";
+                std::cout << "accumulating attr of:" << x->ptr_node->global_idx << " on 'if (z==root) or (z->gval < y->gval)'\n";
             }
             attr_aux1 = attr_aux + x->ptr_node->attribute;
             attr_aux = x->ptr_node->attribute;
@@ -385,7 +385,7 @@ void boundary_tree::merge_branches(boundary_node *this_node, boundary_node *t_no
             }
             //x->accumulate_attr(attr_aux);
             if(verbose){
-                std::cout << "accumulating attr of:" << x->ptr_node->global_idx << " on while x!=root\n";
+                std::cout << "accumulating attr of:" << x->ptr_node->global_idx << " on 'while x!=root'\n";
             }
             x->ptr_node->attribute = x->ptr_node->attribute + attr_aux;
             x = x->bound_tree_ptr->get_border_node_lroot(x->boundary_parent);
