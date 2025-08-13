@@ -99,7 +99,8 @@ class boundary_tree{
         bool is_root(uint64_t n_idx);
         
         /* merge two branches started at nodes this_node(from this tree) and t_node (from t tree) */
-        void merge_branches(boundary_node *this_node, boundary_node *t_node);
+        //void merge_branches(boundary_node *this_node, boundary_node *t_node);
+        void merge_branches(boundary_node *this_node, boundary_node *t_node, std::unordered_map<uint64_t,bool> &acc);
         /* get index given a position */
 
         /* update the boundary tree post merge */
