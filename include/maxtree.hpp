@@ -50,9 +50,9 @@ class maxtree{
         
         std::vector<maxtree_node *> *data;
         std::vector<maxtree_node *> *levelroots;
-        std::unordered_map<Tpixel_value, std::vector<component>> components;
-        std::unordered_map<Tpixel_value, std::mutex> threshold_locks;
-        std::mutex data_lock;
+        //std::unordered_map<Tpixel_value, std::vector<component>> components;
+        //std::unordered_map<Tpixel_value, std::mutex> threshold_locks;
+        //std::mutex data_lock;
         maxtree_node *get_levelroot(maxtree_node *n);
         std::vector<bool> *tile_borders;
 

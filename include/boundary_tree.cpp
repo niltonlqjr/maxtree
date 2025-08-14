@@ -427,6 +427,9 @@ void boundary_tree::merge_branches(boundary_node *this_node, boundary_node *t_no
                 //x->accumulate_attr(attr_aux);
                 if(acc.find(xidx) == acc.end() || acc[xidx] == false){
                     x->ptr_node->attribute += attr_aux;
+                    if(x->bound_tree_ptr != this){
+                        this->add_lroot_tree(x,true);
+                    }
             }
             x = z;
         }else{
@@ -435,13 +438,18 @@ void boundary_tree::merge_branches(boundary_node *this_node, boundary_node *t_no
                 attr_aux = x->ptr_node->attribute;
                 x->ptr_node->attribute = attr_aux1;
                 x->bound_tree_ptr->add_lroot_tree(y,true);
+                if(x->bound_tree_ptr != this){
+                    if(y->bound_tree_ptr != this){
+                        this->add_lroot_tree(y,true);
+                    }
+                    
+                }
                 x->boundary_parent = y->ptr_node->global_idx;
-                //x->border_lr = y->ptr_node->global_idx;
+                x->border_lr = y->ptr_node->global_idx;
                 acc[xidx] = true;
             }
             x = y;
             y = z;
-
         }
     }
     //if(y->bound_tree_ptr->is_root(y->ptr_node->global_idx)){
@@ -564,7 +572,7 @@ boundary_tree *boundary_tree::merge(boundary_tree *t, enum merge_directions d, u
 
     ret_tree = this->get_copy();
     merge_tree = t->get_copy();
-    if(d == MERGE_HORIZONTAL){    
+    if(d == MERGE_HORIZONTAL){  // prepare data to merge borders placed on horizontal (this tree bottom border and merged tree top border)
         if(this->grid_i < merge_tree->grid_i){
             
             v_this = this->border_elements->at(BOTTOM_BORDER);
@@ -582,7 +590,7 @@ boundary_tree *boundary_tree::merge(boundary_tree *t, enum merge_directions d, u
                       << merge_tree->grid_i << ", " << merge_tree->grid_j << "). The destiny tree must be at top left of merged tree.\n";
             exit(EX_DATAERR);
         }
-    }else if(d == MERGE_VERTICAL){
+    }else if(d == MERGE_VERTICAL){ // prepare data to merger borders placed on vertical (this tree right border and merged tree left border)
         if(this->grid_j < merge_tree->grid_j){
             
             v_this = this->border_elements->at(RIGHT_BORDER);
@@ -654,7 +662,16 @@ boundary_tree *boundary_tree::merge(boundary_tree *t, enum merge_directions d, u
 
 
 void boundary_tree::update(boundary_tree *merged){
-
+    auto new_tree = merged->boundary_tree_lroot;
+    for(auto node: *new_tree){
+        if(node.second->border_lr == NO_BORDER_LEVELROOT){
+            if(this->boundary_tree_lroot->find(node.first) != this->boundary_tree_lroot->end()){// if node is in boundary tree just update this attribute
+                this->boundary_tree_lroot->at(node.first)->ptr_node->attribute = node.second->ptr_node->attribute;
+            }
+        }
+        std::cout << node.first << " updated \n";
+    }
+    std::cout << "\n";
 }
 
 uint64_t boundary_tree::index_of(uint32_t l, uint32_t c){

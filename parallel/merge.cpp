@@ -304,7 +304,7 @@ int main(int argc, char *argv[]){
     }
 
     uint32_t grid_col_inc = 2; 
-    while(ntrees > glines){ /* merge horizontal --- creating "big lines"*/     
+    while(ntrees > glines){ /* merge vertical border --- creating "big lines"*/     
         
         for(i = 0; i < glines; i++){
             for(j = 0; j+grid_col_inc/2 < gcolumns; j+=grid_col_inc){
@@ -317,8 +317,11 @@ int main(int argc, char *argv[]){
                 std::cout << "to merge before merge: "<< i << " " << j+grid_col_inc/2 <<"\n";
                 //to_merge->print_tree();
                 
-                base_bt=base_bt->merge(to_merge,MERGE_VERTICAL,pixel_connection);
-                
+                auto merged = base_bt->merge(to_merge,MERGE_VERTICAL,pixel_connection);
+                base_bt->update(merged);
+                std::cout << base_bt->lroot_to_string(BOUNDARY_BORDER_LR) <<"\n";
+                std::cout << base_bt->lroot_to_string(BOUNDARY_ATTR) <<"\n";
+
                 /* std::cout << "<><><><><><><><><> AFTER MERGE: "<< i << " " << j <<" <><><><><><><><><> \n";
                 base_bt->print_tree();
                  */
@@ -353,7 +356,11 @@ int main(int argc, char *argv[]){
             std::cout << "to merge before merge: "<< i+grid_lin_inc/2 << " " << 0 <<"\n";
             //to_merge->print_tree();
             
-            base_bt=base_bt->merge(to_merge,MERGE_HORIZONTAL,pixel_connection);
+            auto merged=base_bt->merge(to_merge,MERGE_HORIZONTAL,pixel_connection);
+            base_bt->update(merged);
+            std::cout << base_bt->lroot_to_string(BOUNDARY_BORDER_LR) <<"\n";
+            std::cout << base_bt->lroot_to_string(BOUNDARY_ATTR) <<"\n";
+
             /* 
             std::cout << "<><><><><><><><><> AFTER MERGE: "<< i << " " << j <<" <><><><><><><><><> \n";
             base_bt->print_tree();

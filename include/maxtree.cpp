@@ -465,6 +465,8 @@ void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t
     }
 } 
 //this code is to "divide" strategy
+
+/* 
 void maxtree::insert_component(component c, Tpixel_value gval){
     auto comps = this->components.find(gval);
     if(comps == this->components.end()){
@@ -472,7 +474,8 @@ void maxtree::insert_component(component c, Tpixel_value gval){
     }
     this->components[gval].push_back(c);
 }
-
+ */
+/* 
 void maxtree::insert_component(std::vector<int> comp, int64_t parent, Tpixel_value threshold, uint64_t id){
     auto comps = this->components.find(threshold);
     if(comps == this->components.end()){
@@ -496,7 +499,7 @@ void maxtree::insert_component(std::vector<int> comp, int64_t parent, Tpixel_val
     }
 }
 
-
+ */
 std::string maxtree::to_string(enum maxtee_node_field field, bool colored, uint8_t spaces, uint8_t decimal ){
     std::string r;
     //a lot of ifs with same for code inside to avoid branches inside for
@@ -618,7 +621,7 @@ std::string maxtree::string_borders(){
     return ret;
 }
 
-
+/* 
 std::vector<component> maxtree::components_at(Tpixel_value threshold){
     return this->components[threshold];
 }
@@ -629,7 +632,7 @@ std::vector<Tpixel_value> maxtree::all_thresholds(){
     }
     return ret;
 }
-
+ */
 std::vector<maxtree_node*> maxtree::get_neighbours(uint64_t pixel, uint8_t con){
     std::vector<maxtree_node*> v;
     int64_t idx, pl, pc;
