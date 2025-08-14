@@ -1,4 +1,2 @@
-b ../include/boundary_tree.cpp:396
-b ../include/boundary_tree.cpp:447
-b ../include/boundary_tree.cpp:480
-b ../include/boundary_tree.cpp:501
+b ../include/boundary_tree.cpp:418
+b ../include/boundary_tree.cpp:425

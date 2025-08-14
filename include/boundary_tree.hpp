@@ -65,10 +65,11 @@ class boundary_tree{
         ~boundary_tree();
         
         /* create a copy of n and insert it at border structure (border_elements). Return the pointer of the created copy */
-        boundary_node *insert_border_element(boundary_node &n, enum borders b, int64_t origin=-1);
+        boundary_node *insert_border_element(boundary_node &n, enum borders b);
         
-        /* insert the node at boundary tree structure */
-        bool insert_bnode_lroot_tree(boundary_node *n);
+        /* check if the node is already on the boundary tree.
+        if it is, returns false, otherwise, insert the node at boundary tree structure and return true*/
+        bool insert_bnode_lroot_tree(boundary_node *n, bool copy=false);
         
         /* get node with global_idx at tree structure (boundary_tree_lroot)*/
         boundary_node *get_border_node_lroot(int64_t global_idx);
@@ -92,8 +93,8 @@ class boundary_tree{
                             boundary_tree *origin=NULL, bool insert_ancestors=true);
         
         /* add a levelroot to tree structure (boundary_tree_lroot) */
-        void add_lroot_tree(boundary_node *levelroot, boundary_tree *t_levelroot, 
-                            bool copy = false, bool insert_ancestors = false);
+        void add_lroot_tree(boundary_node *levelroot, bool insert_ancestors = false,
+                            bool copy = false);
         
         /* check if a node with n_idx is root of the tree */
         bool is_root(uint64_t n_idx);
@@ -106,6 +107,12 @@ class boundary_tree{
         /* update the boundary tree post merge */
         void update(boundary_tree *merged);
 
+        /* return number of nodes in boundary_tree_lroot */
+        uint64_t get_lroot_tree_size();
+        
+        /* return number of nodes in all borders*/
+        uint64_t get_border_size();
+        
         /* get linear index of pixel at i, j */
         uint64_t index_of(uint32_t i, uint32_t j);
         
@@ -121,11 +128,6 @@ class boundary_tree{
         /* print all nodes from the boundary_tree_lroot */
         std::string lroot_to_string(enum boundary_tree_field f=BOUNDARY_BORDER_LR);
         
-        /* return number of nodes in boundary_tree_lroot */
-        uint64_t get_lroot_tree_size();
-        
-        /* return number of nodes in all borders*/
-        uint64_t get_border_size();
         
         /* print boundary tree (borders and levelroots) */
         void print_tree(enum boundary_tree_field lrootf= BOUNDARY_BORDER_LR, enum boundary_tree_field borderf=BOUNDARY_GLOBAL_IDX);
