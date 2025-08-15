@@ -37,8 +37,7 @@ class boundary_node{
                       uint64_t global_idx, Tattribute a = Tattr_default, 
                       int64_t bound_parent = NO_BOUNDARY_PARENT, 
                       int64_t border_lr = NO_BORDER_LEVELROOT); */
-        boundary_node(maxtree_node *n, boundary_tree *origin, 
-                      boundary_tree *bound_tree_ptr, 
+        boundary_node(maxtree_node *n, boundary_tree *bound_tree_ptr, 
                       int64_t bound_parent = NO_BOUNDARY_PARENT, 
                       int64_t border_lr = NO_BORDER_LEVELROOT);
         void accumulate_attr(boundary_node *merged);
@@ -90,7 +89,7 @@ class boundary_tree{
         
         /* add a levelroot to tree structure (boundary_tree_lroot) */
         void add_lroot_tree(maxtree_node *levelroot, std::vector<maxtree_node*> *maxtree_data, 
-                            boundary_tree *origin=NULL, bool insert_ancestors=true);
+                            bool insert_ancestors=true);
         
         /* add a levelroot to tree structure (boundary_tree_lroot) */
         void add_lroot_tree(boundary_node *levelroot, bool insert_ancestors = false,

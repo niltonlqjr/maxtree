@@ -14,7 +14,7 @@
 
 }
  */
-boundary_node::boundary_node(maxtree_node *n, boundary_tree *origin, boundary_tree *bound_tree_ptr, 
+boundary_node::boundary_node(maxtree_node *n, boundary_tree *bound_tree_ptr, 
                              int64_t bound_parent, int64_t border_lr){
     // this->gval = n->gval;
     // this->maxtree_idx = n->idx;
@@ -126,7 +126,7 @@ void boundary_tree::add_lroot_tree(boundary_node *levelroot, bool insert_ancesto
             if(!copy){
                 inserted = this->insert_bnode_lroot_tree(levelroot);
             }else{
-                auto new_lr = new boundary_node(levelroot->ptr_node, t_levelroot, this, levelroot->boundary_parent, levelroot->border_lr);
+                auto new_lr = new boundary_node(levelroot->ptr_node, this, levelroot->boundary_parent, levelroot->border_lr);
                 //new boundary_node(parent->ptr_node, t_levelroot, this, parent->boundary_parent, parent->border_lr);
                 if(verbose) std::cout << new_lr->ptr_node->global_idx << "\n";
                 inserted = this->insert_bnode_lroot_tree(new_lr);
@@ -163,7 +163,7 @@ void boundary_tree::add_lroot_tree(boundary_node *levelroot, bool insert_ancesto
                 if(!copy){
                     inserted = this->insert_bnode_lroot_tree(parent);
                 }else{
-                    auto new_lr = new boundary_node(parent->ptr_node, t_levelroot, this, parent->boundary_parent, parent->border_lr);
+                    auto new_lr = new boundary_node(parent->ptr_node, this, parent->boundary_parent, parent->border_lr);
                     if(verbose) std::cout << new_lr->ptr_node->global_idx << "\n";
                     inserted = this->insert_bnode_lroot_tree(new_lr);
                     if(!inserted){
@@ -176,7 +176,7 @@ void boundary_tree::add_lroot_tree(boundary_node *levelroot, bool insert_ancesto
     }
 }
 
-void boundary_tree::add_lroot_tree(maxtree_node *levelroot, std::vector<maxtree_node*> *maxtree_data, boundary_tree *origin, bool insert_ancestors){
+void boundary_tree::add_lroot_tree(maxtree_node *levelroot, std::vector<maxtree_node*> *maxtree_data, bool insert_ancestors){
     maxtree_node *parent;
     boundary_node *current, *bound_parent;
     int64_t pidx;
@@ -187,7 +187,7 @@ void boundary_tree::add_lroot_tree(maxtree_node *levelroot, std::vector<maxtree_
         //current = this->get_border_node_lroot(levelroot->idx);
         return;
     }else{
-        current = new boundary_node(levelroot, origin, this, -1);
+        current = new boundary_node(levelroot, this, -1);
         this->insert_bnode_lroot_tree(current);
     }
 
@@ -203,7 +203,7 @@ void boundary_tree::add_lroot_tree(maxtree_node *levelroot, std::vector<maxtree_
             } */
             parent = maxtree_data->at(pidx);
             if(this->boundary_tree_lroot->find(parent->global_idx) == this->boundary_tree_lroot->end()){// parent isn't in boundary tree
-                bound_parent = new boundary_node(parent, origin, this, -1); //create the parent node to add on bondary tree
+                bound_parent = new boundary_node(parent, this, -1); //create the parent node to add on bondary tree
                 current->boundary_parent = bound_parent->ptr_node->global_idx; //vinculate the idx (used in maxtree) of parent to the current node
                 if(!this->insert_bnode_lroot_tree(bound_parent)){ // try to insert parent node 
                     delete bound_parent; // if isn't possible insert node (the parent node is alredy in boundary tree) free memory of last 
