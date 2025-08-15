@@ -299,9 +299,9 @@ int main(int argc, char *argv[]){
     int64_t ntrees = glines * gcolumns;
     
 
-    if(verbose){
+    //if(verbose){
         std::cout << ">>>>>>>>> merge columns <<<<<<<<\n";
-    }
+    //}
 
     uint32_t grid_col_inc = 2; 
     while(ntrees > glines){ /* merge vertical border --- creating "big lines"*/     
@@ -343,9 +343,9 @@ int main(int argc, char *argv[]){
         }
     }
     uint32_t grid_lin_inc = 2; 
-    if(verbose){
+    //if(verbose){
         std::cout << ">>>>>>>>> merge lines <<<<<<<<\n";
-    }
+    //}
     
     while(ntrees > 1){/* Merge lines "recreating maxtree of the whole image"*/
         for(i=0; i + grid_lin_inc/2 < glines; i+=grid_lin_inc){
@@ -364,7 +364,8 @@ int main(int argc, char *argv[]){
              
             std::cout << base_bt->lroot_to_string(BOUNDARY_BORDER_LR) <<"\n";
             std::cout << base_bt->lroot_to_string(BOUNDARY_ATTR) <<"\n";
-            
+            std::cout << base_bt->lroot_to_string(BOUNDARY_GVAL) <<"\n";
+        
             /* 
             std::cout << "<><><><><><><><><> AFTER MERGE: "<< i << " " << j <<" <><><><><><><><><> \n";
             base_bt->print_tree();
