@@ -319,9 +319,11 @@ int main(int argc, char *argv[]){
                 
                 auto merged = base_bt->merge(to_merge,MERGE_VERTICAL,pixel_connection);
                 base_bt->update(merged);
+                
                 std::cout << base_bt->lroot_to_string(BOUNDARY_BORDER_LR) <<"\n";
                 std::cout << base_bt->lroot_to_string(BOUNDARY_ATTR) <<"\n";
-
+                std::cout << base_bt->lroot_to_string(BOUNDARY_GVAL) <<"\n";
+                
                 /* std::cout << "<><><><><><><><><> AFTER MERGE: "<< i << " " << j <<" <><><><><><><><><> \n";
                 base_bt->print_tree();
                  */
@@ -358,9 +360,11 @@ int main(int argc, char *argv[]){
             
             auto merged=base_bt->merge(to_merge,MERGE_HORIZONTAL,pixel_connection);
             base_bt->update(merged);
+
+             
             std::cout << base_bt->lroot_to_string(BOUNDARY_BORDER_LR) <<"\n";
             std::cout << base_bt->lroot_to_string(BOUNDARY_ATTR) <<"\n";
-
+            
             /* 
             std::cout << "<><><><><><><><><> AFTER MERGE: "<< i << " " << j <<" <><><><><><><><><> \n";
             base_bt->print_tree();
