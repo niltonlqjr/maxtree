@@ -319,11 +319,26 @@ int main(int argc, char *argv[]){
                 
                 auto merged = base_bt->merge(to_merge,MERGE_VERTICAL,pixel_connection);
                 base_bt->update(merged);
-                
-                std::cout << base_bt->lroot_to_string(BOUNDARY_BORDER_LR) <<"\n";
-                std::cout << base_bt->lroot_to_string(BOUNDARY_ATTR) <<"\n";
-                std::cout << base_bt->lroot_to_string(BOUNDARY_GVAL) <<"\n";
-                
+                to_merge->update(merged);
+
+                if(verbose){
+                    std::cout << "BASE BOUNDARY TREE:\n";
+                    std::cout << base_bt->lroot_to_string(BOUNDARY_BORDER_LR) <<"\n";
+                    std::cout << base_bt->lroot_to_string(BOUNDARY_ATTR) <<"\n";
+                    std::cout << base_bt->lroot_to_string(BOUNDARY_GVAL) <<"\n";
+                    std::cout << "=================================================================\n";
+                    std::cout << "TO_MERGE BOUNDARY TREE:\n";
+                    std::cout << to_merge->lroot_to_string(BOUNDARY_BORDER_LR) <<"\n";
+                    std::cout << to_merge->lroot_to_string(BOUNDARY_ATTR) <<"\n";
+                    std::cout << to_merge->lroot_to_string(BOUNDARY_GVAL) <<"\n";
+                    std::cout << "=================================================================\n";
+                    std::cout << "MERGED BOUNDARY TREE:\n";
+                    std::cout << merged->lroot_to_string(BOUNDARY_BORDER_LR) <<"\n";
+                    std::cout << merged->lroot_to_string(BOUNDARY_ATTR) <<"\n";
+                    std::cout << merged->lroot_to_string(BOUNDARY_GVAL) <<"\n";
+                    std::cout << "_________________________________________________________________\n";
+                }
+                    
                 /* std::cout << "<><><><><><><><><> AFTER MERGE: "<< i << " " << j <<" <><><><><><><><><> \n";
                 base_bt->print_tree();
                  */
@@ -360,12 +375,26 @@ int main(int argc, char *argv[]){
             
             auto merged=base_bt->merge(to_merge,MERGE_HORIZONTAL,pixel_connection);
             base_bt->update(merged);
+            to_merge->update(merged);
 
-             
-            std::cout << base_bt->lroot_to_string(BOUNDARY_BORDER_LR) <<"\n";
-            std::cout << base_bt->lroot_to_string(BOUNDARY_ATTR) <<"\n";
-            std::cout << base_bt->lroot_to_string(BOUNDARY_GVAL) <<"\n";
-        
+            if(verbose){
+                std::cout << "BASE BOUNDARY TREE:\n";
+                std::cout << base_bt->lroot_to_string(BOUNDARY_BORDER_LR) <<"\n";
+                std::cout << base_bt->lroot_to_string(BOUNDARY_ATTR) <<"\n";
+                std::cout << base_bt->lroot_to_string(BOUNDARY_GVAL) <<"\n";
+                std::cout << "=================================================================\n";
+                std::cout << "TO_MERGE BOUNDARY TREE:\n";
+                std::cout << to_merge->lroot_to_string(BOUNDARY_BORDER_LR) <<"\n";
+                std::cout << to_merge->lroot_to_string(BOUNDARY_ATTR) <<"\n";
+                std::cout << to_merge->lroot_to_string(BOUNDARY_GVAL) <<"\n";
+                std::cout << "=================================================================\n";
+                std::cout << "MERGED BOUNDARY TREE:\n";
+                std::cout << merged->lroot_to_string(BOUNDARY_BORDER_LR) <<"\n";
+                std::cout << merged->lroot_to_string(BOUNDARY_ATTR) <<"\n";
+                std::cout << merged->lroot_to_string(BOUNDARY_GVAL) <<"\n";
+                std::cout << "_________________________________________________________________\n";
+            }
+
             /* 
             std::cout << "<><><><><><><><><> AFTER MERGE: "<< i << " " << j <<" <><><><><><><><><> \n";
             base_bt->print_tree();

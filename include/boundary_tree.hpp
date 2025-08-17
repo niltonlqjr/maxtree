@@ -70,9 +70,13 @@ class boundary_tree{
         if it is, returns false, otherwise, insert the node at boundary tree structure and return true*/
         bool insert_bnode_lroot_tree(boundary_node *n, bool copy=false);
         
+        /*remove node from tree, if it isn't at tree, just */
+        bool remove_bnode_lroot_tree(int64_t global_idx);
+
         /* get node with global_idx at tree structure (boundary_tree_lroot)*/
         boundary_node *get_border_node_lroot(int64_t global_idx);
         
+
         /* get a border from boundary tree*/
         std::vector<boundary_node *> *get_border(enum borders b);
         
@@ -95,13 +99,15 @@ class boundary_tree{
         void add_lroot_tree(boundary_node *levelroot, bool insert_ancestors = false,
                             bool copy = false);
         
+
         /* check if a node with n_idx is root of the tree */
         bool is_root(uint64_t n_idx);
         
         /* merge two branches started at nodes this_node(from this tree) and t_node (from t tree) */
         //void merge_branches(boundary_node *this_node, boundary_node *t_node);
-        void merge_branches(boundary_node *this_node, boundary_node *t_node, std::unordered_map<uint64_t,bool> &acc);
+        void merge_branches(boundary_node *this_node, boundary_node *t_node, std::unordered_map<uint64_t, bool> &acc);//, std::vector<u_int64_t> &swap_nodes);
         /* get index given a position */
+
 
         /* update the boundary tree post merge */
         void update(boundary_tree *merged);
