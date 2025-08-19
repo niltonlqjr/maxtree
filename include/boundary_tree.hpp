@@ -108,9 +108,11 @@ class boundary_tree{
         void merge_branches(boundary_node *this_node, boundary_node *t_node, std::unordered_map<uint64_t, bool> &acc);//, std::vector<u_int64_t> &swap_nodes);
         /* get index given a position */
 
-
         /* update the boundary tree post merge */
         void update(boundary_tree *merged);
+
+        /* compress the path to remove duplicated levelroots after merge*/
+        void compress_path();
 
         /* return number of nodes in boundary_tree_lroot */
         uint64_t get_lroot_tree_size();
