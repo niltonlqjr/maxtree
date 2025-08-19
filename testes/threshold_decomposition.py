@@ -94,7 +94,7 @@ attrs={}
 old = apply_threshold(img,0)
 dec[0] = old
 ccs=busca_largura(old)
-attrs[0] = [(i, len(ccs[i])) for i in range(len(ccs))]
+attrs[0] = [len(ccs[i]) for i in range(len(ccs))]
 
 for i in range(1,256):
     new = apply_threshold(img, i)
@@ -102,15 +102,15 @@ for i in range(1,256):
     if len(np.extract(d, d)) > 0:
         dec[i] = new
         ccs=busca_largura(new)
-        attrs[i] = [(ci, len(ccs[ci])) for ci in range(len(ccs))]
+        attrs[i] = [len(ccs[ci]) for ci in range(len(ccs))]
         old = new
 
-
 print('writing files')
+txtname=f'{out_prefix}.txt'
+str_out_text=''
 
 for k in dec:
     fname = f'{out_prefix}_{k}.{out_ext}'
-    txtname=f'{out_prefix}_{k}.txt'
     if verbose:
         print(fname)
         print('')
@@ -118,8 +118,10 @@ for k in dec:
         print('=======================')
     im_save = dec[k]*255
     sk.io.imsave(fname,im_save,check_contrast=False)
-    #print(attrs[k])
-    f=open(txtname,'w')
-    f.write(str(attrs[k])+'\n')
-    f.close()
+    str_out_text += 'threshold:' + str(k) + ' --- area:' + str(attrs[k])+'\n'
+
+
+f=open(txtname,'w')
+f.write(str_out_text)
+f.close()
 
