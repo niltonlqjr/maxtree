@@ -19,4 +19,4 @@ glines=2
 gcolumns=1
 
 #atribute value to filter
-lambda=10
+lambda=310

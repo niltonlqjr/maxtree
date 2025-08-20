@@ -75,7 +75,11 @@ boundary_tree::~boundary_tree(){
     }
     delete this->border_elements;
     for(auto n: *(this->boundary_tree_lroot)){
-        delete n.second;
+/*         if(delete_tree_nodes){
+            delete n.second;
+        } */
+        this->remove_bnode_lroot_tree(n.second->ptr_node->global_idx);
+
     }
     delete this->boundary_tree_lroot;
 }
@@ -254,7 +258,7 @@ bool boundary_tree::is_root(uint64_t n_idx){
 
 void boundary_tree::merge_branches(boundary_node *x, boundary_node *y, std::unordered_map<uint64_t, bool> &acc){
    
-    boundary_node *z, *yblr, *xblr;
+    boundary_node *z;
     Tattribute a, b;
     a = b = Tattr_NULL;
     uint64_t xidx, yidx;
@@ -569,7 +573,32 @@ void boundary_tree::update(boundary_tree *merged){
 }
 
 void boundary_tree::compress_path(){
-
+    boundary_node *n;
+    for(auto node: *(this->boundary_tree_lroot)){
+        n = node.second;
+        std::cout << "(n: " << n->ptr_node->global_idx << ","
+                  << "border_lr: " << n->border_lr << ","
+                  << "boundary_parent: " << n->boundary_parent << ","
+                  << "attribute: " << n->ptr_node->attribute << ","
+                  << "gval: " << (int)n->ptr_node->gval << ")\n";
+    }
+    std::cout << "===================\n";
+    for(auto node: *(this->boundary_tree_lroot)){
+        n = node.second;
+        if(n->border_lr != -1){
+            n->boundary_parent = n->border_lr;
+            n->border_lr = -1;
+        }
+    }
+    for(auto node: *(this->boundary_tree_lroot)){
+        n = node.second;
+        std::cout << "(n: " << n->ptr_node->global_idx << ","
+                  << "border_lr: " << n->border_lr << ","
+                  << "boundary_parent: " << n->boundary_parent << ","
+                  << "attribute: " << n->ptr_node->attribute << ","
+                  << "gval: " << (int)n->ptr_node->gval << ")\n";
+    }
+    std::cout << "===================\n";
 }
 
 uint64_t boundary_tree::index_of(uint32_t l, uint32_t c){

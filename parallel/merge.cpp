@@ -35,6 +35,9 @@ void print_pq(std::priority_queue<maxtree_node*, std::vector<maxtree_node*> ,cmp
 int main(int argc, char *argv[]){
     vips::VImage *in;
     maxtree *t;
+    std::string out_name;
+
+
     std::cout << "argc: " << argc << " argv:" ;
     for(int i=0;i<argc;i++){
         std::cout << argv[i] << " ";
@@ -86,7 +89,11 @@ int main(int argc, char *argv[]){
         exit(EX_CONFIG);
     }
 
-
+    if (configs->find("output") != configs->end()){
+            out_name = configs->at("output");
+    }else{
+        out_name = "output";
+    }
     uint8_t pixel_connection = 4;
 
     uint32_t glines = std::stoi(configs->at("glines"));
@@ -215,8 +222,8 @@ int main(int argc, char *argv[]){
                 
                 std::cout << "__________________GVAL________________\n";
                 std::cout << t->to_string(GVAL,colored,8,2);
-                std::cout << "_________________PARENT_IJ_______________\n";
-                std::cout << t->to_string(PARENT_IJ,colored,10);
+/*                 std::cout << "_________________PARENT_IJ_______________\n";
+                std::cout << t->to_string(PARENT_IJ,colored,10); */
                 std::cout << "________________LEVELROOT________________\n";
                 std::cout << t->to_string(LEVELROOT,colored,5);
                 std::cout << "_______________PARENT_________________\n";
@@ -298,6 +305,7 @@ int main(int argc, char *argv[]){
     */
     int64_t ntrees = glines * gcolumns;
     
+    boundary_tree *merged;
 
     //if(verbose){
         std::cout << ">>>>>>>>> merge columns <<<<<<<<\n";
@@ -317,9 +325,10 @@ int main(int argc, char *argv[]){
                 std::cout << "to merge before merge: "<< i << " " << j+grid_col_inc/2 <<"\n";
                 //to_merge->print_tree();
                 
-                auto merged = base_bt->merge(to_merge,MERGE_VERTICAL,pixel_connection);
+                merged = base_bt->merge(to_merge,MERGE_VERTICAL,pixel_connection);
                 base_bt->update(merged);
                 to_merge->update(merged);
+                merged->compress_path();
 
                 if(verbose){
                     std::cout << "BASE BOUNDARY TREE:\n";
@@ -373,9 +382,15 @@ int main(int argc, char *argv[]){
             std::cout << "to merge before merge: "<< i+grid_lin_inc/2 << " " << 0 <<"\n";
             //to_merge->print_tree();
             
-            auto merged=base_bt->merge(to_merge,MERGE_HORIZONTAL,pixel_connection);
+            merged=base_bt->merge(to_merge,MERGE_HORIZONTAL,pixel_connection);
             base_bt->update(merged);
             to_merge->update(merged);
+            merged->compress_path();
+            
+            auto del_tree = base_bt;
+            base_bt = merged;
+            /* delete del_tree;
+            delete to_merge; */
 
             if(verbose){
                 std::cout << "BASE BOUNDARY TREE:\n";
@@ -416,6 +431,16 @@ int main(int argc, char *argv[]){
         }
     }
     
+    for(int i=0; i < glines; i++){
+        for(int j=0;j<gcolumns; j++){
+            t = tiles.at(i).at(j);
+            t->update_from_boundary_tree(merged);
+            std::cout << "tree (" << t->grid_i << "," << t->grid_j <<" )updated\n";
+            t->filter(lambda);
+            std::cout << "filter done\n";
+            t->save(out_name+"_"+ std::to_string(t->grid_i) + "-" + std::to_string( t->grid_j)+ ".png");
+        }
+    }
 
 
     //as boundary trees tem alturas e tamanhos distintos, logo é possível estimar o custo de um merge

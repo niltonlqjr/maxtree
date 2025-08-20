@@ -48,10 +48,10 @@ class boundary_tree{
     private:
         //std::vector< std::unordered_map<uint64_t, boundary_node *> *> *border_elements;
         std::vector<std::vector<boundary_node *> *> *border_elements;
-        std::unordered_map<uint64_t, boundary_node*> *boundary_tree_lroot;
         std::vector<bool> *tile_borders;
         
     public:
+        std::unordered_map<uint64_t, boundary_node*> *boundary_tree_lroot;
         uint32_t h;
         uint32_t w;
         uint32_t grid_i;
