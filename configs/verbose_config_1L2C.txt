@@ -19,4 +19,7 @@ glines=1
 gcolumns=2
 
 #atribute value to filter
-lambda=15
+lambda=200
+
+#output prefix
+output = saidas/out_1L2C

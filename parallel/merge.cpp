@@ -330,6 +330,8 @@ int main(int argc, char *argv[]){
                 to_merge->update(merged);
                 merged->compress_path();
 
+                tiles_table[i][j] = merged;
+
                 if(verbose){
                     std::cout << "BASE BOUNDARY TREE:\n";
                     std::cout << base_bt->lroot_to_string(BOUNDARY_BORDER_LR) <<"\n";
@@ -388,7 +390,7 @@ int main(int argc, char *argv[]){
             merged->compress_path();
             
             auto del_tree = base_bt;
-            base_bt = merged;
+            tiles_table[i][0] = merged;
             /* delete del_tree;
             delete to_merge; */
 

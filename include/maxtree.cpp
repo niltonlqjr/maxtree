@@ -412,10 +412,10 @@ void maxtree::update_from_boundary_tree(boundary_tree *bt){
         auto bn = boundary_pair.second;
         auto n = this->at_pos(bn->ptr_node->idx);
         if(n->global_idx == bn->ptr_node->global_idx){
-            if(bn->border_lr != -1){
+            /* if(bn->border_lr != -1){
                 std::cerr << "\n ERROR: Updating maxtree with border levelroot non setted. Use compress path on boundary tree before update maxtree\n";
                 exit(EX_DATAERR);
-            }
+            } */
             n->attribute = bn->ptr_node->attribute;
             n->global_parent = bn->boundary_parent;
         } 

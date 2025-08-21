@@ -567,22 +567,25 @@ void boundary_tree::update(boundary_tree *merged){
     
         if(verbose){
             std::cout << node.first << " updated \n_____________________\n";
-        }
+        }   
     }
     std::cout << "\n";
 }
 
 void boundary_tree::compress_path(){
-    boundary_node *n;
-    for(auto node: *(this->boundary_tree_lroot)){
-        n = node.second;
-        std::cout << "(n: " << n->ptr_node->global_idx << ","
-                  << "border_lr: " << n->border_lr << ","
-                  << "boundary_parent: " << n->boundary_parent << ","
-                  << "attribute: " << n->ptr_node->attribute << ","
-                  << "gval: " << (int)n->ptr_node->gval << ")\n";
+    boundary_node *n, *e_parent;
+    int64_t e_idx;
+    if(verbose){
+        for(auto node: *(this->boundary_tree_lroot)){
+            n = node.second;
+            std::cout << "(n: " << n->ptr_node->global_idx << ","
+                    << "border_lr: " << n->border_lr << ","
+                    << "boundary_parent: " << n->boundary_parent << ","
+                    << "attribute: " << n->ptr_node->attribute << ","
+                    << "gval: " << (int)n->ptr_node->gval << ")\n";
+        }
+        std::cout << "===================\n";
     }
-    std::cout << "===================\n";
     for(auto node: *(this->boundary_tree_lroot)){
         n = node.second;
         if(n->border_lr != -1){
@@ -590,13 +593,30 @@ void boundary_tree::compress_path(){
             n->border_lr = -1;
         }
     }
-    for(auto node: *(this->boundary_tree_lroot)){
-        n = node.second;
-        std::cout << "(n: " << n->ptr_node->global_idx << ","
-                  << "border_lr: " << n->border_lr << ","
-                  << "boundary_parent: " << n->boundary_parent << ","
-                  << "attribute: " << n->ptr_node->attribute << ","
-                  << "gval: " << (int)n->ptr_node->gval << ")\n";
+    if(verbose){
+        for(auto node: *(this->boundary_tree_lroot)){
+            n = node.second;
+            std::cout << "(n: " << n->ptr_node->global_idx << ","
+                    << "border_lr: " << n->border_lr << ","
+                    << "boundary_parent: " << n->boundary_parent << ","
+                    << "attribute: " << n->ptr_node->attribute << ","
+                    << "gval: " << (int)n->ptr_node->gval << ")\n";
+        }
+        std::cout << "===================\n";
+    }
+    for(int i=0; i<NamesBordersVector.size(); i++){
+        std::cout << NamesBordersVector.at(i) << "\n";
+        if(this->tile_borders->at(i)){
+            std::vector<boundary_node *> *border = this->border_elements->at(i);
+            for(auto e: *border){
+                std::cout << "node:" << e->ptr_node->global_idx << "\n";
+                std::cout << e->boundary_parent << " " << e->border_lr << " \n";
+                e_parent = this->get_border_node_lroot(e->boundary_parent);
+                std::cout << " parent: " << e_parent->ptr_node->global_idx << "\n";
+                //e->boundary_parent = e_parent->boundary_parent;
+            }    
+        }
+        
     }
     std::cout << "===================\n";
 }
