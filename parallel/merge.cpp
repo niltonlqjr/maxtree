@@ -212,7 +212,7 @@ int main(int argc, char *argv[]){
         }
     }
 
-    if(verbose){
+    //if(verbose){
         for(i=0; i<glines; i++){
             for(j=0; j<gcolumns;j++){
                 t = tiles.at(i).at(j);
@@ -242,7 +242,7 @@ int main(int argc, char *argv[]){
                 std::cout << "\n";
             }
         }
-    }
+    //}
 
     /* 
     for(i=0; i<glines; i++){
@@ -321,18 +321,29 @@ int main(int argc, char *argv[]){
                 boundary_tree *to_merge = aux_tile_table[i][j+grid_col_inc/2];
                 boundary_tree *del_bt = base_bt;
 
-                std::cout << "base before merge: " << i << " " << j << "\n";
+                if(verbose) std::cout << "base before merge: " << i << " " << j << "\n";
                 //base_bt->print_tree();
-                std::cout << "to merge before merge: "<< i << " " << j+grid_col_inc/2 <<"\n";
+                if(verbose) std::cout << "to merge before merge: "<< i << " " << j+grid_col_inc/2 <<"\n";
                 //to_merge->print_tree();
                 
                 merged = base_bt->merge(to_merge,MERGE_VERTICAL,pixel_connection);
                 base_bt->update_tree(merged);
                 to_merge->update_tree(merged);
-                //merged->update_borders(merged);
+                merged->update_borders(merged);
                 merged->compress_path();
-
+                
                 aux_tile_table[i][j] = merged;
+                
+                /* std::cout << i << " " << j << "\n";
+                t = tiles.at(i).at(j);
+                t->update_from_boundary_tree(merged);
+                std::cout << t->to_string(PARENT,colored,5) << "\n\n";
+
+                if(j+grid_col_inc/2 < gcolumns){
+                    t = tiles.at(i).at(j+grid_col_inc/2);
+                    t->update_from_boundary_tree(merged);
+                    std::cout << t->to_string(PARENT,colored,5) << "\n\n";
+                }  */
 
                 if(verbose){
                     std::cout << "BASE BOUNDARY TREE:\n";
@@ -381,21 +392,25 @@ int main(int argc, char *argv[]){
             boundary_tree *to_merge = aux_tile_table[i+grid_lin_inc/2][0];
             boundary_tree *del_bt = base_bt;
             
-            std::cout << "base before merge: "<< i << " " << 0 <<"\n";
+            if(verbose) std::cout << "base before merge: "<< i << " " << 0 <<"\n";
             //base_bt->print_tree();
-            std::cout << "to merge before merge: "<< i+grid_lin_inc/2 << " " << 0 <<"\n";
+            if(verbose) std::cout << "to merge before merge: "<< i+grid_lin_inc/2 << " " << 0 <<"\n";
             //to_merge->print_tree();
             
             merged=base_bt->merge(to_merge,MERGE_HORIZONTAL,pixel_connection);
             base_bt->update_tree(merged);
             to_merge->update_tree(merged);
-            //merged->update_borders(merged);
+            merged->update_borders(merged);
             merged->compress_path();
             
             auto del_tree = base_bt;
             aux_tile_table[i][0] = merged;
             /* delete del_tree;
             delete to_merge; */
+
+            t = tiles.at(i).at(0);
+            t->update_from_boundary_tree(merged);
+            std::cout << t->to_string(GLOBAL_IDX,colored,8,2) << "\n\n";
 
             if(verbose){
                 std::cout << "BASE BOUNDARY TREE:\n";

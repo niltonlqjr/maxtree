@@ -350,7 +350,7 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
                 to_merge=neighbour;
             }
             tn = this->get_levelroot(to_merge);
-            boundary_node n(to_merge, bound_tree, this->get_levelroot(to_merge)->global_idx);
+            boundary_node n(to_merge, bound_tree, tn->global_idx);
             bound_tree->insert_border_element(n, TOP_BORDER);
 
             bound_tree->add_lroot_tree(tn, this->get_data());
@@ -410,15 +410,18 @@ void maxtree::update_from_boundary_tree(boundary_tree *bt){
     boundary_node *n;
     for(auto boundary_pair: *(bt->boundary_tree_lroot)){
         auto bn = boundary_pair.second;
-        auto n = this->at_pos(bn->ptr_node->idx);
-        if(n->global_idx == bn->ptr_node->global_idx){
-            if(bn->border_lr != -1){
-                std::cerr << "\n ERROR: Updating maxtree with border levelroot non setted. Use compress path on boundary tree before update maxtree\n";
-                exit(EX_DATAERR);
+        
+        if(bn->ptr_node->idx < this->data->size()){
+            auto n = this->at_pos(bn->ptr_node->idx);
+            if(n->global_idx == bn->ptr_node->global_idx){
+                if(bn->border_lr != -1){
+                    std::cerr << "\n ERROR: Updating maxtree with border levelroot non setted. Use compress path on boundary tree before update maxtree\n";
+                    exit(EX_DATAERR);
+                } 
+                n->attribute = bn->ptr_node->attribute;
+                n->global_parent = bn->boundary_parent;
             } 
-            n->attribute = bn->ptr_node->attribute;
-            n->global_parent = bn->boundary_parent;
-        } 
+        }
     }
 }
 
