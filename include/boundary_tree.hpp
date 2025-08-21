@@ -20,7 +20,7 @@ class boundary_tree;
 
 
 enum boundary_tree_field{
-    BOUNDARY_PARENT, MAXTREE_IDX, BOUNDARY_GVAL, BOUNDARY_BORDER_LR, BOUNDARY_GLOBAL_IDX, BOUNDARY_LABEL, BOUNDARY_ATTR
+    BOUNDARY_PARENT, MAXTREE_IDX, BOUNDARY_GVAL, BOUNDARY_BORDER_LR, BOUNDARY_GLOBAL_IDX, BOUNDARY_LABEL, BOUNDARY_ATTR, BOUNDARY_ALL_FIELDS
 };
 
 
@@ -40,6 +40,7 @@ class boundary_node{
         boundary_node(maxtree_node *n, boundary_tree *bound_tree_ptr, 
                       int64_t bound_parent = NO_BOUNDARY_PARENT, 
                       int64_t border_lr = NO_BORDER_LEVELROOT);
+        std::string to_string();
         void accumulate_attr(boundary_node *merged);
         void accumulate_attr(Tattribute value);
 };
@@ -74,7 +75,7 @@ class boundary_tree{
         bool remove_bnode_lroot_tree(int64_t global_idx);
 
         /* get node with global_idx at tree structure (boundary_tree_lroot)*/
-        boundary_node *get_border_node_lroot(int64_t global_idx);
+        boundary_node *get_border_node(int64_t global_idx);
         
 
         /* get a border from boundary tree*/
@@ -86,6 +87,9 @@ class boundary_tree{
         /* return a copy of the of this boundary tree (copy boundary nodes but keeps maxtree_nodes references)*/
         boundary_tree *get_copy();
         
+        /* get the levelroot of the bounday_node with global_idx */
+        boundary_node *get_bnode_levelroot(int64_t global_idx);
+
         /* combine borders of t1 and t2 into this tree borders. 
         Its assume that t1 is on the left (when direction is horizontal) 
         or on the top (when direction is vertical) */
@@ -98,7 +102,6 @@ class boundary_tree{
         /* add a levelroot to tree structure (boundary_tree_lroot) */
         void add_lroot_tree(boundary_node *levelroot, bool insert_ancestors = false,
                             bool copy = false);
-        
 
         /* check if a node with n_idx is root of the tree */
         bool is_root(uint64_t n_idx);
@@ -108,8 +111,12 @@ class boundary_tree{
         void merge_branches(boundary_node *this_node, boundary_node *t_node, std::unordered_map<uint64_t, bool> &acc);//, std::vector<u_int64_t> &swap_nodes);
         /* get index given a position */
 
+
+        /* update the borders of boundary tree tile */
+        void update_borders(boundary_tree *merged);
+
         /* update the boundary tree post merge */
-        void update(boundary_tree *merged);
+        void update_tree(boundary_tree *merged);
 
         /* compress the path to remove duplicated levelroots after merge*/
         void compress_path();
@@ -137,7 +144,7 @@ class boundary_tree{
         
         
         /* print boundary tree (borders and levelroots) */
-        void print_tree(enum boundary_tree_field lrootf= BOUNDARY_BORDER_LR, enum boundary_tree_field borderf=BOUNDARY_GLOBAL_IDX);
+        void print_tree(enum boundary_tree_field lrootf= BOUNDARY_BORDER_LR, enum boundary_tree_field borderf=BOUNDARY_ALL_FIELDS);
 
 };
 

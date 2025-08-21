@@ -310,14 +310,15 @@ int main(int argc, char *argv[]){
     //if(verbose){
         std::cout << ">>>>>>>>> merge columns <<<<<<<<\n";
     //}
+    std::vector<std::vector<boundary_tree *> > aux_tile_table = tiles_table;
 
     uint32_t grid_col_inc = 2; 
     while(ntrees > glines){ /* merge vertical border --- creating "big lines"*/     
         
         for(i = 0; i < glines; i++){
             for(j = 0; j+grid_col_inc/2 < gcolumns; j+=grid_col_inc){
-                boundary_tree *base_bt = tiles_table[i][j];
-                boundary_tree *to_merge = tiles_table[i][j+grid_col_inc/2];
+                boundary_tree *base_bt = aux_tile_table[i][j];
+                boundary_tree *to_merge = aux_tile_table[i][j+grid_col_inc/2];
                 boundary_tree *del_bt = base_bt;
 
                 std::cout << "base before merge: " << i << " " << j << "\n";
@@ -326,11 +327,12 @@ int main(int argc, char *argv[]){
                 //to_merge->print_tree();
                 
                 merged = base_bt->merge(to_merge,MERGE_VERTICAL,pixel_connection);
-                base_bt->update(merged);
-                to_merge->update(merged);
+                base_bt->update_tree(merged);
+                to_merge->update_tree(merged);
+                //merged->update_borders(merged);
                 merged->compress_path();
 
-                tiles_table[i][j] = merged;
+                aux_tile_table[i][j] = merged;
 
                 if(verbose){
                     std::cout << "BASE BOUNDARY TREE:\n";
@@ -375,8 +377,8 @@ int main(int argc, char *argv[]){
     
     while(ntrees > 1){/* Merge lines "recreating maxtree of the whole image"*/
         for(i=0; i + grid_lin_inc/2 < glines; i+=grid_lin_inc){
-            boundary_tree *base_bt = tiles_table[i][0];
-            boundary_tree *to_merge = tiles_table[i+grid_lin_inc/2][0];
+            boundary_tree *base_bt = aux_tile_table[i][0];
+            boundary_tree *to_merge = aux_tile_table[i+grid_lin_inc/2][0];
             boundary_tree *del_bt = base_bt;
             
             std::cout << "base before merge: "<< i << " " << 0 <<"\n";
@@ -385,12 +387,13 @@ int main(int argc, char *argv[]){
             //to_merge->print_tree();
             
             merged=base_bt->merge(to_merge,MERGE_HORIZONTAL,pixel_connection);
-            base_bt->update(merged);
-            to_merge->update(merged);
+            base_bt->update_tree(merged);
+            to_merge->update_tree(merged);
+            //merged->update_borders(merged);
             merged->compress_path();
             
             auto del_tree = base_bt;
-            tiles_table[i][0] = merged;
+            aux_tile_table[i][0] = merged;
             /* delete del_tree;
             delete to_merge; */
 
@@ -441,6 +444,10 @@ int main(int argc, char *argv[]){
             t->filter(lambda);
             std::cout << "filter done\n";
             t->save(out_name+"_"+ std::to_string(t->grid_i) + "-" + std::to_string( t->grid_j)+ ".png");
+            if(verbose){
+                std::cout << "__________________LABEL________________\n";
+                std::cout << t->to_string(LABEL,colored,8,2);
+            }
         }
     }
 

@@ -26,6 +26,13 @@ boundary_node::boundary_node(maxtree_node *n, boundary_tree *bound_tree_ptr,
     this->ptr_node = n;
     
 }
+std::string boundary_node::to_string(){
+    std::ostringstream ss;
+    ss << "( idx:" << this->ptr_node->global_idx << ", bound_parent:" 
+       << this->boundary_parent << ", border_lr:" << this->border_lr << " )";
+    return ss.str();
+
+}
 
 /* void boundary_node::accumulate_attr(boundary_node *merged){
     this->ptr_node->compute_attribute(merged->ptr_node->attribute);
@@ -96,7 +103,7 @@ boundary_node *boundary_tree::insert_border_element(boundary_node &n, enum borde
 
 bool boundary_tree::insert_bnode_lroot_tree(boundary_node *n, bool copy){
     //if(this->boundary_tree_lroot->find(n->ptr_node->global_idx) != this->boundary_tree_lroot->end()){
-    if(this->get_border_node_lroot(n->ptr_node->global_idx) != NULL){
+    if(this->get_border_node(n->ptr_node->global_idx) != NULL){
         //if(verbose) std::cout << "fail to inset: " << n->ptr_node->global_idx << " at tree\n";
         return false;
     }
@@ -127,7 +134,7 @@ void boundary_tree::add_lroot_tree(boundary_node *levelroot, bool insert_ancesto
 
 
     t_levelroot = levelroot->bound_tree_ptr; 
-    lroot_at_this=this->get_border_node_lroot(levelroot->ptr_node->global_idx);
+    lroot_at_this=this->get_border_node(levelroot->ptr_node->global_idx);
     if(verbose){
         std::cout << "add levelroot by boundary node:" << levelroot->ptr_node->global_idx << "\n";
         if(lroot_at_this){
@@ -150,12 +157,12 @@ void boundary_tree::add_lroot_tree(boundary_node *levelroot, bool insert_ancesto
             if(pidx < 0){
                 break;
             }
-            parent = t_levelroot->get_border_node_lroot(pidx);
+            parent = t_levelroot->get_border_node(pidx);
             current = parent;
-            if(!parent || !current){
+            if(parent != NULL && current != NULL){
                 std:: cout << "current: " << current->ptr_node->global_idx << " parent: " << parent->ptr_node->global_idx << "\n";
             }
-            if(!parent){
+            if(parent == NULL){
                 break;
             }
             if(parent!=NULL){
@@ -173,9 +180,9 @@ void boundary_tree::add_lroot_tree(maxtree_node *levelroot, std::vector<maxtree_
     int64_t pidx;
     
     //if(this->boundary_tree_lroot->find(levelroot->ptr_node->global_idx) != this->boundary_tree_lroot->end()){ 
-    if(this->get_border_node_lroot(levelroot->global_idx) != NULL){ 
+    if(this->get_border_node(levelroot->global_idx) != NULL){ 
         // levelroot found on boundary tree, the branch is already added to boundary tree
-        //current = this->get_border_node_lroot(levelroot->idx);
+        //current = this->get_border_node(levelroot->idx);
         return;
     }else{
         current = new boundary_node(levelroot, this, -1);
@@ -204,16 +211,37 @@ void boundary_tree::add_lroot_tree(maxtree_node *levelroot, std::vector<maxtree_
                 current->boundary_parent = parent->global_idx;
                 break;
             }
-            current = this->get_border_node_lroot(parent->global_idx); // go to the parent and add its ancerstors
+            current = this->get_border_node(parent->global_idx); // go to the parent and add its ancerstors
         }
     }
 }
 
-boundary_node *boundary_tree::get_border_node_lroot(int64_t global_idx){
+boundary_node *boundary_tree::get_border_node(int64_t global_idx){
     if(this->boundary_tree_lroot->find(global_idx) != this->boundary_tree_lroot->end())
         return this->boundary_tree_lroot->at(global_idx);
     return NULL;
 }
+
+boundary_node *boundary_tree::get_bnode_levelroot(int64_t global_idx){
+    boundary_node *n = this->get_border_node(global_idx);
+    if(n == NULL){
+        return NULL;
+    }
+    std::cout << n->ptr_node->global_idx << "\n";
+    if(n->boundary_parent == NO_BOUNDARY_PARENT){
+        return n;
+    }
+    boundary_node *lr = this->get_border_node(n->boundary_parent);
+    std::cout << lr->ptr_node->global_idx << "\n";
+    while(lr->border_lr != NO_BORDER_LEVELROOT){
+        boundary_node *lr = this->get_border_node(n->boundary_parent);
+        std::cout << lr->ptr_node->global_idx << "\n";
+    }
+    return lr;
+
+
+}
+
 std::vector<boundary_node *> *boundary_tree::get_border(enum borders b){
     return this->border_elements->at(b);
 }
@@ -246,11 +274,11 @@ void boundary_tree::change_border(std::vector<boundary_node *> *new_border, enum
 }
 
 bool boundary_tree::is_root(uint64_t n_idx){
-    if(this->get_border_node_lroot(n_idx) == NULL){
+    if(this->get_border_node(n_idx) == NULL){
         return false;
     }
-    int64_t bound_par_idx = this->get_border_node_lroot(n_idx)->boundary_parent;
-    if(bound_par_idx != -1){
+    int64_t bound_par_idx = this->get_border_node(n_idx)->boundary_parent;
+    if(bound_par_idx != NO_BOUNDARY_PARENT){
         return false;
     }
     return true;
@@ -262,8 +290,8 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y, std::unor
     Tattribute a, b;
     a = b = Tattr_NULL;
     uint64_t xidx, yidx;
-    x = x->bound_tree_ptr->get_border_node_lroot(x->ptr_node->global_idx);
-    y = y->bound_tree_ptr->get_border_node_lroot(y->ptr_node->global_idx);
+    x = x->bound_tree_ptr->get_border_node(x->ptr_node->global_idx);
+    y = y->bound_tree_ptr->get_border_node(y->ptr_node->global_idx);
     this->add_lroot_tree(x,true);
     this->add_lroot_tree(y,true);
     if(x->ptr_node->gval < y->ptr_node->gval){
@@ -272,7 +300,7 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y, std::unor
         y = aux;
     }
     while(y != NULL && x->ptr_node->global_idx != y->ptr_node->global_idx){
-        z = x->bound_tree_ptr->get_border_node_lroot(x->boundary_parent);
+        z = x->bound_tree_ptr->get_border_node(x->boundary_parent);
         xidx = x->ptr_node->global_idx;
         yidx = y->ptr_node->global_idx;
         if(z != NULL && z->ptr_node->gval >= y->ptr_node->gval){
@@ -302,7 +330,7 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y, std::unor
             x->ptr_node->attribute += a;
             acc[xidx] = true;
 
-            x = x->bound_tree_ptr->get_border_node_lroot(x->boundary_parent);
+            x = x->bound_tree_ptr->get_border_node(x->boundary_parent);
         }
     }
 }
@@ -404,14 +432,32 @@ boundary_tree *boundary_tree::merge(boundary_tree *t, enum merge_directions d, u
     boundary_tree *ret_tree, *merge_tree;
     std::unordered_map<uint64_t, bool> accumulated;
     std::vector<u_int64_t> swap_nodes;
+    boundary_node *e_parent;
     /*given that the levelroots will be visited a lot of times, it is needed to sum only once,
      so this map keeps the global ids already summed in this merge operation*/
 
 
     //ret_tree = this->get_copy();
     //merge_tree = t->get_copy();
-    ret_tree = this;
+    //ret_tree = this;
+    ret_tree = this->get_copy();
     merge_tree = t;
+    for(int i=0; i<NamesBordersVector.size(); i++){
+        if(verbose) std::cout << NamesBordersVector.at(i) << "\n";
+        if(merge_tree->tile_borders->at(i)){
+            std::vector<boundary_node *> *border = merge_tree->border_elements->at(i);
+            for(auto e: *border){
+                if(verbose) std::cout << e->to_string() << "\n";
+                e_parent = merge_tree->get_border_node(e->boundary_parent);
+                if(e_parent!=NULL){
+                    if(verbose) std::cout << e_parent->ptr_node->global_idx << " being added\n";
+                    ret_tree->add_lroot_tree(e_parent,true);
+                    if(verbose) std::cout << e->ptr_node->global_idx << " and parents added\n";
+                }
+            }
+            
+        }
+    }
     if(d == MERGE_HORIZONTAL){  // prepare data to merge borders placed on horizontal (this tree bottom border and merged tree top border)
         if(this->grid_i < merge_tree->grid_i){
             
@@ -469,21 +515,21 @@ boundary_tree *boundary_tree::merge(boundary_tree *t, enum merge_directions d, u
 
 
     for(uint32_t i=0; i<v_ret->size(); i++){
-        boundary_node *x = ret_tree->get_border_node_lroot(v_ret->at(i)->boundary_parent);
+        boundary_node *x = ret_tree->get_border_node(v_ret->at(i)->boundary_parent);
         if(x == NULL){
-            x = ret_tree->get_border_node_lroot(v_ret->at(i)->ptr_node->global_idx);
+            x = ret_tree->get_border_node(v_ret->at(i)->ptr_node->global_idx);
         }
 
-        boundary_node *y = merge_tree->get_border_node_lroot(v_t->at(i)->boundary_parent);
+        boundary_node *y = merge_tree->get_border_node(v_t->at(i)->boundary_parent);
         if(y == NULL){
-            y = merge_tree->get_border_node_lroot(v_t->at(i)->ptr_node->global_idx);
+            y = merge_tree->get_border_node(v_t->at(i)->ptr_node->global_idx);
         }
                 
         if(verbose){
             std::cout << "____________________________________________________________\n";
-            std::cout << "merging: " << v_ret->at(i)->ptr_node->global_idx ;
+            std::cout << "merging: " << v_ret->at(i)->ptr_node->global_idx << "\n";
             std::cout << " (lroot:" << x->ptr_node->global_idx << ")\n";
-            std::cout << "   with: " << v_t->at(i)->ptr_node->global_idx;
+            std::cout << "   with: " << v_t->at(i)->ptr_node->global_idx << "\n";
             std::cout << " (lroot:" << v_t->at(i)->boundary_parent << ")\n";
             std::cout << "ret_tree:" << ret_tree->lroot_to_string() << "\n";
             
@@ -532,9 +578,28 @@ boundary_tree *boundary_tree::merge(boundary_tree *t, enum merge_directions d, u
     return ret_tree;
 }
 
+void boundary_tree::update_borders(boundary_tree *merged){
+    boundary_node *e_par;
+    int64_t pidx;
+    for(int i=0; i<NamesBordersVector.size(); i++){
+        if(verbose) std::cout << NamesBordersVector.at(i) << "\n";
+        if(this->tile_borders->at(i)){
+            std::vector<boundary_node *> *border = this->border_elements->at(i);
+            for(auto e: *border){
+                pidx = e->boundary_parent;
+                e_par = merged->get_border_node(pidx);
+                if(e_par->border_lr != NO_BORDER_LEVELROOT){
+                    e->boundary_parent = e_par->border_lr;
+                }
+            }
+            
+        }
+    } 
+}
 
-void boundary_tree::update(boundary_tree *merged){
+void boundary_tree::update_tree(boundary_tree *merged){
     auto new_tree = merged->boundary_tree_lroot;
+    this->update_borders(merged);
     for(auto node: *new_tree){
         if(verbose)
             std::cout << "updating " << node.first << " \n";
@@ -547,8 +612,8 @@ void boundary_tree::update(boundary_tree *merged){
         }else{ // here node has a border levelroot so it need to be updated
             if (this->boundary_tree_lroot->find(node.first) != this->boundary_tree_lroot->end()){
                 //the node is in the tree, so it need to be updated
-                auto merged_node = merged->get_border_node_lroot(node.second->border_lr);
-                auto this_node = this->get_border_node_lroot(node.first);
+                auto merged_node = merged->get_border_node(node.second->border_lr);
+                auto this_node = this->get_border_node(node.first);
                 this_node->border_lr = merged_node->ptr_node->global_idx;
                 
                 if(merged_node->ptr_node->gval == this_node->ptr_node->gval){
@@ -588,9 +653,9 @@ void boundary_tree::compress_path(){
     }
     for(auto node: *(this->boundary_tree_lroot)){
         n = node.second;
-        if(n->border_lr != -1){
+        if(n->border_lr != NO_BORDER_LEVELROOT){
             n->boundary_parent = n->border_lr;
-            n->border_lr = -1;
+            n->border_lr = NO_BORDER_LEVELROOT;
         }
     }
     if(verbose){
@@ -610,10 +675,10 @@ void boundary_tree::compress_path(){
             std::vector<boundary_node *> *border = this->border_elements->at(i);
             for(auto e: *border){
                 std::cout << "node:" << e->ptr_node->global_idx << "\n";
-                std::cout << e->boundary_parent << " " << e->border_lr << " \n";
-                e_parent = this->get_border_node_lroot(e->boundary_parent);
+                std::cout << "boundary_parent:" << e->boundary_parent << " border_lr:" << e->border_lr << " \n";
+                e_parent = this->get_bnode_levelroot(e->boundary_parent);
                 std::cout << " parent: " << e_parent->ptr_node->global_idx << "\n";
-                //e->boundary_parent = e_parent->boundary_parent;
+                e->boundary_parent = e_parent->boundary_parent;
             }    
         }
         
@@ -676,6 +741,8 @@ std::string boundary_tree::border_to_string(enum boundary_tree_field f){
                 ss << bn->ptr_node->gval;
             }else if(f==BOUNDARY_GLOBAL_IDX){
                 ss << bn->ptr_node->global_idx;
+            }else if(f==BOUNDARY_ALL_FIELDS){
+                ss << bn->to_string();
             }
             ss << " ";
         }
