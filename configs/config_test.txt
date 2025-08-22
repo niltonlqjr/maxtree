@@ -19,4 +19,4 @@ colored = false
 lambda=120
 
 #output prefix
-output = saidas/out_2L2C
+output = saidas/config_test

@@ -20,3 +20,5 @@ gcolumns=1
 
 #atribute value to filter
 lambda=310
+
+output=saidas/2L1C
