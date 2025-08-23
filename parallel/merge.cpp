@@ -212,7 +212,7 @@ int main(int argc, char *argv[]){
         }
     }
 
-    //if(verbose){
+    if(verbose){
         for(i=0; i<glines; i++){
             for(j=0; j<gcolumns;j++){
                 t = tiles.at(i).at(j);
@@ -242,7 +242,7 @@ int main(int argc, char *argv[]){
                 std::cout << "\n";
             }
         }
-    //}
+    }
 
     /* 
     for(i=0; i<glines; i++){
@@ -410,7 +410,7 @@ int main(int argc, char *argv[]){
 
             t = tiles.at(i).at(0);
             t->update_from_boundary_tree(merged);
-            std::cout << t->to_string(GLOBAL_IDX,colored,8,2) << "\n\n";
+            //std::cout << t->to_string(GLOBAL_IDX,colored,8,2) << "\n\n";
 
             if(verbose){
                 std::cout << "BASE BOUNDARY TREE:\n";

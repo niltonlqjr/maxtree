@@ -161,7 +161,7 @@ void boundary_tree::add_lroot_tree(boundary_node *levelroot, bool insert_ancesto
             current = parent;
             if(verbose){
                 if(parent != NULL && current != NULL){
-                    std:: cout << "current: " << current->ptr_node->global_idx << " parent: " << parent->ptr_node->global_idx << "\n";
+                    std::cout << "current: " << current->ptr_node->global_idx << " parent: " << parent->ptr_node->global_idx << "\n";
                 }
             }
             if(parent == NULL){
@@ -395,7 +395,7 @@ void boundary_tree::combine_borders(boundary_tree *t1, boundary_tree *t2, enum m
             exit(EXIT_FAILURE);
         }
         node->boundary_parent = node_tree->ptr_node->global_idx;
-        std::cout << "node idx:" << node->ptr_node->global_idx << " new parent:" <<node->boundary_parent<< "\n";
+        //std::cout << "node idx:" << node->ptr_node->global_idx << " new parent:" <<node->boundary_parent<< "\n";
         new_border->push_back(node);
     }
 
@@ -426,7 +426,7 @@ void boundary_tree::combine_borders(boundary_tree *t1, boundary_tree *t2, enum m
             exit(EXIT_FAILURE);
         }
         node->boundary_parent = node_tree->ptr_node->global_idx;
-        std::cout << "node idx:" << node->ptr_node->global_idx << " new parent:" <<node->boundary_parent<< "\n";
+        //std::cout << "node idx:" << node->ptr_node->global_idx << " new parent:" <<node->boundary_parent<< "\n";
         new_border->push_back(node);
     }
 
@@ -688,7 +688,7 @@ void boundary_tree::compress_path(){
     if(verbose){
         for(auto node: *(this->boundary_tree_lroot)){
             n = node.second;
-            std::cout << "(n: " << n->ptr_node->global_idx << ","
+            std::cout << "(idx: " << n->ptr_node->global_idx << ","
                     << "border_lr: " << n->border_lr << ","
                     << "boundary_parent: " << n->boundary_parent << ","
                     << "attribute: " << n->ptr_node->attribute << ","
@@ -706,7 +706,7 @@ void boundary_tree::compress_path(){
     if(verbose){
         for(auto node: *(this->boundary_tree_lroot)){
             n = node.second;
-            std::cout << "(n: " << n->ptr_node->global_idx << ","
+            std::cout << "(idx: " << n->ptr_node->global_idx << ","
                     << "border_lr: " << n->border_lr << ","
                     << "boundary_parent: " << n->boundary_parent << ","
                     << "attribute: " << n->ptr_node->attribute << ","
