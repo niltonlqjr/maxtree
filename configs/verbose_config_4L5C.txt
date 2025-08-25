@@ -4,7 +4,7 @@
 # the args names (lvalue) and values (rvalue) are preprocessed by a right trim and left trim
 
 # print some information(true/false)
-verbose=false
+verbose=true
 # print information with colors (true/false)
 colored = false
 
@@ -19,6 +19,6 @@ glines=4
 gcolumns=5
 
 #atribute value to filter
-lambda=100000
+lambda=15
 
-output = ../output/parallel/output_4L5C_100k
+output = saidas/output_4L5C

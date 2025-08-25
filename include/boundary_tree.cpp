@@ -144,26 +144,24 @@ void boundary_tree::add_lroot_tree(boundary_node *levelroot, bool insert_ancesto
         }
     }
     if(lroot_at_this == NULL){
-        this->insert_bnode_lroot_tree(levelroot,copy);
+        inserted = this->insert_bnode_lroot_tree(levelroot,copy);
     }
-
     if(insert_ancestors){
         current = levelroot;
-        while(current != NULL){
+        while(current != NULL && inserted){
             //if(verbose) std::cout << " This tree: "<< this->lroot_to_string() << "\n";
             //if(verbose) std::cout << " levelroot tree: "<< t_levelroot->lroot_to_string() << "\n";
             pidx = current->boundary_parent;
-            
             if(pidx < 0){
                 break;
             }
             parent = t_levelroot->get_border_node(pidx);
-            current = parent;
             if(verbose){
                 if(parent != NULL && current != NULL){
                     std::cout << "current: " << current->ptr_node->global_idx << " parent: " << parent->ptr_node->global_idx << "\n";
                 }
             }
+            current = parent;
             if(parent == NULL){
                 break;
             }
@@ -171,7 +169,6 @@ void boundary_tree::add_lroot_tree(boundary_node *levelroot, bool insert_ancesto
                 inserted = this->insert_bnode_lroot_tree(parent,copy);
                 
             }
-            
         }
     }
 }
@@ -306,12 +303,9 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y, std::unor
         xidx = x->ptr_node->global_idx;
         yidx = y->ptr_node->global_idx;
         if(z != NULL && z->ptr_node->gval >= y->ptr_node->gval){
-            this->add_lroot_tree(z,true);
-            
-                
+            this->add_lroot_tree(z,true);                
             x->ptr_node->attribute += a;
             acc[xidx] = true;
-
             x = z;
         }else{
             if(acc.find(xidx) == acc.end() ){
@@ -394,6 +388,10 @@ void boundary_tree::combine_borders(boundary_tree *t1, boundary_tree *t2, enum m
             std::cerr << "VAI PRA PUTA QUE PARIU!!! ESSA MERDA NAO TA DANDO CERTO PORRA!\n";
             exit(EXIT_FAILURE);
         }
+        if(node == node_tree){
+            std::cerr << "isso nao deveria acontecer\n";
+            exit(EXIT_FAILURE);
+        }
         node->boundary_parent = node_tree->ptr_node->global_idx;
         //std::cout << "node idx:" << node->ptr_node->global_idx << " new parent:" <<node->boundary_parent<< "\n";
         new_border->push_back(node);
@@ -423,6 +421,10 @@ void boundary_tree::combine_borders(boundary_tree *t1, boundary_tree *t2, enum m
         }
         if(node_tree == NULL){
             std::cerr << "VAI PRA PUTA QUE PARIU!!! ESSA MERDA NAO TA DANDO CERTO PORRA!\n";
+            exit(EXIT_FAILURE);
+        }
+        if(node == node_tree){
+            std::cerr << "isso nao deveria acontecer\n";
             exit(EXIT_FAILURE);
         }
         node->boundary_parent = node_tree->ptr_node->global_idx;
@@ -495,6 +497,7 @@ boundary_tree *boundary_tree::merge(boundary_tree *t, enum merge_directions d, u
                     ret_tree->add_lroot_tree(e_parent,true);
                     if(verbose) std::cout << e->ptr_node->global_idx << " and parents added\n";
                 }
+                
             }
             
         }
@@ -699,7 +702,7 @@ void boundary_tree::compress_path(){
     for(auto node: *(this->boundary_tree_lroot)){
         n = node.second;
         if(n->border_lr != NO_BORDER_LEVELROOT){
-            n->boundary_parent = n->border_lr;
+            n->boundary_parent = n->border_lr; // ver linha
             n->border_lr = NO_BORDER_LEVELROOT;
         }
     }
@@ -725,6 +728,10 @@ void boundary_tree::compress_path(){
                 e_parent = this->get_border_node(e->boundary_parent);
                 if(verbose) std::cout << " parent: " << e_parent->to_string() << "\n";
                 e->boundary_parent = e_parent->ptr_node->global_idx;
+                if(e == e_parent){
+                    std::cerr << "isso nao deveria acontecer\n";
+                    exit(EXIT_FAILURE);
+                }
                 if(verbose) std::cout << "the new parent of:" << e->ptr_node->global_idx << " is:" << e->boundary_parent 
                                       << "\n_______________________________________________________________________________________\n";
             }    

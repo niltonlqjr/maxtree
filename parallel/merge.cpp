@@ -334,10 +334,10 @@ int main(int argc, char *argv[]){
                 
                 aux_tile_table[i][j] = merged;
                 
-                /* std::cout << i << " " << j << "\n";
+                /* std::cout << i << " " << j << "\n";*/
                 t = tiles.at(i).at(j);
                 t->update_from_boundary_tree(merged);
-                std::cout << t->to_string(PARENT,colored,5) << "\n\n";
+                /*std::cout << t->to_string(PARENT,colored,5) << "\n\n";
 
                 if(j+grid_col_inc/2 < gcolumns){
                     t = tiles.at(i).at(j+grid_col_inc/2);
@@ -462,6 +462,8 @@ int main(int argc, char *argv[]){
             if(verbose){
                 std::cout << "__________________LABEL________________\n";
                 std::cout << t->to_string(LABEL,colored,8,2);
+                std::cout << "________________ATTRIBUTE________________\n";
+                std::cout << t->to_string(ATTRIBUTE,colored,5);
             }
         }
     }
