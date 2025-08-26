@@ -35,7 +35,7 @@ void print_pq(std::priority_queue<maxtree_node*, std::vector<maxtree_node*> ,cmp
 int main(int argc, char *argv[]){
     vips::VImage *in;
     maxtree *t;
-    std::string out_name;
+    std::string out_name, out_ext;
 
 
     std::cout << "argc: " << argc << " argv:" ;
@@ -71,6 +71,7 @@ int main(int argc, char *argv[]){
             verbose=true;
         }
     }
+
     bool colored = false;
     if(configs->find("colored") != configs->end()){
         if(configs->at("colored") == "true"){
@@ -88,12 +89,17 @@ int main(int argc, char *argv[]){
         std::cout << "gcolumns=6 #divide image in 6 vertical tiles\n";
         exit(EX_CONFIG);
     }
-
+    
+    out_name = "output";
     if (configs->find("output") != configs->end()){
             out_name = configs->at("output");
-    }else{
-        out_name = "output";
     }
+
+    out_ext = "png";
+    if(configs->find("output_ext") != configs->end()){
+        out_ext = configs->at("output_ext");
+    }
+
     uint8_t pixel_connection = 4;
 
     uint32_t glines = std::stoi(configs->at("glines"));
@@ -326,6 +332,8 @@ int main(int argc, char *argv[]){
                 if(verbose) std::cout << "to merge before merge: "<< i << " " << j+grid_col_inc/2 <<"\n";
                 //to_merge->print_tree();
                 
+                std::cout << "merge boundary tree: " << i << " " << j << " with " << i << " " << j+grid_col_inc/2 << "\n";
+
                 merged = base_bt->merge(to_merge,MERGE_VERTICAL,pixel_connection);
                 base_bt->update_tree(merged);
                 to_merge->update_tree(merged);
@@ -335,8 +343,8 @@ int main(int argc, char *argv[]){
                 aux_tile_table[i][j] = merged;
                 
                 /* std::cout << i << " " << j << "\n";*/
-                t = tiles.at(i).at(j);
-                t->update_from_boundary_tree(merged);
+                //t = tiles.at(i).at(j);
+                //t->update_from_boundary_tree(merged);
                 /*std::cout << t->to_string(PARENT,colored,5) << "\n\n";
 
                 if(j+grid_col_inc/2 < gcolumns){
@@ -408,8 +416,8 @@ int main(int argc, char *argv[]){
             /* delete del_tree;
             delete to_merge; */
 
-            t = tiles.at(i).at(0);
-            t->update_from_boundary_tree(merged);
+            //t = tiles.at(i).at(0);
+            //t->update_from_boundary_tree(merged);
             //std::cout << t->to_string(GLOBAL_IDX,colored,8,2) << "\n\n";
 
             if(verbose){
@@ -458,7 +466,7 @@ int main(int argc, char *argv[]){
             std::cout << "tree (" << t->grid_i << "," << t->grid_j <<" )updated\n";
             t->filter(lambda);
             std::cout << "filter done\n";
-            t->save(out_name+"_"+ std::to_string(t->grid_i) + "-" + std::to_string( t->grid_j)+ ".png");
+            t->save(out_name+"_"+ std::to_string(t->grid_i) + "-" + std::to_string( t->grid_j)+ "." + out_ext);
             if(verbose){
                 std::cout << "__________________LABEL________________\n";
                 std::cout << t->to_string(LABEL,colored,8,2);

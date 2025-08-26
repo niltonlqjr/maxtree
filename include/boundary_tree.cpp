@@ -310,6 +310,7 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y, std::unor
         }else{
             if(acc.find(xidx) == acc.end() ){
                 x->border_lr = yidx;
+                this->add_lroot_tree(y,true);
                 b = x->ptr_node->attribute + a;
                 a = x->ptr_node->attribute;
                 x->ptr_node->attribute = b;
@@ -654,16 +655,26 @@ void boundary_tree::update_tree(boundary_tree *merged){
         if(node.second->border_lr == NO_BORDER_LEVELROOT){
             //does not need to change levelroot of the node
             if(this->boundary_tree_lroot->find(node.first) != this->boundary_tree_lroot->end()){
-                // if node is in boundary tree just update this attribute
+                // if node is in this boundary tree just update this attribute
                 this->boundary_tree_lroot->at(node.first)->ptr_node->attribute = node.second->ptr_node->attribute;
             }
         }else{ // here node has a border levelroot so it need to be updated
             if (this->boundary_tree_lroot->find(node.first) != this->boundary_tree_lroot->end()){
-                //the node is in the tree, so it need to be updated
+                //the node is in this tree, so it need to be updated
                 auto merged_node = merged->get_border_node(node.second->border_lr);
                 auto this_node = this->get_border_node(node.first);
+                if (verbose){
+                    if(merged_node == NULL){
+                        std::cout << "searching for: " << node.second->border_lr << " - merged null\n";
+                    }
+                    if(this_node == NULL){
+                        std::cout << "this null\n";
+                    }
+                    std::cout << "node_second:  " << node.second->to_string() << "\n";
+                    std::cout << "merged:       " << merged_node->to_string() << "\n";
+                    std::cout << "this:         " << this_node->to_string() <<  "\n";
+                }
                 this_node->border_lr = merged_node->ptr_node->global_idx;
-                
                 if(merged_node->ptr_node->gval == this_node->ptr_node->gval){
                     //if the merged node and this node has the same gval, so they are on the same component
                     //then we need to copy the attributes
