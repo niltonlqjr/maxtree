@@ -48,7 +48,7 @@ class boundary_node{
 class boundary_tree{
     private:
         //std::vector< std::unordered_map<uint64_t, boundary_node *> *> *border_elements;
-        std::vector<std::vector<boundary_node *> *> *border_elements;
+        std::vector<std::vector<uint64_t> *> *border_elements; // store global index of the levelroot on a border node
         std::vector<bool> *tile_borders;
         
     public:
@@ -64,8 +64,8 @@ class boundary_tree{
              uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j);*/
         ~boundary_tree();
         
-        /* create a copy of n and insert it at border structure (border_elements). Return the pointer of the created copy */
-        boundary_node *insert_border_element(boundary_node &n, enum borders b);
+        /* insert the globalidx of the node on the border */
+        void insert_border_element(uint64_t global_idx, enum borders b);
         
         /* check if the node is already on the boundary tree.
         if it is, returns false, otherwise, insert the node at boundary tree structure and return true*/
@@ -79,7 +79,7 @@ class boundary_tree{
         
 
         /* get a border from boundary tree*/
-        std::vector<boundary_node *> *get_border(enum borders b);
+        std::vector<uint64_t> *get_border(enum borders b);
         
         /* merge the calling tree with t */
         boundary_tree *merge(boundary_tree *t, enum merge_directions d, uint8_t connection = 4);
@@ -131,7 +131,7 @@ class boundary_tree{
         uint64_t index_of(uint32_t i, uint32_t j);
         
         /* change vector of one border (top, left, bottom or right) */
-        void change_border(std::vector<boundary_node *> *new_border, enum borders b);
+        void change_border(std::vector<uint64_t> *new_border, enum borders b);
         
         /* obtain the line and column of a given index */
         std::tuple<uint32_t, uint32_t> lin_col(uint64_t index);
