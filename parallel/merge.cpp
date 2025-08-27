@@ -476,6 +476,8 @@ int main(int argc, char *argv[]){
             std::cout << "filter done\n";
             t->save(out_name+"_"+ std::to_string(t->grid_i) + "-" + std::to_string( t->grid_j)+ "." + out_ext);
             //if(verbose){
+                std::cout << "__________________GVAL________________\n";
+                std::cout << t->to_string(GVAL,colored,8,2);
                 std::cout << "__________________LABEL________________\n";
                 std::cout << t->to_string(LABEL,colored,8,2);
                 std::cout << "________________ATTRIBUTE________________\n";

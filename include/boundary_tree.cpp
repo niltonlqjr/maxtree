@@ -30,7 +30,10 @@ boundary_node::boundary_node(maxtree_node *n, boundary_tree *bound_tree_ptr,
 std::string boundary_node::to_string(){
     std::ostringstream ss;
     ss << this <<"( idx:" << this->ptr_node->global_idx << ", bound_parent:" 
-       << this->boundary_parent << ", border_lr:" << this->border_lr << " )";
+       << this->boundary_parent << ", border_lr:" << this->border_lr << " )"
+       << " gval:" << (int)this->ptr_node->gval 
+       << ", attribute:" << this->ptr_node->attribute << " ";
+
     return ss.str();
 
 }
@@ -304,16 +307,26 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y, std::unor
         xidx = x->ptr_node->global_idx;
         yidx = y->ptr_node->global_idx;
         if(z != NULL && z->ptr_node->gval >= y->ptr_node->gval){
+            if(x->ptr_node->idx % x->bound_tree_ptr->w 
+                || x->ptr_node->idx < x->bound_tree_ptr->w
+                || x->ptr_node->idx > this->w * (this->h-1) ){//node is in the border
+                x->ptr_node->attribute--;
+            }
             this->add_lroot_tree(z,true);                
             x->ptr_node->attribute += a;
             acc[xidx] = true;
             x = z;
         }else{
-            if(acc.find(xidx) == acc.end() ){
+            this->add_lroot_tree(y,true);
+            if(acc.find(xidx) == acc.end() || !acc[xidx]){
                 x->border_lr = yidx;
-                this->add_lroot_tree(y,true);
                 b = x->ptr_node->attribute + a;
                 a = x->ptr_node->attribute;
+                if(x->ptr_node->idx % x->bound_tree_ptr->w 
+                    || x->ptr_node->idx < x->bound_tree_ptr->w
+                    || x->ptr_node->idx > this->w * (this->h-1) ){//node is in the border
+                    x->ptr_node->attribute--;
+                }   
                 x->ptr_node->attribute = b;
                 acc[xidx] = true;
             }
@@ -324,10 +337,10 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y, std::unor
     if(y == NULL){
         while(x != NULL){
             xidx = x->ptr_node->global_idx;
-            
+            //if(acc.find(xidx) == acc.end() || !acc[xidx]){
             x->ptr_node->attribute += a;
             acc[xidx] = true;
-        
+            //}
             x = x->bound_tree_ptr->get_border_node(x->boundary_parent);
         }
     }
@@ -753,17 +766,19 @@ void boundary_tree::compress_path(){
                 if(verbose) std::cout << " invalid parent: " << e_parent->to_string() << "\n";
                 while(e_parent != NULL && !e_parent->in_lroot_tree){
                     e_parent=this->get_border_node(e_parent->boundary_parent);
-                    if(verbose) std::cout << " invalid parent: " << e_parent->to_string() << "\n";
+                    if(verbose) if(e_parent != NULL) std::cout << " invalid parent: " << e_parent->to_string() << "\n";
                 }
-                if(verbose) std::cout << " parent: " << e_parent->to_string() << "\n";
-                
-                e->boundary_parent = e_parent->ptr_node->global_idx;
-                if(e == e_parent){
-                    std::cerr << "isso nao deveria acontecer\n";
-                    exit(EXIT_FAILURE);
+                if(e_parent != NULL){
+                    if(verbose)std::cout << " parent: " << e_parent->to_string() << "\n";
+                    
+                    e->boundary_parent = e_parent->ptr_node->global_idx;
+                    if(e == e_parent){
+                        std::cerr << "isso nao deveria acontecer\n";
+                        exit(EXIT_FAILURE);
+                    }
+                    if(verbose) std::cout << "the new parent of:" << e->ptr_node->global_idx << " is:" << e->boundary_parent 
+                                        << "\n_______________________________________________________________________________________\n";
                 }
-                if(verbose) std::cout << "the new parent of:" << e->ptr_node->global_idx << " is:" << e->boundary_parent 
-                                      << "\n_______________________________________________________________________________________\n";
             }    
         }
         

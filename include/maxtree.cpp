@@ -264,6 +264,7 @@ void maxtree::compute_sequential_recursive(int gl){
             auto q = this->get_parent(p->idx);
             //q->compute_attribute(p->attribute);
             q->attribute = q->attribute + p->attribute;
+            
         }
     }
 /*     std::vector<Tattribute> attrs(this->get_size(), 0); // = new std::vector<Tattribute>(this->get_size(), Tattr_NULL);
