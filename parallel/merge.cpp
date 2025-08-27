@@ -458,7 +458,15 @@ int main(int argc, char *argv[]){
             std::cout << "+++++++++++++++++++++++++++++++++++\n";
         }
     }
-    
+    //if(verbose){
+        std::cout << "Final Boundary Tree:\n";
+        std::cout << "-------------NODE INFO--------------\n";
+        std::cout << merged->lroot_to_string() << "\n";
+        std::cout << "------------ATTRIBUTES--------------\n";
+        std::cout << merged->lroot_to_string(BOUNDARY_ATTR) << "\n";
+        std::cout << "---------------GVAL-----------------\n";
+        std::cout << merged->lroot_to_string(BOUNDARY_GVAL) << "\n";
+    //}
     for(int i=0; i < glines; i++){
         for(int j=0;j<gcolumns; j++){
             t = tiles.at(i).at(j);
@@ -467,12 +475,12 @@ int main(int argc, char *argv[]){
             t->filter(lambda);
             std::cout << "filter done\n";
             t->save(out_name+"_"+ std::to_string(t->grid_i) + "-" + std::to_string( t->grid_j)+ "." + out_ext);
-            if(verbose){
+            //if(verbose){
                 std::cout << "__________________LABEL________________\n";
                 std::cout << t->to_string(LABEL,colored,8,2);
                 std::cout << "________________ATTRIBUTE________________\n";
                 std::cout << t->to_string(ATTRIBUTE,colored,5);
-            }
+            //}
         }
     }
 

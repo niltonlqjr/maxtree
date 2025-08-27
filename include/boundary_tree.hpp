@@ -32,6 +32,7 @@ class boundary_node{
         int64_t boundary_parent; // parent of the node in boundary tree
         maxtree_node *ptr_node;
         boundary_tree *bound_tree_ptr;
+        bool in_lroot_tree;
         
         /* boundary_node(double gval, uint64_t maxtree_idx, uint64_t origin, 
                       uint64_t global_idx, Tattribute a = Tattr_default, 
