@@ -307,11 +307,7 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y, std::unor
         xidx = x->ptr_node->global_idx;
         yidx = y->ptr_node->global_idx;
         if(z != NULL && z->ptr_node->gval >= y->ptr_node->gval){
-            if(x->ptr_node->idx % x->bound_tree_ptr->w 
-                || x->ptr_node->idx < x->bound_tree_ptr->w
-                || x->ptr_node->idx > this->w * (this->h-1) ){//node is in the border
-                x->ptr_node->attribute--;
-            }
+ 
             this->add_lroot_tree(z,true);                
             x->ptr_node->attribute += a;
             acc[xidx] = true;
@@ -322,11 +318,7 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y, std::unor
                 x->border_lr = yidx;
                 b = x->ptr_node->attribute + a;
                 a = x->ptr_node->attribute;
-                if(x->ptr_node->idx % x->bound_tree_ptr->w 
-                    || x->ptr_node->idx < x->bound_tree_ptr->w
-                    || x->ptr_node->idx > this->w * (this->h-1) ){//node is in the border
-                    x->ptr_node->attribute--;
-                }   
+  
                 x->ptr_node->attribute = b;
                 acc[xidx] = true;
             }
