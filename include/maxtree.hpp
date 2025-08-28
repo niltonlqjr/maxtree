@@ -93,6 +93,8 @@ class maxtree{
         
         boundary_tree *get_boundary_tree(uint8_t connectivity=4);
 
+        bool is_border_node(uint64_t local_idx);
+
         /* Update maxtree attribute and global parent given a boundary tree
         this must be used after compress_path of bt */
         void update_from_boundary_tree(boundary_tree *bt);

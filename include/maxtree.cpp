@@ -204,6 +204,15 @@ void maxtree::compute_sequential_iterative(){
     this->root = root;
 }
 
+bool maxtree::is_border_node(uint64_t local_idx){
+    uint32_t pl,pc;
+    std::tie(pl, pc) = this->lin_col(local_idx);
+    return (pl == 0 && this->tile_borders->at(TOP_BORDER)) || 
+           (pl == this->h-1 && this->tile_borders->at(BOTTOM_BORDER)) || 
+           (pc == 0 && this->tile_borders->at(LEFT_BORDER)) || 
+           (pc == this->w && this->tile_borders->at(RIGHT_BORDER));
+}
+
 int maxtree::flood(int lambda, maxtree_node *r, std::vector<std::deque<maxtree_node*>> *hqueue, 
                    std::vector<maxtree_node *> *levelroot, std::vector<maxtree_node*> &S){
     maxtree_node *p;
@@ -217,6 +226,7 @@ int maxtree::flood(int lambda, maxtree_node *r, std::vector<std::deque<maxtree_n
         }
         auto N = this->get_neighbours(p->idx);
         for(auto n: N){
+            //if(!this->is_border_node(n->idx)){
             if(n->parent == -1){
                 int l = n->gval;
                 if(levelroot->at(l) == NULL){
@@ -228,6 +238,7 @@ int maxtree::flood(int lambda, maxtree_node *r, std::vector<std::deque<maxtree_n
                     l=this->flood(l, levelroot->at(l), hqueue, levelroot, S);
                 }
             }
+            //}
         }
     
     }
@@ -421,7 +432,7 @@ void maxtree::update_from_boundary_tree(boundary_tree *bt){
                 }
                 
                 if(global_lroot != NULL){
-                    if(verbose) std::cout << "levelroot:\n" << global_lroot->to_string() <<"\n";
+                    /* if(verbose) */ std::cout << "levelroot:\n" << global_lroot->to_string() <<"\n";
                     if(n->attribute < global_lroot->ptr_node->attribute){
                         n->attribute = global_lroot->ptr_node->attribute;
                         n->global_parent = global_lroot->ptr_node->global_idx;
@@ -459,9 +470,9 @@ void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t
         noborder_w--;
     }
      
-    if(verbose){
+   /*  if(verbose){
         std::cout << "filling: " << base_h << ", " << base_w << "..." << base_h+this->h << ", " << base_w+this->w <<"\n";
-    }
+    } */
      
     /*char aux_enum_c[][50] = {"VIPS_FORMAT_UCHAR", "VIPS_FORMAT_CHAR", "VIPS_FORMAT_USHORT", "VIPS_FORMAT_SHORT", 
          "VIPS_FORMAT_UINT", " VIPS_FORMAT_INT", " VIPS_FORMAT_FLOAT", " VIPS_FORMAT_COMPLEX", " VIPS_FORMAT_DOUBLE", 

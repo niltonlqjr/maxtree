@@ -159,10 +159,10 @@ int main(int argc, char *argv[]){
         for(j=0; j<gcolumns; j++){
             borders.at(LEFT_BORDER) = false;
             borders.at(RIGHT_BORDER) = false;
-            if(verbose){
+            /* if(verbose){
                 std::cout << "===============inner loop=======================\n";
                 std::cout << x++ << "->" << i << "," << j <<"\n";
-            }
+            } */
             columns_inc = j < num_w_ceil ? w_trunc+1 : w_trunc;
             tile_columns = columns_inc;
             reg_left = noborder_rl;
@@ -177,11 +177,11 @@ int main(int argc, char *argv[]){
             }
             
             //std::cout << "filling: " << noborder_rt << "," << noborder_rl << "..." << noborder_rt + lines_inc << "," << noborder_rl + columns_inc <<"\n";
-            if(verbose){
+/*             if(verbose){
                 std::cout << "with borders:\n";
                 std::cout << reg_left << "," << reg_top << "," << tile_columns << "," << tile_lines << "\nno borders: \n";
                 std::cout << noborder_rl << "," << noborder_rt << "," << columns_inc << "," << lines_inc << "\n------------\n";
-            }
+            } */
             
             maxtree *new_tree = new maxtree(borders, tile_lines, tile_columns, i, j);
             vips::VRegion reg = in->region(reg_left, reg_top, tile_columns, tile_lines);
@@ -194,9 +194,9 @@ int main(int argc, char *argv[]){
             
             //std::cout << new_tree->to_string(GVAL,5);
             noborder_rl+=columns_inc;
-            if(verbose){
+            /* if(verbose){
                 std::cout << "\n\n\n=====================================================================================\n\n\n";
-            }
+            } */
         }
         noborder_rt+=lines_inc;
     }
@@ -333,16 +333,20 @@ int main(int argc, char *argv[]){
                 //to_merge->print_tree();
                 
                 std::cout << "merge boundary tree: " << i << " " << j << " with " << i << " " << j+grid_col_inc/2 << "\n";
-
+                std::cout << "----> base_bt: <-------\n" << base_bt->lroot_to_string(BOUNDARY_ALL_FIELDS,"\n") << "\n=====================================\n";
+                std::cout << "----> to_merge: <-------\n" << to_merge->lroot_to_string(BOUNDARY_ALL_FIELDS,"\n") << "\n=====================================\n";
                 merged = base_bt->merge(to_merge,MERGE_VERTICAL,pixel_connection);
+                
+                std::cout << "----> boundary tree: <-------\n" << merged->lroot_to_string(BOUNDARY_ALL_FIELDS,"\n") << "\n+++++++++++++++++++++++++++++++++++++\n________________________________________\n";
 
-                // base_bt->update_tree(merged);
-                // base_bt->update_borders(merged);
-                //base_bt->compress_path();
 
-                // to_merge->update_tree(merged);
-                // to_merge->update_borders(merged);
-                //to_merge->compress_path();
+/*                 base_bt->update_tree(merged);
+                base_bt->update_borders(merged);
+                base_bt->compress_path();
+
+                to_merge->update_tree(merged);
+                to_merge->update_borders(merged);
+                to_merge->compress_path(); */
 
                 merged->update_tree(merged);
                 merged->update_borders(merged);
@@ -412,20 +416,25 @@ int main(int argc, char *argv[]){
             //base_bt->print_tree();
             if(verbose) std::cout << "to merge before merge: "<< i+grid_lin_inc/2 << " " << 0 <<"\n";
             //to_merge->print_tree();
-            
+            std::cout << "merge boundary tree (" << i << ", " << 0 << ") with (" << i << ", " << 0 << ")\n";
+            std::cout << "----> base_bt: <-------\n" << base_bt->lroot_to_string(BOUNDARY_ALL_FIELDS,"\n") << "\n=====================================\n";
+            std::cout << "----> to_merge: <-------\n" << to_merge->lroot_to_string(BOUNDARY_ALL_FIELDS,"\n") << "\n=====================================\n";
             merged=base_bt->merge(to_merge,MERGE_HORIZONTAL,pixel_connection);
             
-            // base_bt->update_tree(merged);
-            // base_bt->update_borders(merged);
-            //base_bt->compress_path();
+            std::cout << "----> merged: <-------\n" << merged->lroot_to_string(BOUNDARY_ALL_FIELDS,"\n") << "\n+++++++++++++++++++++++++++++++++++++\n_______________________________________\n";
 
-            // to_merge->update_tree(merged);
-            // to_merge->update_borders(merged);
-            //to_merge->compress_path();
+/* 
+            base_bt->update_tree(merged);
+            base_bt->update_borders(merged);
+            base_bt->compress_path();
+
+            to_merge->update_tree(merged);
+            to_merge->update_borders(merged);
+            to_merge->compress_path(); */
 
             merged->update_tree(merged);
             merged->update_borders(merged);
-            merged->compress_path();
+            merged->compress_path(); 
             
             auto del_tree = base_bt;
             aux_tile_table[i][0] = merged;

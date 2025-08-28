@@ -117,6 +117,7 @@ class boundary_tree{
         /* get index given a position */
 
 
+
         /* update the borders of boundary tree tile */
         void update_borders(boundary_tree *merged);
 
@@ -145,7 +146,7 @@ class boundary_tree{
         std::string border_to_string(enum boundary_tree_field f=BOUNDARY_GLOBAL_IDX);
         
         /* print all nodes from the boundary_tree_lroot */
-        std::string lroot_to_string(enum boundary_tree_field f=BOUNDARY_BORDER_LR);
+        std::string lroot_to_string(enum boundary_tree_field f=BOUNDARY_BORDER_LR, std::string end_line=" ");
         
         
         /* print boundary tree (borders and levelroots) */
