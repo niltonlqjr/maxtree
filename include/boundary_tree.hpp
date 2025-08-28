@@ -33,6 +33,7 @@ class boundary_node{
         maxtree_node *ptr_node;
         boundary_tree *bound_tree_ptr;
         bool in_lroot_tree;
+        bool visited;
         
         /* boundary_node(double gval, uint64_t maxtree_idx, uint64_t origin, 
                       uint64_t global_idx, Tattribute a = Tattr_default, 
@@ -90,6 +91,9 @@ class boundary_tree{
         
         /* get the levelroot of the bounday_node with global_idx */
         boundary_node *get_bnode_levelroot(int64_t global_idx);
+
+        /* check if a index is a border node (if it is in the border of the tile) */
+        bool is_in_border(int64_t global_idx);
 
         /* combine borders of t1 and t2 into this tree borders. 
         Its assume that t1 is on the left (when direction is horizontal) 

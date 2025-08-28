@@ -335,8 +335,16 @@ int main(int argc, char *argv[]){
                 std::cout << "merge boundary tree: " << i << " " << j << " with " << i << " " << j+grid_col_inc/2 << "\n";
 
                 merged = base_bt->merge(to_merge,MERGE_VERTICAL,pixel_connection);
-                base_bt->update_tree(merged);
-                to_merge->update_tree(merged);
+
+                // base_bt->update_tree(merged);
+                // base_bt->update_borders(merged);
+                //base_bt->compress_path();
+
+                // to_merge->update_tree(merged);
+                // to_merge->update_borders(merged);
+                //to_merge->compress_path();
+
+                merged->update_tree(merged);
                 merged->update_borders(merged);
                 merged->compress_path();
                 
@@ -406,8 +414,16 @@ int main(int argc, char *argv[]){
             //to_merge->print_tree();
             
             merged=base_bt->merge(to_merge,MERGE_HORIZONTAL,pixel_connection);
-            base_bt->update_tree(merged);
-            to_merge->update_tree(merged);
+            
+            // base_bt->update_tree(merged);
+            // base_bt->update_borders(merged);
+            //base_bt->compress_path();
+
+            // to_merge->update_tree(merged);
+            // to_merge->update_borders(merged);
+            //to_merge->compress_path();
+
+            merged->update_tree(merged);
             merged->update_borders(merged);
             merged->compress_path();
             

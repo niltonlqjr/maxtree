@@ -264,7 +264,6 @@ void maxtree::compute_sequential_recursive(int gl){
             auto q = this->get_parent(p->idx);
             //q->compute_attribute(p->attribute);
             q->attribute = q->attribute + p->attribute;
-            
         }
     }
 /*     std::vector<Tattribute> attrs(this->get_size(), 0); // = new std::vector<Tattribute>(this->get_size(), Tattr_NULL);
@@ -422,7 +421,7 @@ void maxtree::update_from_boundary_tree(boundary_tree *bt){
                 }
                 
                 if(global_lroot != NULL){
-                    if(verbose) std::cout << "levelroot:" << global_lroot->to_string() <<"\n";
+                    if(verbose) std::cout << "levelroot:\n" << global_lroot->to_string() <<"\n";
                     if(n->attribute < global_lroot->ptr_node->attribute){
                         n->attribute = global_lroot->ptr_node->attribute;
                         n->global_parent = global_lroot->ptr_node->global_idx;
