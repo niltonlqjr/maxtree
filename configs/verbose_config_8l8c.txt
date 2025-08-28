@@ -14,11 +14,11 @@ server = 10.1.1.2
 threads=  1
 
 # grid lines (integer value)
-glines=4
+glines=8
 # grid columns(integer value)
-gcolumns=5
+gcolumns=8
 
 #atribute value to filter
 lambda=15
 
-output = saidas/output_4L5C
+output = saidas/output_8L8C

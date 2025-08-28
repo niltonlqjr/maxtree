@@ -736,6 +736,34 @@ void boundary_tree::update_tree(boundary_tree *merged){
     if(verbose) std::cout << "\n";
 }
 
+
+/* void boundary_tree::update_tree(boundary_tree *merged){
+    auto t = merged->boundary_tree_lroot;
+    auto tmp_updated = std::unordered_map<uint64_t, boundary_node*>();
+    for(auto node: *t){
+        tmp_updated.emplace(node.first, new boundary_node(*node.second));
+    }
+    for(auto node: tmp_updated){
+        // the node doesn't change its levelroot
+        if(node.second->border_lr == NO_BORDER_LEVELROOT){
+            // if node is in this boundary tree just update this attribute
+            this->boundary_tree_lroot->at(node.first)->ptr_node->attribute = node.second->ptr_node->attribute;
+        }else{// here node has a border levelroot so it need to be updated
+            if (this->boundary_tree_lroot->find(node.first) != this->boundary_tree_lroot->end()){
+                //the node is in this tree, so it need to be updated
+                auto merged_node = tmp_updated.at(node.second->border_lr);
+                auto this_node = this->get_border_node(node.first);
+                this_node->border_lr = merged_node->ptr_node->global_idx;
+                if(merged_node->ptr_node->gval == this_node->ptr_node->gval){
+                    //if the merged node and this node has the same gval, so they are on the same component
+                    //then we need to copy the attributes
+                    this_node->ptr_node->attribute = merged_node->ptr_node->attribute;
+                }
+            }
+        }
+    }
+} */
+
 //ver essa funcao
 // ver essa funcao
 void boundary_tree::compress_path(){
