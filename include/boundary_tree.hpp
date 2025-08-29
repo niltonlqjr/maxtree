@@ -113,7 +113,9 @@ class boundary_tree{
         
         /* merge two branches started at nodes this_node(from this tree) and t_node (from t tree) */
         //void merge_branches(boundary_node *this_node, boundary_node *t_node);
-        void merge_branches(boundary_node *this_node, boundary_node *t_node, std::unordered_map<uint64_t, bool> &acc);//, std::vector<u_int64_t> &swap_nodes);
+        //void merge_branches(boundary_node *this_node, boundary_node *t_node, std::unordered_map<uint64_t, bool> &acc);//, std::vector<u_int64_t> &swap_nodes);
+        void merge_branches(boundary_node *x, boundary_node *y, std::unordered_map<uint64_t, bool> &accx, std::unordered_map<uint64_t, bool> &accy);
+        
         /* get index given a position */
 
 
@@ -142,10 +144,10 @@ class boundary_tree{
         std::tuple<uint32_t, uint32_t> lin_col(uint64_t index);
         
         /* convert all border_elements to string  */
-        std::string border_to_string(enum boundary_tree_field f=BOUNDARY_GLOBAL_IDX);
+        std::string border_to_string(enum boundary_tree_field f=BOUNDARY_GLOBAL_IDX, std::string endl=" ");
         
         /* print all nodes from the boundary_tree_lroot */
-        std::string lroot_to_string(enum boundary_tree_field f=BOUNDARY_BORDER_LR, std::string end_field=" ");
+        std::string lroot_to_string(enum boundary_tree_field f=BOUNDARY_BORDER_LR, std::string endl=" ");
         
         
         /* print boundary tree (borders and levelroots) */
