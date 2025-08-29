@@ -459,9 +459,9 @@ void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t
         noborder_w--;
     }
      
-    if(verbose){
+/*     if(verbose){
         std::cout << "filling: " << base_h << ", " << base_w << "..." << base_h+this->h << ", " << base_w+this->w <<"\n";
-    }
+    } */
      
     /*char aux_enum_c[][50] = {"VIPS_FORMAT_UCHAR", "VIPS_FORMAT_CHAR", "VIPS_FORMAT_USHORT", "VIPS_FORMAT_SHORT", 
          "VIPS_FORMAT_UINT", " VIPS_FORMAT_INT", " VIPS_FORMAT_FLOAT", " VIPS_FORMAT_COMPLEX", " VIPS_FORMAT_DOUBLE", 

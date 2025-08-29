@@ -313,14 +313,12 @@ bool boundary_tree::is_root(uint64_t n_idx){
 
 void boundary_tree::merge_branches(boundary_node *x, boundary_node *y, std::unordered_map<uint64_t, bool> &acc){
    
-    boundary_node *z;
+    boundary_node *z, *aux;
     Tattribute a, b;
     a = b = Tattr_NULL;
     uint64_t xidx, yidx;
     x = x->bound_tree_ptr->get_border_node(x->ptr_node->global_idx);
     y = y->bound_tree_ptr->get_border_node(y->ptr_node->global_idx);
-    this->add_lroot_tree(x,true);
-    this->add_lroot_tree(y,true);
     if(x->ptr_node->gval < y->ptr_node->gval){
         auto aux = x;
         x = y;
@@ -332,15 +330,28 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y, std::unor
         yidx = y->ptr_node->global_idx;
         if(z != NULL && z->ptr_node->gval >= y->ptr_node->gval){
  
-            this->add_lroot_tree(z,true);                
+            this->add_lroot_tree(z); 
+            aux=this->get_border_node(x->ptr_node->global_idx);
+            if(aux != NULL){
+                x = aux;
+            }else{
+                this->add_lroot_tree(x);
+                x=this->get_border_node(x->ptr_node->global_idx);
+            }    
             x->ptr_node->attribute += a;
             acc[xidx] = true;
             //x->visited = true;
             x = z;
         }else{
-            this->add_lroot_tree(y,true);
             if(acc.find(xidx) == acc.end() || !acc[xidx]){
             //if(!x->visited){
+                aux=this->get_border_node(x->ptr_node->global_idx);
+                if(aux != NULL){
+                    x = aux;
+                }else{
+                    this->add_lroot_tree(x);
+                    x=this->get_border_node(x->ptr_node->global_idx);
+                }
                 x->border_lr = yidx;
                 b = x->ptr_node->attribute + a;
                 a = x->ptr_node->attribute;
@@ -845,7 +856,7 @@ std::tuple<uint32_t, uint32_t> boundary_tree::lin_col(uint64_t index){
     return std::make_tuple(index / this->w, index % this->w);
 }
 
-std::string boundary_tree::lroot_to_string(enum boundary_tree_field f){
+std::string boundary_tree::lroot_to_string(enum boundary_tree_field f, std::string end_field){
     std::ostringstream ss;
     for(auto bn: *(this->boundary_tree_lroot)){
         if(f == BOUNDARY_PARENT){
@@ -863,8 +874,10 @@ std::string boundary_tree::lroot_to_string(enum boundary_tree_field f){
             ss << "(" << bn.first << ", " << bn.second->ptr_node->global_idx << ")";
         }else if(f==BOUNDARY_ATTR){
             ss << "(n:" << bn.first << ", a:" << bn.second->ptr_node->attribute << ")";
+        }else if(f==BOUNDARY_ALL_FIELDS){
+            ss << bn.second->to_string();
         }
-        ss << " ";
+        ss << end_field;
     }
     return ss.str();
 }

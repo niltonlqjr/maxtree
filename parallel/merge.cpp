@@ -159,10 +159,10 @@ int main(int argc, char *argv[]){
         for(j=0; j<gcolumns; j++){
             borders.at(LEFT_BORDER) = false;
             borders.at(RIGHT_BORDER) = false;
-            if(verbose){
+         /*    if(verbose){
                 std::cout << "===============inner loop=======================\n";
                 std::cout << x++ << "->" << i << "," << j <<"\n";
-            }
+            } */
             columns_inc = j < num_w_ceil ? w_trunc+1 : w_trunc;
             tile_columns = columns_inc;
             reg_left = noborder_rl;
@@ -177,11 +177,11 @@ int main(int argc, char *argv[]){
             }
             
             //std::cout << "filling: " << noborder_rt << "," << noborder_rl << "..." << noborder_rt + lines_inc << "," << noborder_rl + columns_inc <<"\n";
-            if(verbose){
+/*             if(verbose){
                 std::cout << "with borders:\n";
                 std::cout << reg_left << "," << reg_top << "," << tile_columns << "," << tile_lines << "\nno borders: \n";
                 std::cout << noborder_rl << "," << noborder_rt << "," << columns_inc << "," << lines_inc << "\n------------\n";
-            }
+            } */
             
             maxtree *new_tree = new maxtree(borders, tile_lines, tile_columns, i, j);
             vips::VRegion reg = in->region(reg_left, reg_top, tile_columns, tile_lines);
@@ -194,9 +194,9 @@ int main(int argc, char *argv[]){
             
             //std::cout << new_tree->to_string(GVAL,5);
             noborder_rl+=columns_inc;
-            if(verbose){
+/*             if(verbose){
                 std::cout << "\n\n\n=====================================================================================\n\n\n";
-            }
+            } */
         }
         noborder_rt+=lines_inc;
     }
@@ -209,10 +209,10 @@ int main(int argc, char *argv[]){
         for(int j=0;j<gcolumns; j++){
             t = tiles.at(i).at(j);
 
-            if (verbose) {
+/*             if (verbose) {
                 std::cout << "=> computing tile (stored in maxtree):" << t->grid_i << ", " << t->grid_j << " size:" << t->h << ", " <<  t->w << "\n";
                 std::cout << "i:" << i << " j:" << j << "\n";
-            }
+            } */
             //t->compute_sequential_iterative();
             t->compute_sequential_recursive();
         }
@@ -363,19 +363,13 @@ int main(int argc, char *argv[]){
 
                 if(verbose){
                     std::cout << "BASE BOUNDARY TREE:\n";
-                    std::cout << base_bt->lroot_to_string(BOUNDARY_BORDER_LR) <<"\n";
-                    std::cout << base_bt->lroot_to_string(BOUNDARY_ATTR) <<"\n";
-                    std::cout << base_bt->lroot_to_string(BOUNDARY_GVAL) <<"\n";
+                    std::cout << base_bt->lroot_to_string(BOUNDARY_ALL_FIELDS,"\n") <<"\n";
                     std::cout << "=================================================================\n";
                     std::cout << "TO_MERGE BOUNDARY TREE:\n";
-                    std::cout << to_merge->lroot_to_string(BOUNDARY_BORDER_LR) <<"\n";
-                    std::cout << to_merge->lroot_to_string(BOUNDARY_ATTR) <<"\n";
-                    std::cout << to_merge->lroot_to_string(BOUNDARY_GVAL) <<"\n";
+                    std::cout << to_merge->lroot_to_string(BOUNDARY_ALL_FIELDS,"\n") <<"\n";
                     std::cout << "=================================================================\n";
                     std::cout << "MERGED BOUNDARY TREE:\n";
-                    std::cout << merged->lroot_to_string(BOUNDARY_BORDER_LR) <<"\n";
-                    std::cout << merged->lroot_to_string(BOUNDARY_ATTR) <<"\n";
-                    std::cout << merged->lroot_to_string(BOUNDARY_GVAL) <<"\n";
+                    std::cout << merged->lroot_to_string(BOUNDARY_ALL_FIELDS,"\n") <<"\n";
                     std::cout << "_________________________________________________________________\n";
                 }
                     
