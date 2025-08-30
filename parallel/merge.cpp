@@ -359,10 +359,11 @@ int main(int argc, char *argv[]){
                 //}
 
 
+                //auto copy_merged = merged->get_copy(true);
                 merged->update_tree(merged);
                 merged->update_borders(merged);
                 merged->compress_path();
-                
+                //delete copy_merged;
                 aux_tile_table[i][j] = merged;
                 
                 /* std::cout << i << " " << j << "\n";*/
@@ -438,7 +439,7 @@ int main(int argc, char *argv[]){
             // to_merge->update_tree(merged);
             // to_merge->update_borders(merged);
             //to_merge->compress_path();
-
+            //auto copy_merged = merged->get_copy(true);
             merged->update_tree(merged);
             merged->update_borders(merged);
             merged->compress_path();

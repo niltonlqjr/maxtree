@@ -42,6 +42,7 @@ class boundary_node{
         boundary_node(maxtree_node *n, boundary_tree *bound_tree_ptr, 
                       int64_t bound_parent = NO_BOUNDARY_PARENT, 
                       int64_t border_lr = NO_BORDER_LEVELROOT);
+        boundary_node(boundary_node *b);           
         std::string to_string();
         void accumulate_attr(boundary_node *merged);
         void accumulate_attr(Tattribute value);
@@ -87,7 +88,7 @@ class boundary_tree{
         boundary_tree *merge(boundary_tree *t, enum merge_directions d, uint8_t connection = 4);
         
         /* return a copy of the of this boundary tree (copy boundary nodes but keeps maxtree_nodes references)*/
-        boundary_tree *get_copy();
+        boundary_tree *get_copy(bool deepcopy = false);
         
         /* get the levelroot of the bounday_node with global_idx */
         boundary_node *get_bnode_levelroot(int64_t global_idx);
@@ -112,9 +113,8 @@ class boundary_tree{
         bool is_root(uint64_t n_idx);
         
         /* merge two branches started at nodes this_node(from this tree) and t_node (from t tree) */
-        //void merge_branches(boundary_node *this_node, boundary_node *t_node);
-        //void merge_branches(boundary_node *this_node, boundary_node *t_node, std::unordered_map<uint64_t, bool> &acc);//, std::vector<u_int64_t> &swap_nodes);
         void merge_branches(boundary_node *x, boundary_node *y, std::unordered_map<uint64_t, bool> &accx, std::unordered_map<uint64_t, bool> &accy);
+        void merge_branches_gaz(boundary_node *x, boundary_node *y, std::unordered_map<uint64_t, bool> &acc);
         
         /* get index given a position */
 
