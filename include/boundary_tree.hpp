@@ -101,6 +101,11 @@ class boundary_tree{
         or on the top (when direction is vertical) */
         void combine_borders(boundary_tree *t1, boundary_tree *t2, enum merge_directions d);
         
+        /*Combine nodes of lroot trees that doesn't were used in merge. They must be inserted because they maybe has changes
+        that must be sent to the original nodes */
+        void combine_lroot_trees(boundary_tree *t1, boundary_tree *t2);
+
+
         /* add a levelroot to tree structure (boundary_tree_lroot) */
         void add_lroot_tree(maxtree_node *levelroot, std::vector<maxtree_node*> *maxtree_data, 
                             bool insert_ancestors=true);

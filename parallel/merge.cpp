@@ -489,11 +489,12 @@ int main(int argc, char *argv[]){
     //if(verbose){
         std::cout << "Final Boundary Tree:\n";
         std::cout << "-------------NODE INFO--------------\n";
-        std::cout << merged->lroot_to_string() << "\n";
-        std::cout << "------------ATTRIBUTES--------------\n";
-        std::cout << merged->lroot_to_string(BOUNDARY_ATTR) << "\n";
-        std::cout << "---------------GVAL-----------------\n";
-        std::cout << merged->lroot_to_string(BOUNDARY_GVAL) << "\n";
+        std::cout << merged->lroot_to_string(BOUNDARY_ALL_FIELDS, "\n") << "\n";
+        // std::cout << "------------ATTRIBUTES--------------\n";
+        // std::cout << merged->lroot_to_string(BOUNDARY_ATTR) << "\n";
+        // std::cout << "---------------GVAL-----------------\n";
+        // std::cout << merged->lroot_to_string(BOUNDARY_GVAL) << "\n";
+        std::cout << "======================================================\n";
     //}
     for(int i=0; i < glines; i++){
         for(int j=0;j<gcolumns; j++){
