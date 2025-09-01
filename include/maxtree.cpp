@@ -421,7 +421,7 @@ void maxtree::update_from_boundary_tree(boundary_tree *bt){
                 // } 
                 
                 if(global_lroot != NULL){
-                    /* if(verbose) */ std::cout << "node:" << bn->to_string() << "levelroot:" << global_lroot->to_string() <<"\n";
+                    if(verbose)  std::cout << "node:" << bn->to_string() << "levelroot:" << global_lroot->to_string() <<"\n";
                     if(n->attribute < global_lroot->ptr_node->attribute){
                         n->attribute = global_lroot->ptr_node->attribute;
                         n->global_parent = global_lroot->ptr_node->global_idx;

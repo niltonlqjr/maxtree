@@ -247,6 +247,14 @@ boundary_node *boundary_tree::get_bnode_levelroot(int64_t global_idx){
         return n;
     }
     boundary_node *lr = this->get_border_node(n->boundary_parent);
+    if(!lr){
+        std::cout << "par:" << n->boundary_parent << "par:" << n->boundary_parent << "\n";
+        lr = this->get_border_node(n->border_lr);
+        std::cout << this->lroot_to_string(BOUNDARY_ALL_FIELDS,"\n");
+        std::cout << "par:" << n->boundary_parent << "\n";
+        std::cout << "n:" <<n->to_string() << "\n";
+        return NULL;
+    }
     if(lr->ptr_node->gval != n->ptr_node->gval){
         return n;
     }
@@ -408,7 +416,7 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y,
     uint64_t xidx, yidx;
     x = x->bound_tree_ptr->get_border_node(x->ptr_node->global_idx);
     y = y->bound_tree_ptr->get_border_node(y->ptr_node->global_idx);
-    //if(verbose)
+    if(verbose)
         std::cout << "merge nodes: x=" << x->ptr_node->global_idx << " with " << y->ptr_node->global_idx << "\n";
     while(y != NULL && x != NULL){
         xidx = x->ptr_node->global_idx;
@@ -500,22 +508,25 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y,
 }
 
 void boundary_tree::combine_lroot_trees(boundary_tree *t1, boundary_tree *t2){
-    boundary_node *lr;
+    boundary_node *lr, *insert_node;
+
     for(auto node: *t1->boundary_tree_lroot){
         lr = this->get_bnode_levelroot(node.first);
+        insert_node = new boundary_node(*node.second);
         if(lr && lr->ptr_node->gval == node.second->ptr_node->gval){
-            node.second->boundary_parent = lr->boundary_parent;
-            node.second->ptr_node->attribute = lr->ptr_node->attribute;
+            insert_node->boundary_parent = lr->boundary_parent;
+            insert_node->ptr_node->attribute = lr->ptr_node->attribute;
         }
-        this->insert_bnode_lroot_tree(node.second);
+        this->insert_bnode_lroot_tree(insert_node);
     }
     for(auto node: *t2->boundary_tree_lroot){
         lr = this->get_bnode_levelroot(node.first);
+        insert_node = new boundary_node(*node.second);
         if(lr && lr->ptr_node->gval == node.second->ptr_node->gval){
-            node.second->boundary_parent = lr->boundary_parent;
-            node.second->ptr_node->attribute = lr->ptr_node->attribute;
+            insert_node->boundary_parent = lr->boundary_parent;
+            insert_node->ptr_node->attribute = lr->ptr_node->attribute;
         }
-        this->insert_bnode_lroot_tree(node.second);
+        this->insert_bnode_lroot_tree(insert_node);
     }
 }
 
