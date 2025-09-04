@@ -284,8 +284,8 @@ int main(int argc, char *argv[]){
             tiles_table.at(i).push_back(bt);
             if(verbose){
                 std::cout << i << ", " << j <<"\n";
-                std::cout << "borders:" << t->string_borders() << "\n";
-                std::cout << "boundary border nodes:\n" << bt->border_to_string(BOUNDARY_ALL_FIELDS,"--") << "\n";
+                // std::cout << "borders:" << t->string_borders() << "\n";
+                std::cout << "boundary border nodes:\n" << bt->border_to_string(BOUNDARY_ALL_FIELDS,"\n") << "\n";
                 std::cout << "boundary tree:\n" << bt->lroot_to_string(BOUNDARY_ALL_FIELDS,"\n") << "\n";
                 std::cout << "\n==========================================================================================================\n\n\n";
             }

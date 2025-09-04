@@ -243,7 +243,7 @@ boundary_node *boundary_tree::get_bnode_levelroot(int64_t global_idx){
     if(n == NULL){
         return NULL;
     }
-    if(verbose) std::cout << "node:\n" << n->to_string() << " line: "<< __LINE__ << "\n";
+    // if(verbose) std::cout << "node:\n" << n->to_string() << " line: "<< __LINE__ << "\n";
     if(n->boundary_parent == NO_BOUNDARY_PARENT){
         return n;
     }
@@ -986,7 +986,7 @@ void boundary_tree::compress_path(){
         std::cout << "===================\n";
     }
     for(int i=0; i<NamesBordersVector.size(); i++){
-        if(verbose) std::cout << NamesBordersVector.at(i) << "\n";
+        // if(verbose) std::cout << NamesBordersVector.at(i) << "\n";
         if(this->tile_borders->at(i)){
             std::vector<boundary_node *> *border = this->border_elements->at(i);
             for(auto e: *border){
@@ -997,10 +997,10 @@ void boundary_tree::compress_path(){
                 // if(verbose) std::cout << " invalid parent: " << e_parent->to_string() << "\n";
                 while(e_parent != NULL && !e_parent->in_lroot_tree){
                     e_parent=this->get_border_node(e_parent->boundary_parent);
-                    if(verbose) if(e_parent != NULL) std::cout << " invalid parent: " << e_parent->to_string() << "\n";
+                    // if(verbose) if(e_parent != NULL) std::cout << " invalid parent: " << e_parent->to_string() << "\n";
                 }
                 if(e_parent != NULL){
-                    if(verbose)std::cout << " parent: " << e_parent->to_string() << "\n";
+                    // if(verbose)std::cout << " parent: " << e_parent->to_string() << "\n";
                     
                     e->boundary_parent = e_parent->ptr_node->global_idx;
                     if(e == e_parent){
