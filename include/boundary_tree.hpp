@@ -125,8 +125,8 @@ class boundary_tree{
 
 
         /* update the borders of boundary tree tile */
-        void update_borders(boundary_tree *merged);
-
+        // void update_borders(boundary_tree *merged);
+        void update_borders();
         /* update the boundary tree post merge */
         void update_tree(boundary_tree *merged);
 
