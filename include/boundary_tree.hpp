@@ -72,7 +72,7 @@ class boundary_tree{
         
         /* check if the node is already on the boundary tree.
         if it is, returns false, otherwise, insert the node at boundary tree structure and return true*/
-        bool insert_bnode_lroot_tree(boundary_node *n, bool copy=false);
+        bool insert_bnode_lroot_tree(boundary_node *n, bool copy=true);
         
         /*remove node from tree, if it isn't at tree, just */
         bool remove_bnode_lroot_tree(int64_t global_idx);
@@ -112,7 +112,7 @@ class boundary_tree{
         
         /* add a levelroot to tree structure (boundary_tree_lroot) */
         void add_lroot_tree(boundary_node *levelroot, bool insert_ancestors = false,
-                            bool copy = false);
+                            bool copy = true);
 
         /* check if a node with n_idx is root of the tree */
         bool is_root(uint64_t n_idx);
