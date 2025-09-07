@@ -623,7 +623,7 @@ void boundary_tree::combine_lroot_trees(boundary_tree *t1, boundary_tree *t2){
         n = this->get_border_node(node.first);
         insert_node = new boundary_node(node.second);
         insert_node->bound_tree_ptr = this;
-        std::cout << "insert:" << insert_node->to_string() << "<--------------------------------------------------------------------------\n";
+        //std::cout << "insert:" << insert_node->to_string() << "<--------------------------------------------------------------------------\n";
         // if(n && n->ptr_node->gval == node.second->ptr_node->gval){
         //     insert_node->boundary_parent = n->boundary_parent;
         //     insert_node->ptr_node->attribute = n->ptr_node->attribute;
@@ -635,7 +635,7 @@ void boundary_tree::combine_lroot_trees(boundary_tree *t1, boundary_tree *t2){
         n = this->get_border_node(node.first);
         insert_node = new boundary_node(node.second);
         insert_node->bound_tree_ptr = this;
-        std::cout << "insert:" << insert_node->to_string() << "<--------------------------------------------------------------------------\n";
+        //std::cout << "insert:" << insert_node->to_string() << "<--------------------------------------------------------------------------\n";
         // if(n && n->ptr_node->gval == node.second->ptr_node->gval){
         //     insert_node->boundary_parent = n->boundary_parent;
         //     insert_node->ptr_node->attribute = n->ptr_node->attribute;
@@ -893,9 +893,11 @@ boundary_tree *boundary_tree::merge(boundary_tree *t, enum merge_directions d, u
     }
 
  */
-    std::cout << "this: " << this << " " << this->lroot_to_string() << "\n";
-    std::cout << "merge_tree: " << merge_tree << " " << merge_tree->lroot_to_string() << "\n";
-    std::cout << "ret: " << ret_tree << " " << ret_tree->lroot_to_string() << "\n";
+    if(verbose){
+        std::cout << "this: " << this << " " << this->lroot_to_string() << "\n";
+        std::cout << "merge_tree: " << merge_tree << " " << merge_tree->lroot_to_string() << "\n";
+        std::cout << "ret: " << ret_tree << " " << ret_tree->lroot_to_string() << "\n";
+    }
     for(uint32_t i=0; i<v_this->size(); i++){
         // boundary_node *x = this->get_bnode_levelroot(v_this->at(i)->boundary_parent);
         boundary_node *x = this->get_border_node(v_this->at(i)->boundary_parent);
