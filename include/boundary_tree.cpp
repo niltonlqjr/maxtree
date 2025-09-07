@@ -124,7 +124,7 @@ bool boundary_tree::insert_bnode_lroot_tree(boundary_node *n, bool copy){
         return false;
     }
     if(copy){
-        n = new boundary_node(*n);
+        n = new boundary_node(n);
         n->bound_tree_ptr = this;
     }
     this->boundary_tree_lroot->emplace(n->ptr_node->global_idx, n);
@@ -527,13 +527,13 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y,
                 }
                 // if(y->ptr_node->global_idx != x->ptr_node->global_idx)
                 //     y->border_lr = x->ptr_node->global_idx;
-            }else if(addy){
+            }else if(addx){
                 thisx->ptr_node->attribute += b;
                 thisy->ptr_node->attribute = thisx->ptr_node->attribute;
-                
-                if(y->ptr_node->global_idx != x->ptr_node->global_idx)
+                if(y->ptr_node->global_idx != x->ptr_node->global_idx){
                     thisy->border_lr = xidx;
-            }else if(addx){
+                }
+            }else if(addy){
                 thisy->ptr_node->attribute += b;
                 thisx->ptr_node->attribute = thisy->ptr_node->attribute;
                 b = thisy->ptr_node->attribute;
@@ -542,41 +542,45 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y,
             }
             x=xpar;
             y=ypar;
-        }else if(x->ptr_node->gval > y->ptr_node->gval){
+        }else if(x->ptr_node->gval > y->ptr_node->gval){ // >>>>>>>>>>>>>>>>>>>>> need to test this case <<<<<<<<<<<<<<<<<<<<<<<<<
             if(verbose){
                 std::cout << "  case 2\n";
-                std::cout << "  x " << x->to_string() << " > y "<< y->to_string() <<" has the same gval\n";
+                std::cout << "  x " << x->to_string() << " > y "<< y->to_string() <<" gval\n";
             }
-            xpar = x->bound_tree_ptr->get_bnode_levelroot(x->boundary_parent);
+            // xpar = x->bound_tree_ptr->get_bnode_levelroot(x->boundary_parent);
             thisx = this->get_border_node(xidx);
             a = x->ptr_node->attribute;
-            if(xpar && xpar->ptr_node->gval < y->ptr_node->gval){
+            if((xpar && xpar->ptr_node->gval < y->ptr_node->gval) || !xpar){
                 thisx->border_lr = y->ptr_node->global_idx;
                 thisy = this->get_border_node(yidx);
                 if(accx.find(xidx) == accx.end() || !accx[xidx]){
-                    thisy->ptr_node->attribute += thisx->ptr_node->attribute;
-                    b=thisy->ptr_node->attribute;
+                    thisy->ptr_node->attribute += a;
+                    // b=thisy->ptr_node->attribute;
                     accx[xidx] = true;
                 }
             }
             x=xpar;    
-        }else if(x->ptr_node->gval < y->ptr_node->gval){
+        }else if(x->ptr_node->gval < y->ptr_node->gval){ // >>>>>>>>>>>>>>>>>>>>> need to test this case <<<<<<<<<<<<<<<<<<<<<<<<<
             if(verbose){
                 std::cout << "  case 3\n";
-                std::cout << "  x " << x->to_string() << " < y "<< y->to_string() <<" has the same gval\n";
+                std::cout << "  x " << x->to_string() << " < y "<< y->to_string() <<" gval\n";
             }
-            ypar = y->bound_tree_ptr->get_bnode_levelroot(y->boundary_parent);
+            // ypar = y->bound_tree_ptr->get_bnode_levelroot(y->boundary_parent);
             thisy = this->get_border_node(yidx);
-            a = x->ptr_node->attribute;
-            if(ypar && ypar->ptr_node->gval < x->ptr_node->gval){
+            a = y->ptr_node->attribute;
+            if((ypar && ypar->ptr_node->gval < x->ptr_node->gval)){
                 thisy->border_lr = x->ptr_node->global_idx;
                 thisx = this->get_border_node(xidx);
                 if(accy.find(yidx) == accy.end() || !accy[yidx]){
-                    thisx->ptr_node->attribute += thisy->ptr_node->attribute;
-                    b=thisx->ptr_node->attribute;
+                    thisx->ptr_node->attribute += a;
+                    // b=thisx->ptr_node->attribute;
                     accy[yidx] = true;
                 }
+            }else if(!ypar){
+
             }
+            
+                
             y=ypar;    
         }
         
@@ -588,10 +592,10 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y,
             this->add_lroot_tree(y,false,true);
             thisy = this->get_border_node(yidx);
         }
-        // if(accy.find(yidx) == accy.end() || !accy[yidx]){
+        if(accy.find(yidx) == accy.end() || !accy[yidx]){
             thisy->ptr_node->attribute += a;
-            // accy[yidx] = true;
-        // }
+            accy[yidx] = true;
+        }
         y=y->bound_tree_ptr->get_bnode_levelroot(y->boundary_parent);
     }
     while(x!=NULL){
@@ -601,10 +605,10 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y,
             this->add_lroot_tree(x,true,true);
             thisx = this->get_border_node(xidx);
         }
-        // if(accx.find(xidx) == accx.end() || !accx[xidx]){
+        if(accx.find(xidx) == accx.end() || !accx[xidx]){
             thisx->ptr_node->attribute += a;
-            // accx[xidx] = true;
-        // }
+            accx[xidx] = true;
+        }
         
         x=x->bound_tree_ptr->get_bnode_levelroot(x->boundary_parent);
     }
