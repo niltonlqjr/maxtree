@@ -473,12 +473,11 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y,
     a = b = Tattr_NULL;
     uint64_t xidx, yidx;
     if(verbose){
-        std::cout << "x tree:" << x->bound_tree_ptr << " " << x->bound_tree_ptr->lroot_to_string() << "\n";
-        std::cout << "y tree:" << y->bound_tree_ptr << " " << y->bound_tree_ptr->lroot_to_string() << "\n";
+        std::cout << "x tree:" << x->bound_tree_ptr << " " << x->bound_tree_ptr->lroot_to_string(BOUNDARY_ALL_FIELDS, "\n") << "\n";
+        std::cout << "y tree:" << y->bound_tree_ptr << " " << y->bound_tree_ptr->lroot_to_string(BOUNDARY_ALL_FIELDS, "\n") << "\n";
     }
     x = x->bound_tree_ptr->get_bnode_levelroot(x->ptr_node->global_idx);
     y = y->bound_tree_ptr->get_bnode_levelroot(y->ptr_node->global_idx);
-    
     if(verbose){
         std::cout << "merge nodes: x=" << x->ptr_node->global_idx << " with " << y->ptr_node->global_idx << "\n";
     }    
@@ -525,8 +524,6 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y,
                         thisy->border_lr = xidx;
                     }
                 }
-                // if(y->ptr_node->global_idx != x->ptr_node->global_idx)
-                //     y->border_lr = x->ptr_node->global_idx;
             }else if(addx){
                 thisx->ptr_node->attribute += b;
                 thisy->ptr_node->attribute = thisx->ptr_node->attribute;
@@ -927,7 +924,7 @@ boundary_tree *boundary_tree::merge(boundary_tree *t, enum merge_directions d, u
             std::cout << "merge_tree (attributes):" << ret_tree->lroot_to_string(BOUNDARY_ATTR) << "\n";
             std::cout << "____________________________________________________________\n";
         }   */
-        
+        if(x->bound_tree_ptr->grid_i == 4 && x->bound_tree_ptr->grid_j == 0 && y->bound_tree_ptr->grid_i == 6 && y->bound_tree_ptr->grid_j == 0) exit(0);
         ret_tree->merge_branches(x, y, accumulatedx, accumulatedy);
         
         // ret_tree->merge_branches_gaz(x, y, accumulatedx);
