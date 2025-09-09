@@ -473,12 +473,12 @@ int main(int argc, char *argv[]){
             ntrees--;
 
             if(verbose){
-                std::cout << "Merge tiles: (" << base_bt->grid_i << ", " << base_bt->grid_j << ") <===> "
+                std::cout << ">> Merge tiles: (" << base_bt->grid_i << ", " << base_bt->grid_j << ") <===> "
                           << "(" << to_merge->grid_i << ", " << to_merge->grid_j << ")\n";
                 std::cout << "ntrees:" << ntrees << " glines:"  << glines << " gcol:" <<  gcolumns <<"\n";
                 std::cout << "base new tree:" << base_bt->lroot_to_string() << "\n";
                 std::cout << "to merge new tree:" << to_merge->lroot_to_string() << "\n";
-                std::cout << "================\n";
+                std::cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n";
             }
         }
         grid_lin_inc*=2;
