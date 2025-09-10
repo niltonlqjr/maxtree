@@ -472,10 +472,11 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y,
     Tattribute a, b, carryx, carryy;
     a = b = carryx = carryy = Tattr_NULL;
     uint64_t xidx, yidx;
-    if(verbose){
+/*     if(verbose){
         std::cout << "x tree:" << x->bound_tree_ptr << "\n" << x->bound_tree_ptr->lroot_to_string(BOUNDARY_ALL_FIELDS, "\n") << "\n";
         std::cout << "y tree:" << y->bound_tree_ptr << "\n" << y->bound_tree_ptr->lroot_to_string(BOUNDARY_ALL_FIELDS, "\n") << "\n";
-    }
+    } */
+
     x = x->bound_tree_ptr->get_bnode_levelroot(x->ptr_node->global_idx);
     y = y->bound_tree_ptr->get_bnode_levelroot(y->ptr_node->global_idx);
     if(verbose){
@@ -896,6 +897,10 @@ boundary_tree *boundary_tree::merge(boundary_tree *t, enum merge_directions d, u
         std::cout << "ret: " << ret_tree << " " << ret_tree->lroot_to_string() << "\n";
     }
     for(uint32_t i=0; i<v_this->size(); i++){
+        if(verbose){
+            std::cout << "border node x:" << v_this->at(i)->ptr_node->global_idx << 
+                         " border node y:" << v_t->at(i)->ptr_node->global_idx << "\n";
+        }
         // boundary_node *x = this->get_bnode_levelroot(v_this->at(i)->boundary_parent);
         boundary_node *x = this->get_border_node(v_this->at(i)->boundary_parent);
         if(x == NULL){
