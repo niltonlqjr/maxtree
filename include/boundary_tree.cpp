@@ -560,13 +560,13 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y,
             carryx = x->ptr_node->attribute;
             thisx->ptr_node->attribute += carryy;
             xpar=x->bound_tree_ptr->get_bnode_levelroot(x->boundary_parent);
-            if((xpar && xpar->ptr_node->gval < y->ptr_node->gval)){
-                thisx->border_lr = y->ptr_node->global_idx;
-            }else if(!xpar){
-                thisy->border_lr = x->ptr_node->global_idx;
+            if(xpar){ 
+                if(xpar->ptr_node->gval < y->ptr_node->gval){
+                    thisx->border_lr = y->ptr_node->global_idx; 
+                }
             }
             xold=x;
-            x=xpar;    
+            x=xpar;
         }else if(x->ptr_node->gval < y->ptr_node->gval){ // >>>>>>>>>>>>>>>>>>>>> need to test this case <<<<<<<<<<<<<<<<<<<<<<<<<
             if(verbose){
                 std::cout << "  case 3\n";
@@ -580,8 +580,6 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y,
             ypar=y->bound_tree_ptr->get_bnode_levelroot(y->boundary_parent);
             if((ypar && ypar->ptr_node->gval < x->ptr_node->gval)){
                 thisy->border_lr = x->ptr_node->global_idx;
-            }else if(!ypar){
-                thisx->border_lr = y->ptr_node->global_idx;
             }
             yold=y;
             y=ypar;    
@@ -897,8 +895,8 @@ boundary_tree *boundary_tree::merge(boundary_tree *t, enum merge_directions d, u
 
  */
     if(verbose){
-        std::cout << "this: " << this << " " << this->lroot_to_string() << "\n";
-        std::cout << "merge_tree: " << merge_tree << " " << merge_tree->lroot_to_string() << "\n";
+        std::cout << "this: " << this << " \n" << this->lroot_to_string(BOUNDARY_ALL_FIELDS,"\n") << "\n";
+        std::cout << "merge_tree: " << merge_tree << " " << merge_tree->lroot_to_string(BOUNDARY_ALL_FIELDS,"\n") << "\n";
         std::cout << "ret: " << ret_tree << " " << ret_tree->lroot_to_string() << "\n";
     }
     for(uint32_t i=0; i<v_this->size(); i++){
