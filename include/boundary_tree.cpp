@@ -467,7 +467,7 @@ void boundary_tree::merge_branches_gaz(boundary_node *x, boundary_node *y, std::
 void boundary_tree::merge_branches(boundary_node *x, boundary_node *y, 
                                    std::unordered_map<uint64_t, bool> &accx, 
                                    std::unordered_map<uint64_t, bool> &accy){
-    boundary_node *z, *thisx, *thisy, *xpar, *ypar;
+    boundary_node *z, *thisx, *thisy, *xpar, *ypar, *xold, *yold;
     bool addx, addy;
     Tattribute a, b, carryx, carryy;
     a = b = carryx = carryy = Tattr_NULL;
@@ -545,6 +545,8 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y,
             }else{
                 carryx = carryy = Tattr_NULL;
             }
+            xold=x;
+            yold=y;
             x=xpar;
             y=ypar;
         }else if(x->ptr_node->gval > y->ptr_node->gval){ // >>>>>>>>>>>>>>>>>>>>> need to test this case <<<<<<<<<<<<<<<<<<<<<<<<<
@@ -554,31 +556,34 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y,
             }
             
             thisx = this->get_border_node(xidx);
+            thisy = this->get_border_node(yidx);
             carryx = x->ptr_node->attribute;
             thisx->ptr_node->attribute += carryy;
             xpar=x->bound_tree_ptr->get_bnode_levelroot(x->boundary_parent);
             if((xpar && xpar->ptr_node->gval < y->ptr_node->gval)){
                 thisx->border_lr = y->ptr_node->global_idx;
-                thisy = this->get_border_node(yidx);
             }else if(!xpar){
-                x->border_lr = y->ptr_node->global_idx;
+                thisy->border_lr = x->ptr_node->global_idx;
             }
+            xold=x;
             x=xpar;    
         }else if(x->ptr_node->gval < y->ptr_node->gval){ // >>>>>>>>>>>>>>>>>>>>> need to test this case <<<<<<<<<<<<<<<<<<<<<<<<<
             if(verbose){
                 std::cout << "  case 3\n";
                 std::cout << "  x " << x->to_string() << " < y "<< y->to_string() <<" gval\n";
             }
+            xold->border_lr = y->ptr_node->global_idx;
             thisy = this->get_border_node(yidx);
+            thisx = this->get_border_node(xidx);
             carryy = thisy->ptr_node->attribute;
             thisy->ptr_node->attribute += carryx;
             ypar=y->bound_tree_ptr->get_bnode_levelroot(y->boundary_parent);
             if((ypar && ypar->ptr_node->gval < x->ptr_node->gval)){
                 thisy->border_lr = x->ptr_node->global_idx;
-                thisx = this->get_border_node(xidx);
             }else if(!ypar){
-                y->border_lr = x->ptr_node->global_idx;
+                thisx->border_lr = y->ptr_node->global_idx;
             }
+            yold=y;
             y=ypar;    
         }
         
