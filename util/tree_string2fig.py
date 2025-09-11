@@ -1,8 +1,7 @@
-import skimage as sk
-import numpy as np
 import argparse
 import networkx as nx
 import matplotlib.pyplot as plt
+
  
 def get_field(line, name, tp, sep=','):
     tfield = line.split(name)[1]
@@ -42,7 +41,10 @@ for u in g.nodes(data = True):
     parent = u[1]["par"]
     if(parent != -1):
         g.add_edge(idx,parent)
-    
-nx.draw(g, with_labels=True)
+
+
+pdot=nx.drawing.nx_pydot.pydot_layout(g, prog='dot')
+
+nx.draw(g, with_labels=True, pos=pdot, node_size=250, font_size=8, node_color="#8a8a8a")
 out_name = args.output
 plt.savefig(out_name)

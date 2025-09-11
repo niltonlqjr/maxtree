@@ -420,15 +420,18 @@ int main(int argc, char *argv[]){
             boundary_tree *to_merge = aux_tile_table[i+grid_lin_inc/2][0];
             boundary_tree *del_bt = base_bt;
             
-            if(verbose) std::cout << "base before merge: "<< i << " " << 0 <<"\n";
-            //base_bt->print_tree();
-            if(verbose) std::cout << "to merge before merge: "<< i+grid_lin_inc/2 << " " << 0 <<"\n";
-            //to_merge->print_tree();
-            
+            if(verbose){
+                std::cout << "BASE BOUNDARY TREE:" << base_bt->grid_i << ", " << base_bt->grid_j <<  "\n";
+                std::cout << base_bt->lroot_to_string(BOUNDARY_ALL_FIELDS,"\n") <<"\n";
+                std::cout << "=================================================================\n";
+                std::cout << "TO_MERGE BOUNDARY TREE:" << to_merge->grid_i << ", " << to_merge->grid_j <<  "\n";
+                std::cout << to_merge->lroot_to_string(BOUNDARY_ALL_FIELDS,"\n") <<"\n";
+                std::cout << "=================================================================\n";
+            }
             merged=base_bt->merge(to_merge,MERGE_HORIZONTAL,pixel_connection);
             if(verbose){
                 std::cout << "---------------------before update and compress---------------------\n";
-                std::cout << "merged boundary tree:\n";
+                std::cout << "merged boundary tree:" << merged->grid_i << ", " << merged->grid_j <<  "\n";
                 std::cout << merged->lroot_to_string(BOUNDARY_ALL_FIELDS,"\n") <<"\n";
                 std::cout << "_________________________________________________________________\n";
             }
@@ -455,13 +458,8 @@ int main(int argc, char *argv[]){
 
 
             if(verbose){
-                std::cout << "BASE BOUNDARY TREE:\n";
-                std::cout << base_bt->lroot_to_string(BOUNDARY_ALL_FIELDS,"\n") <<"\n";
-                std::cout << "=================================================================\n";
-                std::cout << "TO_MERGE BOUNDARY TREE:\n";
-                std::cout << to_merge->lroot_to_string(BOUNDARY_ALL_FIELDS,"\n") <<"\n";
-                std::cout << "=================================================================\n";
-                std::cout << "MERGED BOUNDARY TREE:\n";
+
+                std::cout << "MERGED BOUNDARY TREE:" << merged->grid_i << ", " << merged->grid_j <<  "\n";
                 std::cout << merged->lroot_to_string(BOUNDARY_ALL_FIELDS,"\n") <<"\n";
                 std::cout << "_________________________________________________________________\n";
             }

@@ -896,8 +896,8 @@ boundary_tree *boundary_tree::merge(boundary_tree *t, enum merge_directions d, u
  */
     if(verbose){
         std::cout << "this: " << this << " \n" << this->lroot_to_string(BOUNDARY_ALL_FIELDS,"\n") << "\n";
-        std::cout << "merge_tree: " << merge_tree << " " << merge_tree->lroot_to_string(BOUNDARY_ALL_FIELDS,"\n") << "\n";
-        std::cout << "ret: " << ret_tree << " " << ret_tree->lroot_to_string() << "\n";
+        std::cout << "merge_tree: " << merge_tree << " \n" << merge_tree->lroot_to_string(BOUNDARY_ALL_FIELDS,"\n") << "\n";
+        std::cout << "ret: " << ret_tree << " \n" << ret_tree->lroot_to_string() << "\n";
     }
     for(uint32_t i=0; i<v_this->size(); i++){
         if(verbose){
