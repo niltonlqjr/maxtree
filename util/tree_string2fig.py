@@ -40,7 +40,7 @@ for u in g.nodes(data = True):
     idx = u[0]
     parent = u[1]["par"]
     if(parent != -1):
-        g.add_edge(idx,parent)
+        g.add_edge(parent,idx)
 
 
 pdot=nx.drawing.nx_pydot.pydot_layout(g, prog='dot')

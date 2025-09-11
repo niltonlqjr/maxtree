@@ -313,8 +313,8 @@ boundary_node *boundary_tree::get_bnode_levelroot(int64_t global_idx){
     }
     //std::cout << "     " << n->to_string() << this->grid_i << " " << this->grid_j <<"\n";
     lr=this->get_border_node(n->boundary_parent);
-    // if(lr)
-    //     std::cout << "     " << lr->to_string() << "\n";
+    if(lr)
+        std::cout << "     " << lr->to_string() << "\n";
     // else
     //     std::cout << "     NULL\n";
         
@@ -462,6 +462,28 @@ void boundary_tree::merge_branches_gaz(boundary_node *x, boundary_node *y, std::
     }
 }
 
+bool boundary_tree::search_cicle(int64_t s){
+    std::vector<int64_t> visited;
+
+    auto n = this->get_border_node(s);
+    bool cicle=false;
+    while(n != NULL && !cicle){
+        if(std::find(visited.begin(), visited.end(), n->ptr_node->global_idx)!=visited.end()){
+            cicle = true;
+            std::cout << "cicle:\n   ";
+            for(auto x: visited){
+                std::cout << x << " ";
+            }
+            std::cout << n->ptr_node->global_idx << "\n";
+            
+        }else{
+            visited.push_back(n->ptr_node->global_idx);
+        }
+        n = this->get_bnode_levelroot(n->border_lr);
+    }
+    return cicle;
+
+}
 
 
 void boundary_tree::merge_branches(boundary_node *x, boundary_node *y, 
@@ -494,7 +516,10 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y,
         thisy = this->get_border_node(yidx);
         addx = addy = false;
         b = Tattr_NULL;
-        
+        if(this->search_cicle(xidx) || this->search_cicle(yidx)){
+            std::cout << "end cicle\n";
+            exit(0);
+        }
         if(x->ptr_node->gval == y->ptr_node->gval){
             if(verbose){
                 std::cout << "  case 1\n";
@@ -590,8 +615,7 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y,
             } */
             yold=y;
             y=ypar;    
-        }
-        
+        }        
     }
     while(y!=NULL){
         yidx = y->ptr_node->global_idx;

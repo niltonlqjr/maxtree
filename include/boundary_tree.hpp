@@ -158,6 +158,9 @@ class boundary_tree{
         /* print boundary tree (borders and levelroots) */
         void print_tree(enum boundary_tree_field lrootf= BOUNDARY_BORDER_LR, enum boundary_tree_field borderf=BOUNDARY_ALL_FIELDS);
 
+        /* functions to help find bugs */
+        bool search_cicle(int64_t s);
+
 };
 
 
