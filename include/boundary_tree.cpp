@@ -520,7 +520,9 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y,
             std::cout << "end cicle\n";
             exit(0);
         }
-        if(x->ptr_node->gval == y->ptr_node->gval){// tentar fazer uma fusao entre os nos x e y na árvore (ambos idx apontarem para o mesmo no)
+        // TODO:
+        // tentar fazer uma fusao entre os nos x e y na árvore (ambos idx apontarem para o mesmo noh)
+        if(x->ptr_node->gval == y->ptr_node->gval){
             if(verbose){
                 std::cout << "  case 1\n";
                 std::cout << "  x " << x->to_string() << " and y "<< y->to_string() <<" has the same gval\n";
