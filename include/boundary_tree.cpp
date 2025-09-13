@@ -585,8 +585,6 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y,
                 thisx->border_lr = y->ptr_node->global_idx;
             }
             thisyold->border_lr = x->ptr_node->global_idx;
-            
-             
             xold=x;
             x=xpar;
         }else if(x->ptr_node->gval < y->ptr_node->gval){ // >>>>>>>>>>>>>>>>>>>>> need to test this case <<<<<<<<<<<<<<<<<<<<<<<<<
@@ -601,8 +599,7 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y,
             if(!ypar || ypar->ptr_node->gval < x->ptr_node->gval) { 
                 thisy->border_lr = x->ptr_node->global_idx;
             } 
-            thisxold->border_lr = y->ptr_node->global_idx;
-            
+            thisxold->border_lr = y->ptr_node->global_idx;            
             yold=y;
             y=ypar;    
         }        
