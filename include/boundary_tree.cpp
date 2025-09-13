@@ -518,6 +518,7 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y,
         b = Tattr_NULL;
         if(this->search_cicle(xidx) || this->search_cicle(yidx)){
             std::cout << "end cicle\n";
+            std::cerr << "CICLO ENCONTRADO\n\n";
             exit(0);
         }
         // TODO:
@@ -550,6 +551,7 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y,
                 thisx->ptr_node->attribute = b;
                 thisy->ptr_node->attribute = b;
                 //carryx = carryy= Tattr_NULL;
+                std::cout << "antes - x: "<< thisx->to_string() << " y: " << thisy->to_string() << "\n";
                 if(y->ptr_node->global_idx != x->ptr_node->global_idx){
                     if(x->boundary_parent == NO_BOUNDARY_PARENT){
                         thisx->border_lr = yidx;
@@ -557,11 +559,17 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y,
                         thisy->border_lr = xidx;
                     }
                 }
+                std::cout << "depois - x: "<< thisx->to_string() << " y: " << thisy->to_string() << "\n";
             }else if(addx){
                 thisx->ptr_node->attribute += b;
                 carryx = Tattr_NULL;
                 thisy->ptr_node->attribute = thisx->ptr_node->attribute;
-                if(y->ptr_node->global_idx != x->ptr_node->global_idx){
+                /* if(y->ptr_node->global_idx != x->ptr_node->global_idx){
+                    thisy->border_lr = xidx;
+                } */
+                if(x->boundary_parent == NO_BOUNDARY_PARENT){
+                    thisx->border_lr = yidx;
+                }else{
                     thisy->border_lr = xidx;
                 }
             }else if(addy){
@@ -569,8 +577,13 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y,
                 carryy = Tattr_NULL;
                 thisx->ptr_node->attribute = thisy->ptr_node->attribute;
                 b = thisy->ptr_node->attribute;
-                if(y->ptr_node->global_idx != x->ptr_node->global_idx)
+                /* if(y->ptr_node->global_idx != x->ptr_node->global_idx)
+                    thisx->border_lr = yidx; */
+                if(x->boundary_parent == NO_BOUNDARY_PARENT){
                     thisx->border_lr = yidx;
+                }else{
+                    thisy->border_lr = xidx;
+                }
             }else{
                 carryx = carryy = Tattr_NULL;
             }
@@ -590,12 +603,10 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y,
             xpar=x->bound_tree_ptr->get_bnode_levelroot(x->boundary_parent);
             if(!xpar || xpar->ptr_node->gval < y->ptr_node->gval){ 
                 thisx->border_lr = y->ptr_node->global_idx;
+                thisyold->border_lr = x->ptr_node->global_idx;
+            }else{
                 thisyold->border_lr = y->ptr_node->global_idx;
-            }/* else{
-                if(xpar->ptr_node->gval < y->ptr_node->gval){
-                    thisx->border_lr = y->ptr_node->global_idx; 
-                }
-            } */
+            } 
             xold=x;
             x=xpar;
         }else if(x->ptr_node->gval < y->ptr_node->gval){ // >>>>>>>>>>>>>>>>>>>>> need to test this case <<<<<<<<<<<<<<<<<<<<<<<<<
@@ -607,14 +618,12 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y,
             thisy->ptr_node->attribute += carryx;
             thisxold = this->get_border_node(xold->ptr_node->global_idx);
             ypar=y->bound_tree_ptr->get_bnode_levelroot(y->boundary_parent);
-            if(!ypar || ypar->ptr_node->gval < x->ptr_node->gval) {
+            if(!ypar || ypar->ptr_node->gval < x->ptr_node->gval) { 
                 thisy->border_lr = x->ptr_node->global_idx;
                 thisxold->border_lr = y->ptr_node->global_idx;
-            }/* else{
-                if(ypar->ptr_node->gval < x->ptr_node->gval){
-                    thisy->border_lr = x->ptr_node->global_idx;
-                }
-            } */
+            } else{
+                thisxold->border_lr = x->ptr_node->global_idx;
+            }
             yold=y;
             y=ypar;    
         }        
