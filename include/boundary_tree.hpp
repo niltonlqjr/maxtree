@@ -90,6 +90,8 @@ class boundary_tree{
         /* return a copy of the of this boundary tree (copy boundary nodes but keeps maxtree_nodes references)*/
         boundary_tree *get_copy(bool deepcopy = false);
         
+        
+
         /* get the levelroot of the bounday_node with global_idx */
         boundary_node *get_bnode_levelroot(int64_t global_idx);
 
