@@ -584,7 +584,7 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y,
                 accx[xidx] = true;
             }
             
-            thisx->ptr_node->attribute += yold->ptr_node->attribute ;
+            thisx->ptr_node->attribute += carryy;//yold->ptr_node->attribute ;
             
             xpar=x->bound_tree_ptr->get_bnode_levelroot(x->boundary_parent);
             if(!xpar || xpar->ptr_node->gval < y->ptr_node->gval){ 
@@ -600,10 +600,10 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y,
             }
             thisxold = this->get_border_node(xold->ptr_node->global_idx);
             if(accy.find(yidx) == accy.end() || !accy[yidx]){
-                carryy = thisy->ptr_node->attribute;
+                carryy = y->ptr_node->attribute;
                 accy[yidx] = true;
             }
-            thisy->ptr_node->attribute += xold->ptr_node->attribute;
+            thisy->ptr_node->attribute += carryx;//xold->ptr_node->attribute;
            
         
             ypar=y->bound_tree_ptr->get_bnode_levelroot(y->boundary_parent);
