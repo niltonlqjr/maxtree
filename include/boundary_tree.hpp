@@ -13,6 +13,7 @@
 
 #define NO_BORDER_LEVELROOT -1
 #define NO_BOUNDARY_PARENT -1
+#define NULL_IDX -1
 
 #define Tboundary_tree_lroot std::unordered_map<uint64_t, boundary_node*>
 class boundary_node;
