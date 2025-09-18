@@ -361,7 +361,7 @@ int main(int argc, char *argv[]){
 
                 //auto copy_merged = merged->get_copy(true);
                 merged->update_tree(merged);
-                merged->update_borders();
+                // merged->update_borders();
                 merged->compress_path();
                 //delete copy_merged;
                 aux_tile_table[i][j] = merged;
@@ -444,7 +444,7 @@ int main(int argc, char *argv[]){
             //to_merge->compress_path();
             //auto copy_merged = merged->get_copy(true);
             merged->update_tree(merged);
-            merged->update_borders();
+            // merged->update_borders();
             merged->compress_path();
             
             auto del_tree = base_bt;
@@ -501,7 +501,7 @@ int main(int argc, char *argv[]){
             std::cout << "tree (" << t->grid_i << "," << t->grid_j <<" )updated\n";
             t->filter(lambda);
             std::cout << "filter done\n";
-            t->save(out_name+"_"+ std::to_string(t->grid_i) + "-" + std::to_string( t->grid_j)+ "." + out_ext);
+            //t->save(out_name+"_"+ std::to_string(t->grid_i) + "-" + std::to_string( t->grid_j)+ "." + out_ext);
             if(verbose){
                 std::cout << "__________________GVAL________________\n";
                 std::cout << t->to_string(GVAL,colored,8,2);

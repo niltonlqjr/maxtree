@@ -351,9 +351,9 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
             }
             tn = this->get_levelroot(to_merge);
             boundary_node n(to_merge, bound_tree, tn->global_idx);
-            bound_tree->insert_border_element(n, TOP_BORDER);
+            bound_tree->insert_border_element(to_merge->global_idx, TOP_BORDER);
 
-            bound_tree->add_lroot_tree(tn, this->get_data());
+            bound_tree->add_lroot_tree(to_merge, this->get_data());
             
         }
     }
@@ -368,8 +368,8 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
             
             tn = this->get_levelroot(to_merge);
             boundary_node n(to_merge, bound_tree, this->get_levelroot(to_merge)->global_idx);
-            bound_tree->insert_border_element(n, RIGHT_BORDER);
-            bound_tree->add_lroot_tree(tn, this->get_data());
+            bound_tree->insert_border_element(to_merge->global_idx, RIGHT_BORDER);
+            bound_tree->add_lroot_tree(to_merge, this->get_data());
         }
     }
 
@@ -383,8 +383,8 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
             }
             tn = this->get_levelroot(to_merge);
             boundary_node n(to_merge, bound_tree, this->get_levelroot(to_merge)->global_idx);
-            bound_tree->insert_border_element(n, BOTTOM_BORDER);
-            bound_tree->add_lroot_tree(tn, this->get_data());
+            bound_tree->insert_border_element(to_merge->global_idx, BOTTOM_BORDER);
+            bound_tree->add_lroot_tree(to_merge, this->get_data());
             
         }
     }
@@ -399,8 +399,8 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
             }
             tn = this->get_levelroot(to_merge);
             boundary_node n(to_merge, bound_tree, this->get_levelroot(to_merge)->global_idx);
-            bound_tree->insert_border_element(n, LEFT_BORDER);
-            bound_tree->add_lroot_tree(tn, this->get_data());
+            bound_tree->insert_border_element(to_merge->global_idx, LEFT_BORDER);
+            bound_tree->add_lroot_tree(to_merge, this->get_data());
         }
     }
     return bound_tree;
