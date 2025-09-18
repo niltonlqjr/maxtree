@@ -12,7 +12,10 @@ parser = argparse.ArgumentParser()
 parser.add_argument('file', help = 'filename')
 parser.add_argument('--output', '-o', dest='output', default='fig.pdf', help='output file')
 parser.add_argument('--show-values', '-s', dest='show_values', action='store_true', help='')
+parser.add_argument('--filter-unimportant-nodes', '-f', dest='filter', action='store_true', help='remove nodes with attribute 0 or 1 that arent fathers on the tree')
 args = parser.parse_args()
+
+filter_nodes=args.filter
 
 fn = args.file
 with open(fn) as f:
@@ -29,12 +32,24 @@ for l in lines:
 
 g = nx.DiGraph()
 
+all_parents = {}
+
+if filter_nodes:
+    for ld in lines_data:
+        parent = get_field(ld, "bound_parent:", int)
+        all_parents[parent] = True
+
+
 for ld in lines_data:
     idx = get_field(ld, "idx:", int)
     gval = get_field(ld, "gval:", int)
     attribute = get_field(ld, "attribute:", int, sep = ')')
     parent = get_field(ld, "bound_parent:", int)
-    g.add_node(idx, gval=gval, attr=attribute, par = parent)
+    insert=True
+    if filter_nodes and (not idx in all_parents):
+        insert = False
+    if insert:
+        g.add_node(idx, gval=gval, attr=attribute, par = parent)
 
 for u in g.nodes(data = True):
     idx = u[0]

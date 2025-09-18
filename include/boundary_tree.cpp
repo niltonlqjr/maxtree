@@ -494,6 +494,7 @@ bool boundary_tree::search_cicle(int64_t s){
 }
 
 
+/* ver o merge das linhas do grid 4 e 5 na divisão 8x8*/
 void boundary_tree::merge_branches(boundary_node *x, boundary_node *y, 
                                    std::unordered_map<uint64_t, bool> &accx, 
                                    std::unordered_map<uint64_t, bool> &accy){
@@ -502,11 +503,10 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y,
     Tattribute a, b, carryx, carryy;
     a = b = carryx = carryy = Tattr_NULL;
     uint64_t xidx, yidx, carryyidx, carryxidx;
-    /* ver o merge das linhas do grid 4 e 5 na divisão 8x8*/
-/*     if(verbose){
-        std::cout << "x tree:" << x->bound_tree_ptr << "\n" << x->bound_tree_ptr->lroot_to_string(BOUNDARY_ALL_FIELDS, "\n") << "\n";
-        std::cout << "y tree:" << y->bound_tree_ptr << "\n" << y->bound_tree_ptr->lroot_to_string(BOUNDARY_ALL_FIELDS, "\n") << "\n";
-    } */
+    // if(verbose){
+    //     std::cout << "x tree:" << x->bound_tree_ptr << "\n" << x->bound_tree_ptr->lroot_to_string(BOUNDARY_ALL_FIELDS, "\n") << "\n";
+    //     std::cout << "y tree:" << y->bound_tree_ptr << "\n" << y->bound_tree_ptr->lroot_to_string(BOUNDARY_ALL_FIELDS, "\n") << "\n";
+    // }
     xold = x;
     yold = y;
     x = x->bound_tree_ptr->get_bnode_levelroot(x->ptr_node->global_idx);
