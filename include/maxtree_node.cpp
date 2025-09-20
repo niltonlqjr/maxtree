@@ -8,7 +8,7 @@ maxtree_node::maxtree_node(Tpixel_value g, uint64_t i, uint64_t global_idx, Tatt
     this->attribute = attr;
     this->label = Tattr_NULL;
     this->labeled = false;
-    this->parent = -1;
+    this->parent = NO_PARENT;
     this->global_idx = global_idx;
     this->visited=false;
     this->global_parent = global_parent;

@@ -13,7 +13,7 @@ enum maxtee_node_field {
 #define Tattribute uint64_t
 #define Tattr_default 1
 #define Tattr_NULL 0
-
+#define NO_PARENT -1
 #define Tpixel_value uint8_t
 
 enum borders{

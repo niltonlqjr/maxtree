@@ -82,7 +82,10 @@ maxtree_node *maxtree::at_pos(int64_t l, int64_t c){
 }
 
 maxtree_node *maxtree::at_pos(int64_t index){
-    return this->data->at(index);
+    if(this->data->size() > index){
+        return this->data->at(index);
+    }
+    return NULL;
 }
 
 maxtree_node *maxtree::get_parent(uint64_t node_idx){
@@ -422,6 +425,7 @@ void maxtree::update_from_boundary_tree(boundary_tree *bt){
     //         } 
     //     }
     // }
+    // std::cout << "update_from_boundary_tree\n";
     for(auto n: *(this->data)){
         auto llr = this->get_levelroot(n); // local levelroot
         auto glr = bt->get_bnode_levelroot(llr->global_idx); // global levelroot
@@ -429,32 +433,59 @@ void maxtree::update_from_boundary_tree(boundary_tree *bt){
             n->attribute = glr->ptr_node->attribute;
         }
     }
+    // std::cout << "fim update_from_boundary_tree\n";
 }
 
 
  
 void maxtree::filter(Tattribute lambda, boundary_tree *bt){
+    std::vector<maxtree_node *> llr_stack;
+    std::vector<boundary_node *> glr_stack;
     maxtree_node *llr, *llr_par;
-    boundary_node *glr, *par_glr;
+    boundary_node *glr, *label_lr;
     for(auto node: *(this->data)){
         llr = this->get_levelroot(node);
-        if(llr->labeled){
-            node->label = llr->label;
-        }else{
+        glr = bt->get_bnode_levelroot(llr->global_idx);
+        llr_stack.push_back(llr);
+        while(glr == NULL && llr != NULL){
+            llr = this->get_levelroot(llr);
             glr = bt->get_bnode_levelroot(llr->global_idx);
+            llr_stack.push_back(llr);
             llr_par = this->at_pos(llr->parent);
-            while(glr==NULL){
-                llr_par = this->at_pos(llr_par->parent);
-                glr = bt->get_bnode_levelroot(llr_par->global_idx);
+            llr=llr_par;
+        }
+        if(llr==NULL){
+            std::cout << "DEU RUIM..... PILHA:\n";
+            while(!llr_stack.empty()){
+                std::cout << llr_stack.back()->global_idx << " ";
+                llr_stack.pop_back();
             }
+            exit(1);
+        }
+        if(!glr->ptr_node->labeled){
+            glr_stack.push_back(glr);
             while(glr->ptr_node->attribute < lambda){
-                par_glr = bt->get_border_node(glr->boundary_parent);
-                glr = bt->get_bnode_levelroot(par_glr->ptr_node->global_idx);
+                glr = bt->get_bnode_levelroot(glr->boundary_parent);
+                glr_stack.push_back(glr);
             }
-            node->label = glr->ptr_node->gval;
-            llr->label = glr->ptr_node->gval;
-            llr->labeled=true;
-            
+            label_lr = glr_stack.back();
+            label_lr->ptr_node->label = label_lr->ptr_node->gval;
+            label_lr->ptr_node->labeled = true;
+            glr_stack.pop_back();
+            while(!glr_stack.empty()){
+                auto stack_top = glr_stack.back();
+                stack_top->ptr_node->label = label_lr->ptr_node->label;
+                stack_top->ptr_node->labeled = true;
+                glr_stack.pop_back();
+            }
+        }else{
+            label_lr = glr;
+        }
+        while(!llr_stack.empty()){
+            auto stack_top = llr_stack.back();
+            stack_top->label = label_lr->ptr_node->label;
+            stack_top->labeled = true;
+            llr_stack.pop_back();
         }
     }
 }

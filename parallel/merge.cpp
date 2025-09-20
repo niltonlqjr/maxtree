@@ -501,7 +501,7 @@ int main(int argc, char *argv[]){
             std::cout << "tree (" << t->grid_i << "," << t->grid_j <<" )updated\n";
             t->filter(lambda,merged);
             std::cout << "filter done\n";
-            //t->save(out_name+"_"+ std::to_string(t->grid_i) + "-" + std::to_string( t->grid_j)+ "." + out_ext);
+            t->save(out_name+"_"+ std::to_string(t->grid_i) + "-" + std::to_string( t->grid_j)+ "." + out_ext);
             if(verbose){
                 std::cout << "__________________GVAL________________\n";
                 std::cout << t->to_string(GVAL,colored,8,2);
