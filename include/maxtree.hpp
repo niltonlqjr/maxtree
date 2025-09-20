@@ -102,7 +102,7 @@ class maxtree{
         std::string string_borders();
         
         
-        void filter(Tattribute a);
+        void filter(Tattribute a, boundary_tree *bt);
 
         uint64_t get_size();
         

@@ -499,7 +499,7 @@ int main(int argc, char *argv[]){
             t = tiles.at(i).at(j);
             t->update_from_boundary_tree(merged);
             std::cout << "tree (" << t->grid_i << "," << t->grid_j <<" )updated\n";
-            t->filter(lambda);
+            t->filter(lambda,merged);
             std::cout << "filter done\n";
             //t->save(out_name+"_"+ std::to_string(t->grid_i) + "-" + std::to_string( t->grid_j)+ "." + out_ext);
             if(verbose){

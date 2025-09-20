@@ -407,28 +407,27 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
 }
 
 void maxtree::update_from_boundary_tree(boundary_tree *bt){
-    boundary_node *n;
-    for(auto boundary_pair: *(bt->boundary_tree_lroot)){
-        auto bn = boundary_pair.second;
-        
-        if(bn->ptr_node->idx < this->data->size()){//if it has the possibility of being at this maxtree
-            auto n = this->at_pos(bn->ptr_node->idx);
-            if(n->global_idx == bn->ptr_node->global_idx){// if this boundary node is the same node that is on mergetre
-                auto global_lroot = bt->get_bnode_levelroot(n->global_idx);
-                // if(bn->border_lr != NO_BORDER_LEVELROOT && bn->in_lroot_tree){
-                //     std::cerr << "\n ERROR: Updating maxtree with border levelroot non setted. Use compress path on boundary tree before update maxtree\n";
-                //     exit(EX_DATAERR);
-                // } 
-                
-                if(global_lroot != NULL){
-                    // if(verbose)  std::cout << "node:" << bn->to_string() << "levelroot:" << global_lroot->to_string() <<"\n";
-                    if(n->attribute < global_lroot->ptr_node->attribute){
-                        n->attribute = global_lroot->ptr_node->attribute;
-                        n->global_parent = global_lroot->ptr_node->global_idx;
-                    }
-                }
-            } 
-        }
+    // boundary_node *n;
+    // for(auto boundary_pair: *(bt->boundary_tree_lroot)){
+    //     auto bn = boundary_pair.second;
+    //     if(bn->ptr_node->idx < this->data->size()){//if it has the possibility of being at this maxtree
+    //         auto n = this->at_pos(bn->ptr_node->idx);
+    //         if(n->global_idx == bn->ptr_node->global_idx){// if this boundary node is the same node that is on mergetre
+    //             auto global_lroot = bt->get_bnode_levelroot(n->global_idx);
+
+    //             if(global_lroot != NULL){
+    //                 n->attribute = global_lroot->ptr_node->attribute;
+    //                 n->global_parent = global_lroot->ptr_node->global_idx;
+    //             }
+    //         } 
+    //     }
+    // }
+    for(auto n: *(this->data)){
+        auto llr = this->get_levelroot(n); // local levelroot
+        auto glr = bt->get_bnode_levelroot(llr->global_idx); // global levelroot
+        // if(glr != NULL){
+            n->attribute = glr->ptr_node->attribute;
+        // }
     }
 }
 
@@ -703,7 +702,25 @@ std::vector<maxtree_node*> maxtree::get_neighbours(uint64_t pixel, uint8_t con){
 }
 
  
-void maxtree::filter(Tattribute lambda){
+void maxtree::filter(Tattribute lambda, boundary_tree *bt){
+    for(auto node: *(this->data)){
+        auto llr = this->get_levelroot(node);
+        if(llr->labeled){
+            node->label = llr->label;
+        }else{
+            auto glr = bt->get_bnode_levelroot(llr->global_idx);
+            while(glr->ptr_node->attribute < lambda){
+                auto par_glr = bt->get_border_node(glr->boundary_parent);
+                glr = bt->get_bnode_levelroot(par_glr->ptr_node->global_idx);
+            }
+            node->label = glr->ptr_node->gval;
+            llr->label = glr->ptr_node->gval;
+            llr->labeled=true;
+        }
+    }
+}
+
+/* void maxtree::filter(Tattribute lambda){
     maxtree_node *aux, *p, *lr , *q, *r = this->root;
 
     std::vector<maxtree_node *> stack;
@@ -713,6 +730,7 @@ void maxtree::filter(Tattribute lambda){
     } else {
         r->label = r->gval;
     }
+    this->get_levelroot(r)
     r->labeled = true;
     uint64_t tot_labeled = 1;
     uint64_t first_not_labeled=0;
@@ -752,7 +770,7 @@ void maxtree::filter(Tattribute lambda){
         }
         first_not_labeled++;
     }
-}
+} */
 
 
 /* void maxtree::filter(Tattribute lambda){
