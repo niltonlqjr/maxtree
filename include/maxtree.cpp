@@ -425,11 +425,40 @@ void maxtree::update_from_boundary_tree(boundary_tree *bt){
     for(auto n: *(this->data)){
         auto llr = this->get_levelroot(n); // local levelroot
         auto glr = bt->get_bnode_levelroot(llr->global_idx); // global levelroot
-        // if(glr != NULL){
+        if(glr != NULL){
             n->attribute = glr->ptr_node->attribute;
-        // }
+        }
     }
 }
+
+
+ 
+void maxtree::filter(Tattribute lambda, boundary_tree *bt){
+    maxtree_node *llr, *llr_par;
+    boundary_node *glr, *par_glr;
+    for(auto node: *(this->data)){
+        llr = this->get_levelroot(node);
+        if(llr->labeled){
+            node->label = llr->label;
+        }else{
+            glr = bt->get_bnode_levelroot(llr->global_idx);
+            llr_par = this->at_pos(llr->parent);
+            while(glr==NULL){
+                llr_par = this->at_pos(llr_par->parent);
+                glr = bt->get_bnode_levelroot(llr_par->global_idx);
+            }
+            while(glr->ptr_node->attribute < lambda){
+                par_glr = bt->get_border_node(glr->boundary_parent);
+                glr = bt->get_bnode_levelroot(par_glr->ptr_node->global_idx);
+            }
+            node->label = glr->ptr_node->gval;
+            llr->label = glr->ptr_node->gval;
+            llr->labeled=true;
+            
+        }
+    }
+}
+
 
 void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t base_w, 
                                 uint32_t l_tiles, uint32_t c_tiles){
@@ -701,24 +730,6 @@ std::vector<maxtree_node*> maxtree::get_neighbours(uint64_t pixel, uint8_t con){
     return v;
 }
 
- 
-void maxtree::filter(Tattribute lambda, boundary_tree *bt){
-    for(auto node: *(this->data)){
-        auto llr = this->get_levelroot(node);
-        if(llr->labeled){
-            node->label = llr->label;
-        }else{
-            auto glr = bt->get_bnode_levelroot(llr->global_idx);
-            while(glr->ptr_node->attribute < lambda){
-                auto par_glr = bt->get_border_node(glr->boundary_parent);
-                glr = bt->get_bnode_levelroot(par_glr->ptr_node->global_idx);
-            }
-            node->label = glr->ptr_node->gval;
-            llr->label = glr->ptr_node->gval;
-            llr->labeled=true;
-        }
-    }
-}
 
 /* void maxtree::filter(Tattribute lambda){
     maxtree_node *aux, *p, *lr , *q, *r = this->root;
