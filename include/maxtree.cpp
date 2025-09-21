@@ -437,6 +437,56 @@ void maxtree::update_from_boundary_tree(boundary_tree *bt){
 }
 
 
+void maxtree::filter(Tattribute lambda){
+    maxtree_node *aux, *p, *lr , *q, *r = this->root;
+
+    std::vector<maxtree_node *> stack;
+
+    if(r->attribute < lambda){
+        r->label = 0;//this->get_levelroot(this->at_pos(r->parent))->gval;
+    } else {
+        r->label = r->gval;
+    }
+    r->labeled = true;
+    uint64_t tot_labeled = 1;
+    uint64_t first_not_labeled=0;
+    p=this->at_pos(first_not_labeled);
+    while(first_not_labeled < this->get_size()){
+        p=this->at_pos(first_not_labeled);
+        if(p->attribute >= lambda){ 
+            p->label = p->gval;
+            p->labeled = true;
+        }else{ // p->atrribute < lambda and p is not labeled
+            lr = this->get_levelroot(p);
+            if(!lr->labeled){
+                if(lr->attribute >= lambda){
+                    lr->label = lr->gval;
+                    lr->labeled = true;
+                }else{// levelroot has no label and must be filtered off (attribute of component is not greater than lambda)
+                    while(!lr->labeled && lr->attribute < lambda){
+                        stack.push_back(lr);
+                        lr=this->get_parent(lr->idx);
+                    }
+                    //levelroot that pass on filter or labeled found in backward path
+                    if(!lr->labeled){
+                        lr->label = lr->gval;
+                        lr->labeled = true;
+                    }
+                    while(!stack.empty()){
+                        aux=stack.back();
+                        stack.pop_back();
+                        aux->label = lr->label;
+                        aux->labeled = true;
+
+                    }
+                }
+            }
+            p->label = lr->label;
+            p->labeled = true;
+        }
+        first_not_labeled++;
+    }
+}
  
 void maxtree::filter(Tattribute lambda, boundary_tree *bt){
     std::vector<maxtree_node *> llr_stack;
