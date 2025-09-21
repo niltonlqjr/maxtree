@@ -26,6 +26,11 @@ maxtree_node::maxtree_node(Tpixel_value g, uint64_t i, uint64_t global_idx, Tatt
     return s;
 } */
 
+void maxtree_node::set_label(Tpixel_value l){
+    this->label = l;
+    this->labeled = true;
+}
+
 bool maxtree_node::operator>(const maxtree_node &r){
     return this->gval > r.gval;
 }

@@ -316,8 +316,8 @@ void maxtree::fill_from_VImage(vips::VImage &img_in, uint32_t global_nlines, uin
 
 maxtree_node *maxtree::get_levelroot(maxtree_node *n){
     maxtree_node *n_parent;
-    if(n->parent >= 0){
-        n_parent = this->data->at(n->parent);
+    if(n->parent != NO_PARENT){
+        n_parent = this->at_pos(n->parent);
     }else{
         return n;
     }
@@ -329,6 +329,14 @@ maxtree_node *maxtree::get_levelroot(maxtree_node *n){
         n_parent = this->data->at(n_parent->parent);
     }
     return n;
+}
+
+maxtree_node *maxtree::get_levelroot(int64_t idx){
+    if(idx != NO_PARENT){
+        auto n = this->at_pos(idx);
+        return this->get_levelroot(n);
+    }
+    return NULL;
 }
 
 
@@ -431,6 +439,11 @@ void maxtree::update_from_boundary_tree(boundary_tree *bt){
         auto glr = bt->get_bnode_levelroot(llr->global_idx); // global levelroot
         if(glr != NULL){
             n->attribute = glr->ptr_node->attribute;
+            n->global_parent = glr->ptr_node->global_idx;
+        }
+        else{
+            n->attribute = llr->attribute;
+            n->global_parent = llr->global_idx;
         }
     }
     // std::cout << "fim update_from_boundary_tree\n";
@@ -443,25 +456,22 @@ void maxtree::filter(Tattribute lambda){
     std::vector<maxtree_node *> stack;
 
     if(r->attribute < lambda){
-        r->label = 0;//this->get_levelroot(this->at_pos(r->parent))->gval;
+        r->set_label(Tpixel_NULL);//this->get_levelroot(this->at_pos(r->parent))->gval;
     } else {
-        r->label = r->gval;
+        r->set_label(r->gval);
     }
-    r->labeled = true;
     uint64_t tot_labeled = 1;
     uint64_t first_not_labeled=0;
     p=this->at_pos(first_not_labeled);
     while(first_not_labeled < this->get_size()){
         p=this->at_pos(first_not_labeled);
         if(p->attribute >= lambda){ 
-            p->label = p->gval;
-            p->labeled = true;
+            p->set_label(p->gval);
         }else{ // p->atrribute < lambda and p is not labeled
             lr = this->get_levelroot(p);
             if(!lr->labeled){
                 if(lr->attribute >= lambda){
-                    lr->label = lr->gval;
-                    lr->labeled = true;
+                    lr->set_label(lr->gval);
                 }else{// levelroot has no label and must be filtered off (attribute of component is not greater than lambda)
                     while(!lr->labeled && lr->attribute < lambda){
                         stack.push_back(lr);
@@ -469,20 +479,16 @@ void maxtree::filter(Tattribute lambda){
                     }
                     //levelroot that pass on filter or labeled found in backward path
                     if(!lr->labeled){
-                        lr->label = lr->gval;
-                        lr->labeled = true;
+                        lr->set_label(lr->gval);
                     }
                     while(!stack.empty()){
                         aux=stack.back();
                         stack.pop_back();
-                        aux->label = lr->label;
-                        aux->labeled = true;
-
+                        aux->set_label(lr->label);
                     }
                 }
             }
-            p->label = lr->label;
-            p->labeled = true;
+            p->set_label(lr->label);
         }
         first_not_labeled++;
     }
@@ -491,50 +497,36 @@ void maxtree::filter(Tattribute lambda){
 void maxtree::filter(Tattribute lambda, boundary_tree *bt){
     std::vector<maxtree_node *> llr_stack;
     std::vector<boundary_node *> glr_stack;
-    maxtree_node *llr, *llr_par;
-    boundary_node *glr, *label_lr;
+    maxtree_node *llr, *llr_last, *llr_par, *label_lr;
+    boundary_node *glr; 
+    
     for(auto node: *(this->data)){
         llr = this->get_levelroot(node);
-        glr = bt->get_bnode_levelroot(llr->global_idx);
         llr_stack.push_back(llr);
-        while(glr == NULL && llr != NULL){
-            llr = this->get_levelroot(llr);
-            glr = bt->get_bnode_levelroot(llr->global_idx);
+        while(llr!=NULL && !llr->labeled && llr->attribute < lambda){
+            llr = this->get_levelroot(llr->parent);
             llr_stack.push_back(llr);
-            llr_par = this->at_pos(llr->parent);
-            llr=llr_par;
         }
-        if(llr==NULL){
-            std::cout << "DEU RUIM..... PILHA:\n";
-            while(!llr_stack.empty()){
-                std::cout << llr_stack.back()->global_idx << " ";
-                llr_stack.pop_back();
-            }
-            exit(1);
-        }
-        if(!glr->ptr_node->labeled){
+        if(llr->labeled || llr->attribute >= lambda){
+            label_lr = llr;
+            label_lr->set_label(llr->gval);
+        }else if(llr == NULL){
+            glr = bt->get_bnode_levelroot(llr->global_parent);
             glr_stack.push_back(glr);
-            while(glr->ptr_node->attribute < lambda){
+            while(!glr->ptr_node->labeled && glr->ptr_node->attribute < lambda){
                 glr = bt->get_bnode_levelroot(glr->boundary_parent);
                 glr_stack.push_back(glr);
             }
-            label_lr = glr_stack.back();
-            label_lr->ptr_node->label = label_lr->ptr_node->gval;
-            label_lr->ptr_node->labeled = true;
-            glr_stack.pop_back();
+            label_lr = glr->ptr_node;
             while(!glr_stack.empty()){
-                auto stack_top = glr_stack.back();
-                stack_top->ptr_node->label = label_lr->ptr_node->label;
-                stack_top->ptr_node->labeled = true;
+                glr = glr_stack.back();
+                glr->ptr_node->set_label(label_lr->label);
                 glr_stack.pop_back();
             }
-        }else{
-            label_lr = glr;
         }
         while(!llr_stack.empty()){
-            auto stack_top = llr_stack.back();
-            stack_top->label = label_lr->ptr_node->label;
-            stack_top->labeled = true;
+            llr = llr_stack.back();
+            llr->set_label(label_lr->label);
             llr_stack.pop_back();
         }
     }

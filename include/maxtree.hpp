@@ -53,7 +53,7 @@ class maxtree{
         //std::unordered_map<Tpixel_value, std::vector<component>> components;
         //std::unordered_map<Tpixel_value, std::mutex> threshold_locks;
         //std::mutex data_lock;
-        maxtree_node *get_levelroot(maxtree_node *n);
+        
         std::vector<bool> *tile_borders;
 
         int flood(int lambda, maxtree_node *r, std::vector<std::deque<maxtree_node*>> *hqueue, 
@@ -90,7 +90,10 @@ class maxtree{
         std::vector<component> components_at(Tpixel_value threshold);
         std::vector<Tpixel_value> all_thresholds();
         std::vector<maxtree_node *> *get_levelroots();
-        
+        maxtree_node *get_levelroot(maxtree_node *n);
+        maxtree_node *get_levelroot(int64_t idx);
+
+
         boundary_tree *get_boundary_tree(uint8_t connectivity=4);
 
         /* Update maxtree attribute and global parent given a boundary tree
