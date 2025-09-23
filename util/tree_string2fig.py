@@ -1,3 +1,4 @@
+import re
 import argparse
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -26,8 +27,9 @@ lines = texto.split('\n')
 lines_data = []
 
 for l in lines:
-    p = l.find('(')
-    if l!= '':
+    a=re.search('.*\(.*idx:-?.*',l)
+    if a!=None:
+        p = l.find('(')
         lines_data.append(l[p:])
 
 g = nx.DiGraph()
@@ -60,6 +62,9 @@ for u in g.nodes(data = True):
 
 pdot=nx.drawing.nx_pydot.pydot_layout(g, prog='dot')
 
-nx.draw(g, with_labels=True, pos=pdot, node_size=250, font_size=8, node_color="#8a8a8a")
+node_colors = ["#"+3*(hex(g.nodes[node]['gval']).split('x')[-1].rjust(2).replace(' ','0')) for node in g.nodes()]
+
+
+nx.draw(g, with_labels=True, pos=pdot, linewidths=5.0, node_size=250, font_size=5, font_color='red', node_color=node_colors)#node_color="#8a8a8a")
 out_name = args.output
 plt.savefig(out_name)
