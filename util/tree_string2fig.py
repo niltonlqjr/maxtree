@@ -27,7 +27,7 @@ lines = texto.split('\n')
 lines_data = []
 
 for l in lines:
-    a=re.search('.*\(.*idx:-?.*',l)
+    a=re.search('.*idx:-?.*',l)
     if a!=None:
         p = l.find('(')
         lines_data.append(l[p:])
@@ -64,7 +64,9 @@ pdot=nx.drawing.nx_pydot.pydot_layout(g, prog='dot')
 
 node_colors = ["#"+3*(hex(g.nodes[node]['gval']).split('x')[-1].rjust(2).replace(' ','0')) for node in g.nodes()]
 
+nsize = 30
+fsize = nsize//10
 
-nx.draw(g, with_labels=True, pos=pdot, linewidths=5.0, node_size=250, font_size=5, font_color='red', node_color=node_colors)#node_color="#8a8a8a")
+nx.draw(g, with_labels=True, pos=pdot, node_size=nsize, font_size=fsize, font_color='red', node_color=node_colors)
 out_name = args.output
 plt.savefig(out_name)

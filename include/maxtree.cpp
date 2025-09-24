@@ -343,7 +343,7 @@ maxtree_node *maxtree::get_levelroot(int64_t idx){
 boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
     boundary_tree *bound_tree;
     boundary_node *bound_parent, *current;
-    maxtree_node *tn, *parent, *to_merge, *neighbour;
+    maxtree_node *to_merge_lr, *parent, *to_merge, *neighbour;
     uint32_t i, j, pidx; 
 
     if(connectivity != 4){
@@ -360,11 +360,10 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
             if(neighbour->gval < to_merge->gval){
                 to_merge=neighbour;
             }
-            tn = this->get_levelroot(to_merge);
-            boundary_node n(to_merge, bound_tree, tn->global_idx);
-            bound_tree->insert_border_element(to_merge->global_idx, TOP_BORDER);
-
-            bound_tree->add_lroot_tree(to_merge, this->get_data());
+            to_merge_lr = this->get_levelroot(to_merge);
+            // boundary_node n(to_merge, bound_tree, to_merge_lr->global_idx);
+            bound_tree->insert_border_element(to_merge_lr->global_idx, TOP_BORDER);
+            bound_tree->add_lroot_tree(to_merge_lr, this->get_data());
             
         }
     }
@@ -377,10 +376,10 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
                 to_merge=neighbour;
             }
             
-            tn = this->get_levelroot(to_merge);
-            boundary_node n(to_merge, bound_tree, this->get_levelroot(to_merge)->global_idx);
-            bound_tree->insert_border_element(to_merge->global_idx, RIGHT_BORDER);
-            bound_tree->add_lroot_tree(to_merge, this->get_data());
+            to_merge_lr = this->get_levelroot(to_merge);
+            // boundary_node n(to_merge, bound_tree, this->get_levelroot(to_merge)->global_idx);
+            bound_tree->insert_border_element(to_merge_lr->global_idx, RIGHT_BORDER);
+            bound_tree->add_lroot_tree(to_merge_lr, this->get_data());
         }
     }
 
@@ -392,10 +391,10 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
             if(neighbour->gval < to_merge->gval){
                 to_merge = neighbour;
             }
-            tn = this->get_levelroot(to_merge);
-            boundary_node n(to_merge, bound_tree, this->get_levelroot(to_merge)->global_idx);
-            bound_tree->insert_border_element(to_merge->global_idx, BOTTOM_BORDER);
-            bound_tree->add_lroot_tree(to_merge, this->get_data());
+            to_merge_lr = this->get_levelroot(to_merge);
+            // boundary_node n(to_merge, bound_tree, this->get_levelroot(to_merge)->global_idx);
+            bound_tree->insert_border_element(to_merge_lr->global_idx, BOTTOM_BORDER);
+            bound_tree->add_lroot_tree(to_merge_lr, this->get_data());
             
         }
     }
@@ -408,10 +407,10 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
             if(neighbour->gval < to_merge->gval){
                 to_merge=neighbour;
             }
-            tn = this->get_levelroot(to_merge);
-            boundary_node n(to_merge, bound_tree, this->get_levelroot(to_merge)->global_idx);
-            bound_tree->insert_border_element(to_merge->global_idx, LEFT_BORDER);
-            bound_tree->add_lroot_tree(to_merge, this->get_data());
+            to_merge_lr = this->get_levelroot(to_merge);
+            // boundary_node n(to_merge, bound_tree, this->get_levelroot(to_merge)->global_idx);
+            bound_tree->insert_border_element(to_merge_lr->global_idx, LEFT_BORDER);
+            bound_tree->add_lroot_tree(to_merge_lr, this->get_data());
         }
     }
     return bound_tree;
@@ -502,15 +501,16 @@ void maxtree::filter(Tattribute lambda, boundary_tree *bt){
     
     for(auto node: *(this->data)){
         llr = this->get_levelroot(node);
-        llr_stack.push_back(llr);
+        
         while(llr!=NULL && !llr->labeled && llr->attribute < lambda){
+            llr_stack.push_back(llr);
             llr = this->get_levelroot(llr->parent);
+        }
+        if(llr != NULL){
             llr_stack.push_back(llr);
         }
-        if(llr->labeled || llr->attribute >= lambda){
-            label_lr = llr;
-            label_lr->set_label(llr->gval);
-        }else if(llr == NULL){
+        if(llr == NULL){
+            llr = llr_stack.back();
             glr = bt->get_bnode_levelroot(llr->global_parent);
             glr_stack.push_back(glr);
             while(!glr->ptr_node->labeled && glr->ptr_node->attribute < lambda){
@@ -523,6 +523,9 @@ void maxtree::filter(Tattribute lambda, boundary_tree *bt){
                 glr->ptr_node->set_label(label_lr->label);
                 glr_stack.pop_back();
             }
+        }else if(llr->labeled || llr->attribute >= lambda){
+            label_lr = llr;
+            label_lr->set_label(llr->gval);
         }
         while(!llr_stack.empty()){
             llr = llr_stack.back();
