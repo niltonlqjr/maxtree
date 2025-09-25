@@ -41,10 +41,10 @@ boundary_node::boundary_node(boundary_node *b){
 
 std::string boundary_node::to_string(){
     std::ostringstream ss;
-    ss << this <<"( idx:" << this->ptr_node->global_idx << "\t, bound_parent:" 
-       << this->boundary_parent << "\t, border_lr:" << this->border_lr << ", "
-       << "\t gval:" << (int)this->ptr_node->gval 
-       << "\t, attribute:" << this->ptr_node->attribute 
+    ss << this <<"( idx:" << this->ptr_node->global_idx << ",\tbound_parent:" 
+       << this->boundary_parent << ",\tborder_lr:" << this->border_lr << ","
+       << "\tgval:" << (int)this->ptr_node->gval 
+       << ",\tattribute:" << this->ptr_node->attribute 
        << ")";
 
     return ss.str();
