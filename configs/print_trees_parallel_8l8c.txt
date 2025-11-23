@@ -29,7 +29,7 @@ server = 10.1.1.2
 lambda=100000
 
 #output filename
-output=../output/parallel/8l8c/lambda_100000
+output=../../output/parallel/8l8c/lambda_100000
 
 #output extension (only the libvips extensions)
 output_ext=png

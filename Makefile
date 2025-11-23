@@ -22,3 +22,8 @@ flood_execs:
 
 union:
 	$(MAKE) -C ${union_find_dir} ${MAKE_SUBPROJECTS_ARGS}
+
+clean:
+	$(MAKE) -C ${parallel_dir} clean
+	$(MAKE) -C ${flood_dir} clean
+	$(MAKE) -C ${union_find_dir} clean
