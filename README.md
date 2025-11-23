@@ -62,3 +62,5 @@ The variables TYPE and OPT can be used in those buildings.
         $ cd parallel
         $ ./exec/merge ../testes/dos_wp_bw.png ../configs/parallel_8l8c.txt
         ```
+
+Some configuration examples are available in [configs](configs/).
