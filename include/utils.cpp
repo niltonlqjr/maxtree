@@ -8,7 +8,14 @@ std::string terminal_color_string(int color){
     return COLORS[BLACK];
 }
 
+int64_t int_pow(int64_t base, int64_t exp){
+    int64_t r=1;
+    while(exp--){
+        r*=base;
+    }
+    return r;
 
+}
 
 void label_components(std::vector<maxtree_node*> *mt){
     for(auto p: *mt){
@@ -64,6 +71,12 @@ void print_VImage_band(vips::VImage *in, int band){
     return;
 }
 
+uint64_t get_levroot_pair_idx(std::unordered_map<int64_t, int64_t> &lrp, uint64_t idx){
+    if(lrp.find(idx) == lrp.end()){
+        return idx;
+    }
+    return lrp[idx];
+}
 
 std::string ltrim(std::string s, const std::string b){
     s.erase(0, s.find_first_not_of(b));
@@ -75,6 +88,9 @@ std::string rtrim(std::string s, const std::string b){
     return s;
 }
 
+std::string int_pair_to_string(std::pair<uint32_t, uint32_t> &p){
+    return "(" + std::to_string(p.first) + ", " + std::to_string(p.second) + ")";
+}
 
 bool is_blank(std::string s, std::vector<char> b){
     for(int i=0; i<s.size(); i++){

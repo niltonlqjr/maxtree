@@ -47,6 +47,7 @@ maxtree::maxtree(std::vector<maxtree_node*> *data, uint32_t h, uint32_t w, uint3
     this->tile_borders = new std::vector<bool>(4, false);
 }
 
+
 maxtree::maxtree(std::vector <bool> borders, uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j){
     this->h = h;
     this->w = w;
@@ -88,6 +89,32 @@ maxtree_node *maxtree::at_pos(int64_t index){
     return NULL;
 }
 
+void maxtree::set_pixel(maxtree_node *p, int64_t idx){
+    if(idx < this->data->size()){
+        this->data->at(idx) = p;
+    }
+}
+// void maxtree::set_pixel(maxtree_node &p, int64_t idx){
+//     maxtree_node *new_pix;
+//     if(idx < this->data->size()){
+//         if(this->data->at(idx) == NULL){
+//             new_pix = new maxtree_node(p.gval, idx, p.global_idx, p.attribute, p.global_parent);
+//         }else{
+//             new_pix = this->data->at(idx);
+//             new_pix->gval = p.gval;
+//             new_pix->idx = idx;
+//             new_pix->global_idx = p.global_idx;
+//             new_pix->attribute = p.attribute;
+//             new_pix->global_parent = p.global_parent;
+//         }
+//         new_pix->attr_final = p.attr_final;
+//         new_pix->label = p.label;
+//         new_pix->labeled = p.labeled;
+//         new_pix->parent = p.parent;
+//     }
+
+// }
+
 maxtree_node *maxtree::get_parent(uint64_t node_idx){
     if(node_idx < 0){
         return NULL;
@@ -111,6 +138,69 @@ uint64_t maxtree::get_size(){
 std::vector<maxtree_node *> *maxtree::get_levelroots(){
     return this->levelroots;
 }
+
+
+void maxtree::fill_from_VImage(vips::VImage &img_in, uint32_t global_nlines, uint32_t global_ncols){
+    this->h = img_in.height();
+    this->w = img_in.width();
+    vips::VImage img = img_in.copy_memory();
+    auto img_pels = img.get_image();
+    
+    char aux_enum_c[][50] = {"VIPS_FORMAT_UCHAR", "VIPS_FORMAT_CHAR", "VIPS_FORMAT_USHORT", "VIPS_FORMAT_SHORT", 
+         "VIPS_FORMAT_UINT", " VIPS_FORMAT_INT", " VIPS_FORMAT_FLOAT", " VIPS_FORMAT_COMPLEX", " VIPS_FORMAT_DOUBLE", 
+         "VIPS_FORMAT_DPCOMPLEX", "VIPS_FORMAT_LAST"};
+    if(verbose){
+        std::cout << "pixel format: ";
+        if (img_pels->BandFmt > 0){
+            std::cout << aux_enum_c[img_pels->BandFmt];
+        }else {
+            std::cout << "VIPS_FORMAT_NOTSET";
+        }
+        std::cout << "\n";
+    }
+    
+    for(int l = 0; l < this->h; l++){
+        for(int c = 0; c < this->w; c++){
+            int x = this->index_of(l, c);
+            VipsPel *vpel = VIPS_IMAGE_ADDR(img_pels, c, l);
+            this->data->push_back(new maxtree_node((*vpel), x));
+        }
+    }
+}
+
+
+void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t base_w, 
+                                uint32_t l_tiles, uint32_t c_tiles){
+    VipsRegion *c_region = reg_in.get_region();
+    uint64_t global_idx;
+    Tattribute attr_ini;
+    this->h = vips_region_height(c_region);
+    this->w = vips_region_width(c_region);
+    
+    
+    for(int l = 0; l < this->h; l++){
+        for(int c = 0; c < this->w; c++){
+/*             if(verbose)
+                std::cout << "accessing:" << "(" << l << ", " << c << ")\n"; */
+            int x = this->index_of(l, c);
+            //VipsPel *vpel__ = VIPS_IMAGE_ADDR(c_region, c, l);
+            global_idx = ((base_h+l) * c_tiles) + (c+base_w);
+/*             if(verbose)
+                std::cout << "local:(" << l << ", " << c << ") Global:(" << l+base_h << ", "<< c+base_w << ")\n"; */
+            VipsPel *vpel = VIPS_REGION_ADDR(c_region, c+base_w, l+base_h);
+            /* check if it is a border pixel, so this attr should not be computed */
+            if((this->tile_borders->at(LEFT_BORDER)  && c == 0)           ||
+              (this->tile_borders->at(RIGHT_BORDER)  && c == this->w - 1) ||
+              (this->tile_borders->at(TOP_BORDER)    && l == 0)           ||
+              (this->tile_borders->at(BOTTOM_BORDER) && l == this->h - 1)){
+                attr_ini = Tattr_NULL;
+            }else{
+                attr_ini = Tattr_default;
+            }
+            this->data->push_back(new maxtree_node((*vpel), x, global_idx, attr_ini));
+        }
+    }
+} 
 
 void maxtree::compute_sequential_iterative(){
     std::priority_queue<maxtree_node*, std::vector<maxtree_node*> , cmp_maxtree_nodes> pixel_pq;
@@ -286,34 +376,6 @@ void maxtree::compute_sequential_recursive(int gl){
 
 }
 
-void maxtree::fill_from_VImage(vips::VImage &img_in, uint32_t global_nlines, uint32_t global_ncols){
-    this->h = img_in.height();
-    this->w = img_in.width();
-    vips::VImage img = img_in.copy_memory();
-    auto img_pels = img.get_image();
-    
-    char aux_enum_c[][50] = {"VIPS_FORMAT_UCHAR", "VIPS_FORMAT_CHAR", "VIPS_FORMAT_USHORT", "VIPS_FORMAT_SHORT", 
-         "VIPS_FORMAT_UINT", " VIPS_FORMAT_INT", " VIPS_FORMAT_FLOAT", " VIPS_FORMAT_COMPLEX", " VIPS_FORMAT_DOUBLE", 
-         "VIPS_FORMAT_DPCOMPLEX", "VIPS_FORMAT_LAST"};
-    if(verbose){
-        std::cout << "pixel format: ";
-        if (img_pels->BandFmt > 0){
-            std::cout << aux_enum_c[img_pels->BandFmt];
-        }else {
-            std::cout << "VIPS_FORMAT_NOTSET";
-        }
-        std::cout << "\n";
-    }
-    
-    for(int l = 0; l < this->h; l++){
-        for(int c = 0; c < this->w; c++){
-            int x = this->index_of(l, c);
-            VipsPel *vpel = VIPS_IMAGE_ADDR(img_pels, c, l);
-            this->data->push_back(new maxtree_node((*vpel), x));
-        }
-    }
-}
-
 maxtree_node *maxtree::get_levelroot(maxtree_node *n){
     maxtree_node *n_parent;
     if(n->parent != NO_PARENT){
@@ -357,7 +419,7 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
         for(j=0; j<this->w; j++){
             to_merge = this->at_pos(1, j);    
             neighbour = this->at_pos(0, j);
-            if(neighbour->gval < to_merge->gval){
+            if(neighbour->gval > to_merge->gval){
                 to_merge=neighbour;
             }
             to_merge_lr = this->get_levelroot(to_merge);
@@ -372,7 +434,7 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
         for(i=0; i<this->h; i++){
             to_merge = this->at_pos(i, this->w-2);
             neighbour = this->at_pos(i, this->w-1);
-            if(neighbour->gval < to_merge->gval){
+            if(neighbour->gval > to_merge->gval){
                 to_merge=neighbour;
             }
             
@@ -388,7 +450,7 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
         for(j=0; j < this->w; j++){
             to_merge = this->at_pos(this->h-2, j);
             neighbour = this->at_pos(this->h-1, j);
-            if(neighbour->gval < to_merge->gval){
+            if(neighbour->gval > to_merge->gval){
                 to_merge = neighbour;
             }
             to_merge_lr = this->get_levelroot(to_merge);
@@ -404,7 +466,7 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
         for(i=0; i < this->h; i++){
             to_merge = this->at_pos(i, 1);
             neighbour = this->at_pos(i, 0);
-            if(neighbour->gval < to_merge->gval){
+            if(neighbour->gval > to_merge->gval){
                 to_merge=neighbour;
             }
             to_merge_lr = this->get_levelroot(to_merge);
@@ -416,37 +478,30 @@ boundary_tree *maxtree::get_boundary_tree(uint8_t connectivity){
     return bound_tree;
 }
 
-void maxtree::update_from_boundary_tree(boundary_tree *bt){
-    // boundary_node *n;
-    // for(auto boundary_pair: *(bt->boundary_tree_lroot)){
-    //     auto bn = boundary_pair.second;
-    //     if(bn->ptr_node->idx < this->data->size()){//if it has the possibility of being at this maxtree
-    //         auto n = this->at_pos(bn->ptr_node->idx);
-    //         if(n->global_idx == bn->ptr_node->global_idx){// if this boundary node is the same node that is on mergetre
-    //             auto global_lroot = bt->get_bnode_levelroot(n->global_idx);
+void maxtree::update_node_attr(maxtree_node *n, boundary_tree *bt){
+    auto glr = bt->get_bnode_levelroot(n->global_idx); // global levelroot
+    if(glr != NULL){
+        n->compute_attribute(glr->ptr_node->attribute);
+        n->global_parent = glr->ptr_node->global_idx;
+    }else{
+        auto llr = this->get_levelroot(n);
+        n->compute_attribute(llr->attribute);
+        n->global_parent = llr->global_idx;
+    }
+}
 
-    //             if(global_lroot != NULL){
-    //                 n->attribute = global_lroot->ptr_node->attribute;
-    //                 n->global_parent = global_lroot->ptr_node->global_idx;
-    //             }
-    //         } 
-    //     }
-    // }
-    // std::cout << "update_from_boundary_tree\n";
+void maxtree::update_from_boundary_tree(boundary_tree *bt){
+
     for(auto n: *(this->data)){
         auto llr = this->get_levelroot(n); // local levelroot
-        auto glr = bt->get_bnode_levelroot(llr->global_idx); // global levelroot
-        if(glr != NULL){
-            n->attribute = glr->ptr_node->attribute;
-            n->global_parent = glr->ptr_node->global_idx;
+        if(!llr->attr_final){
+            this->update_node_attr(llr, bt);
         }
-        else{
-            n->attribute = llr->attribute;
-            n->global_parent = llr->global_idx;
-        }
+        n->compute_attribute(llr->attribute);
     }
-    // std::cout << "fim update_from_boundary_tree\n";
+
 }
+
 
 
 void maxtree::filter(Tattribute lambda){
@@ -492,7 +547,52 @@ void maxtree::filter(Tattribute lambda){
         first_not_labeled++;
     }
 }
- 
+
+/* 
+maxtree_node *maxtree::up_tree_filter(maxtree_node *n, Tattribute lambda, boundary_tree *bt){
+    maxtree_node *llr, *llr_last, *llr_par, *label_lr;
+    boundary_node *glr;
+    llr = this->get_levelroot(n);
+    if(llr->labeled){
+        return llr;
+    }
+    if(llr->attribute >= lambda){
+        llr->set_label(llr->gval);
+        label_lr =  llr;
+    }else if(llr->parent != NO_PARENT){
+        llr_par = this->get_levelroot(llr->parent);
+        label_lr = this->up_tree_filter(llr_par, lambda, bt); 
+    }else{
+        label_lr = bt->up_tree_filter(llr->global_idx, lambda);
+    }
+    llr->set_label(label_lr->label);
+    return label_lr;
+}
+*/
+    
+maxtree_node *maxtree::up_tree_filter(maxtree_node *n, Tattribute lambda, boundary_tree *bt){
+    maxtree_node *llr, *llr_last, *llr_par, *label_lr;
+    boundary_node *glr;
+    llr = this->get_levelroot(n);
+    if(llr->labeled){
+        return llr;
+    }
+    if(llr->attribute >= lambda){
+        llr->set_label(llr->gval);
+        label_lr =  llr;
+    }else{
+        glr = bt->get_bnode_levelroot(llr->global_parent);
+        if(glr!=NULL){
+            label_lr = bt->up_tree_filter(glr->ptr_node->global_idx, lambda);
+        }else{
+            llr_par = this->get_levelroot(llr->parent);
+            label_lr = this->up_tree_filter(llr_par, lambda, bt); 
+        }
+    }
+    llr->set_label(label_lr->label);
+    return label_lr;
+}
+
 void maxtree::filter(Tattribute lambda, boundary_tree *bt){
     std::vector<maxtree_node *> llr_stack;
     std::vector<boundary_node *> glr_stack;
@@ -500,101 +600,15 @@ void maxtree::filter(Tattribute lambda, boundary_tree *bt){
     boundary_node *glr; 
     
     for(auto node: *(this->data)){
-        llr = this->get_levelroot(node);
-        
-        while(llr!=NULL && !llr->labeled && llr->attribute < lambda){
-            llr_stack.push_back(llr);
-            llr = this->get_levelroot(llr->parent);
-        }
-        if(llr != NULL){
-            llr_stack.push_back(llr);
-        }
-        if(llr == NULL){
-            llr = llr_stack.back();
-            glr = bt->get_bnode_levelroot(llr->global_parent);
-            glr_stack.push_back(glr);
-            while(!glr->ptr_node->labeled && glr->ptr_node->attribute < lambda){
-                glr = bt->get_bnode_levelroot(glr->boundary_parent);
-                glr_stack.push_back(glr);
-            }
-            label_lr = glr->ptr_node;
-            while(!glr_stack.empty()){
-                glr = glr_stack.back();
-                glr->ptr_node->set_label(label_lr->label);
-                glr_stack.pop_back();
-            }
-        }else if(llr->labeled || llr->attribute >= lambda){
-            label_lr = llr;
-            label_lr->set_label(llr->gval);
-        }
-        while(!llr_stack.empty()){
-            llr = llr_stack.back();
-            llr->set_label(label_lr->label);
-            llr_stack.pop_back();
-        }
+        label_lr = this->up_tree_filter(node, lambda, bt);
+        node->set_label(label_lr->label);
     }
+    // std::cout << "\n";
 }
 
 
-void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t base_w, 
-                                uint32_t l_tiles, uint32_t c_tiles){
-    VipsRegion *c_region = reg_in.get_region();
-    uint64_t global_idx;
-    Tattribute attr_ini;
-    this->h = vips_region_height(c_region);
-    this->w = vips_region_width(c_region);
-    
-    uint32_t noborder_h = this->h, noborder_w = this->w;
 
-    int32_t ini_col=base_h, ini_line=base_h;
-
-    if(this->tile_borders->at(LEFT_BORDER)){
-        noborder_h--;
-        ini_col++;
-    }
-    if(this->tile_borders->at(RIGHT_BORDER)){
-        noborder_h--;
-    }
-    if(this->tile_borders->at(TOP_BORDER)){
-        noborder_w--;
-        ini_line++;
-    }
-    if(this->tile_borders->at(BOTTOM_BORDER)){
-        noborder_w--;
-    }
-     
-/*     if(verbose){
-        std::cout << "filling: " << base_h << ", " << base_w << "..." << base_h+this->h << ", " << base_w+this->w <<"\n";
-    } */
-     
-    /*char aux_enum_c[][50] = {"VIPS_FORMAT_UCHAR", "VIPS_FORMAT_CHAR", "VIPS_FORMAT_USHORT", "VIPS_FORMAT_SHORT", 
-         "VIPS_FORMAT_UINT", " VIPS_FORMAT_INT", " VIPS_FORMAT_FLOAT", " VIPS_FORMAT_COMPLEX", " VIPS_FORMAT_DOUBLE", 
-         "VIPS_FORMAT_DPCOMPLEX", "VIPS_FORMAT_LAST"};*/
-    
-    for(int l = 0; l < this->h; l++){
-        for(int c = 0; c < this->w; c++){
-/*             if(verbose)
-                std::cout << "accessing:" << "(" << l << ", " << c << ")\n"; */
-            int x = this->index_of(l, c);
-            //VipsPel *vpel__ = VIPS_IMAGE_ADDR(c_region, c, l);
-            global_idx = ((base_h+l) * c_tiles) + (c+base_w);
-/*             if(verbose)
-                std::cout << "local:(" << l << ", " << c << ") Global:(" << l+base_h << ", "<< c+base_w << ")\n"; */
-            VipsPel *vpel = VIPS_REGION_ADDR(c_region, c+base_w, l+base_h);
-            /* check if it is a border pixel, so this attr should not be computed */
-            if((this->tile_borders->at(LEFT_BORDER)  && c == 0)           ||
-              (this->tile_borders->at(RIGHT_BORDER)  && c == this->w - 1) ||
-              (this->tile_borders->at(TOP_BORDER)    && l == 0)           ||
-              (this->tile_borders->at(BOTTOM_BORDER) && l == this->h - 1)){
-                attr_ini = Tattr_NULL;
-            }else{
-                attr_ini = Tattr_default;
-            }
-            this->data->push_back(new maxtree_node((*vpel), x, global_idx, attr_ini));
-        }
-    }
-} 
-//this code is to "divide" strategy
+//this code is to "divide" strategy that performed pooly (very worst than sequential)
 
 /* 
 void maxtree::insert_component(component c, Tpixel_value gval){
@@ -630,6 +644,91 @@ void maxtree::insert_component(std::vector<int> comp, int64_t parent, Tpixel_val
 }
 
  */
+
+std::string maxtree::string_borders(){
+    std::string ret="";
+    if(this->tile_borders->at(LEFT_BORDER)) ret+="Left ";
+    if(this->tile_borders->at(TOP_BORDER)) ret+="Top ";
+    if(this->tile_borders->at(RIGHT_BORDER)) ret+="Rigth ";
+    if(this->tile_borders->at(BOTTOM_BORDER)) ret+="Bottom ";
+    if(ret == "") ret+="No Borders";
+    return ret;
+}
+
+/* 
+std::vector<component> maxtree::components_at(Tpixel_value threshold){
+    return this->components[threshold];
+}
+std::vector<Tpixel_value> maxtree::all_thresholds(){
+    std::vector<Tpixel_value> ret;
+    for(auto t: this->components){
+        ret.push_back(t.first);
+    }
+    return ret;
+}
+ */
+std::vector<maxtree_node*> maxtree::get_neighbours(uint64_t pixel, uint8_t con){
+    std::vector<maxtree_node*> v;
+    int64_t idx, pl, pc;
+    std::tie(pl, pc) = this->lin_col(pixel);
+    if(con == 4 || con == 8){
+        if(pl >= 1){
+            idx = index_of(pl-1, pc);
+            v.push_back(this->data->at(idx));
+        }
+        if(pl < (uint64_t)h - 1){
+            idx = index_of(pl+1, pc);
+            v.push_back(this->data->at(idx));
+        }
+        if(pc >= 1){
+            idx = index_of(pl, pc-1);
+            v.push_back(this->data->at(idx));
+        }
+        if(pc < (uint64_t)w - 1){
+            idx = index_of(pl, pc+1);
+            v.push_back(this->data->at(idx));
+        }
+    }
+    if(con == 8){
+        if(pl >= 1 && pc >=1){
+            idx = index_of(pl-1, pc-1);
+            v.push_back(this->data->at(idx));
+        }
+        if(pl < (uint64_t)h - 1 && pc < (uint64_t)w - 1){
+            idx = index_of(pl+1, pc+1);
+            v.push_back(this->data->at(idx));
+        }
+        if(pc >= 1 && pl < (uint64_t)h - 1){
+            idx = index_of(pl+1, pc-1);
+            v.push_back(this->data->at(idx));
+        }
+        if(pc < (uint64_t)w - 1 && pl >= 1){
+            idx = index_of(pl-1, pc+1);
+            v.push_back(this->data->at(idx));
+        }
+    }
+    return v;
+}
+
+void maxtree::save(std::string name, enum maxtee_node_field f){
+    
+    std::vector<uint8_t> data;
+    if(f == LABEL){
+        for(uint64_t i=0; i < this->get_size(); i++){
+            data.push_back((uint8_t) this->at_pos(i)->label);
+        }
+    }else if(f == GVAL){
+        for(uint64_t i=0; i < this->get_size(); i++){
+            data.push_back((uint8_t)this->at_pos(i)->gval);
+        }
+    }
+    vips::VImage out = vips::VImage::new_from_memory(data.data(), this->w * this->h * sizeof(uint8_t), this->w, this->h, 1, VIPS_FORMAT_UCHAR);
+
+    out.write_to_file(name.c_str());
+    
+}
+
+
 std::string maxtree::to_string(enum maxtee_node_field field, bool colored, uint8_t spaces, uint8_t decimal ){
     std::string r;
     //a lot of ifs with same for code inside to avoid branches inside for
@@ -738,184 +837,4 @@ std::string maxtree::to_string(enum maxtee_node_field field, bool colored, uint8
     if(colored)
         r+=terminal_color_string(RESET);
     return r;
-}
-
-
-std::string maxtree::string_borders(){
-    std::string ret="";
-    if(this->tile_borders->at(LEFT_BORDER)) ret+="Left ";
-    if(this->tile_borders->at(TOP_BORDER)) ret+="Top ";
-    if(this->tile_borders->at(RIGHT_BORDER)) ret+="Rigth ";
-    if(this->tile_borders->at(BOTTOM_BORDER)) ret+="Bottom ";
-    if(ret == "") ret+="No Borders";
-    return ret;
-}
-
-/* 
-std::vector<component> maxtree::components_at(Tpixel_value threshold){
-    return this->components[threshold];
-}
-std::vector<Tpixel_value> maxtree::all_thresholds(){
-    std::vector<Tpixel_value> ret;
-    for(auto t: this->components){
-        ret.push_back(t.first);
-    }
-    return ret;
-}
- */
-std::vector<maxtree_node*> maxtree::get_neighbours(uint64_t pixel, uint8_t con){
-    std::vector<maxtree_node*> v;
-    int64_t idx, pl, pc;
-    std::tie(pl, pc) = this->lin_col(pixel);
-    if(con == 4 || con == 8){
-        if(pl >= 1){
-            idx = index_of(pl-1, pc);
-            v.push_back(this->data->at(idx));
-        }
-        if(pl < (uint64_t)h - 1){
-            idx = index_of(pl+1, pc);
-            v.push_back(this->data->at(idx));
-        }
-        if(pc >= 1){
-            idx = index_of(pl, pc-1);
-            v.push_back(this->data->at(idx));
-        }
-        if(pc < (uint64_t)w - 1){
-            idx = index_of(pl, pc+1);
-            v.push_back(this->data->at(idx));
-        }
-    }
-    if(con == 8){
-        if(pl >= 1 && pc >=1){
-            idx = index_of(pl-1, pc-1);
-            v.push_back(this->data->at(idx));
-        }
-        if(pl < (uint64_t)h - 1 && pc < (uint64_t)w - 1){
-            idx = index_of(pl+1, pc+1);
-            v.push_back(this->data->at(idx));
-        }
-        if(pc >= 1 && pl < (uint64_t)h - 1){
-            idx = index_of(pl+1, pc-1);
-            v.push_back(this->data->at(idx));
-        }
-        if(pc < (uint64_t)w - 1 && pl >= 1){
-            idx = index_of(pl-1, pc+1);
-            v.push_back(this->data->at(idx));
-        }
-    }
-    return v;
-}
-
-
-/* void maxtree::filter(Tattribute lambda){
-    maxtree_node *aux, *p, *lr , *q, *r = this->root;
-
-    std::vector<maxtree_node *> stack;
-
-    if(r->attribute < lambda){
-        r->label = 0;//this->get_levelroot(this->at_pos(r->parent))->gval;
-    } else {
-        r->label = r->gval;
-    }
-    this->get_levelroot(r)
-    r->labeled = true;
-    uint64_t tot_labeled = 1;
-    uint64_t first_not_labeled=0;
-    p=this->at_pos(first_not_labeled);
-    while(first_not_labeled < this->get_size()){
-        p=this->at_pos(first_not_labeled);
-        if(p->attribute >= lambda){ 
-            p->label = p->gval;
-            p->labeled = true;
-        }else{ // p->atrribute < lambda and p is not labeled
-            lr = this->get_levelroot(p);
-            if(!lr->labeled){
-                if(lr->attribute >= lambda){
-                    lr->label = lr->gval;
-                    lr->labeled = true;
-                }else{// levelroot has no label and must be filtered off (attribute of component is not greater than lambda)
-                    while(!lr->labeled && lr->attribute < lambda){
-                        stack.push_back(lr);
-                        lr=this->get_parent(lr->idx);
-                    }
-                    //levelroot that pass on filter or labeled found in backward path
-                    if(!lr->labeled){
-                        lr->label = lr->gval;
-                        lr->labeled = true;
-                    }
-                    while(!stack.empty()){
-                        aux=stack.back();
-                        stack.pop_back();
-                        aux->label = lr->label;
-                        aux->labeled = true;
-
-                    }
-                }
-            }
-            p->label = lr->label;
-            p->labeled = true;
-        }
-        first_not_labeled++;
-    }
-} */
-
-
-/* void maxtree::filter(Tattribute lambda){
-    
-    maxtree_node *aux, *p, *q, *r = this->root;
-
-    std::vector<maxtree_node *> stack;
-
-    if(r->attribute < lambda){
-        r->label = 0//this->get_levelroot(this->at_pos(r->parent))->gval;
-    } else {
-        r->label = r->gval;
-    }
-    r->labeled = true;
-    for(uint64_t i=0; i < this->get_size(); i++){
-        p = this->at_pos(i);
-        stack.push_back(p);
-        while(!stack.empty()){
-            p = stack.back();
-            if(p->attribute > lambda){
-                p->label = p->gval;
-                p->labeled = true;
-                stack.pop_back();
-            }else{
-                q = this->get_parent(p->idx);
-                if(q){ 
-                    q = this->get_levelroot(q);
-                    if(q->gval <= p->gval){
-                        if(q->labeled){
-                            p->labeled = true;
-                            p->label = q->label;
-                            stack.pop_back();
-                        }else{
-                            stack.push_back(q);
-                        }
-                    }
-                }
-            }
-        }
-        
-    }
-} */
-
-
-void maxtree::save(std::string name, enum maxtee_node_field f){
-    
-    std::vector<uint8_t> data;
-    if(f == LABEL){
-        for(uint64_t i=0; i < this->get_size(); i++){
-            data.push_back((uint8_t) this->at_pos(i)->label);
-        }
-    }else if(f == GVAL){
-        for(uint64_t i=0; i < this->get_size(); i++){
-            data.push_back((uint8_t)this->at_pos(i)->gval);
-        }
-    }
-    vips::VImage out = vips::VImage::new_from_memory(data.data(), this->w * this->h * sizeof(uint8_t), this->w, this->h, 1, VIPS_FORMAT_UCHAR);
-
-    out.write_to_file(name.c_str());
-    
 }

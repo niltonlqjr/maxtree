@@ -14,7 +14,11 @@ glines=3
 gcolumns=5
 
 # print some information(true/false)
-verbose=false
+# verbose=false
+
+# print trees in output (can be used to create figures of merged trees with util/trees_logs2fig.py)
+print_only_trees=true
+
 # print information with colors (true/false)
 colored = false
 

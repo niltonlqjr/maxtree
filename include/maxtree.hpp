@@ -5,13 +5,14 @@
 #include <vector>
 #include <cinttypes>
 #include <sysexits.h>
+#include "const_enum_define.hpp"
+
+#ifndef __MAXTREE_HPP__
+#define __MAXTREE_HPP__
 
 #include "utils.hpp"
 #include "maxtree_node.hpp"
 #include "boundary_tree.hpp"
-
-#ifndef __MAXTREE_HPP__
-#define __MAXTREE_HPP__
 
 #define INQUEUE -2
 
@@ -58,7 +59,7 @@ class maxtree{
 
         int flood(int lambda, maxtree_node *r, std::vector<std::deque<maxtree_node*>> *hqueue, 
             std::vector<maxtree_node *> *levelroot, std::vector<maxtree_node*> &S);
-
+        void update_node_attr(maxtree_node *n, boundary_tree *bt);
         
     public:
         
@@ -76,9 +77,12 @@ class maxtree{
         std::tuple<uint32_t,uint32_t> lin_col(uint64_t index);
         maxtree_node *at_pos(int64_t h, int64_t w);
         maxtree_node *at_pos(int64_t index);
+        
 
         maxtree_node *get_parent(uint64_t node_idx);
 
+        void set_pixel(maxtree_node *p, int64_t idx);
+        // void set_pixel(maxtree_node &p, int64_t idx);
         void fill_from_VImage(vips::VImage &img, uint32_t global_nlines=0, uint32_t global_ncols=0);
         void fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t base_w,
                                uint32_t l_tiles, uint32_t c_tiles);
@@ -86,6 +90,8 @@ class maxtree{
 
         void insert_component(std::vector<int> component, int64_t parent, Tpixel_value threshold, uint64_t id=-1);
         void insert_component(component c, Tpixel_value threshold);
+        
+
         
         std::vector<component> components_at(Tpixel_value threshold);
         std::vector<Tpixel_value> all_thresholds();
@@ -101,13 +107,15 @@ class maxtree{
         void update_from_boundary_tree(boundary_tree *bt);
         boundary_tree *get_boundary_tree_no_overlap(uint8_t connectivity=4);
         
-        std::string to_string(enum maxtee_node_field field = PARENT,bool colored = true, uint8_t spaces = 5, uint8_t decimal = 0);
+        std::string to_string(enum maxtee_node_field field = PARENT,bool colored = false, uint8_t spaces = 5, uint8_t decimal = 0);
         std::string string_borders();
         
         /* filter a elements using boundary tree */
         void filter(Tattribute a, boundary_tree *bt);
         
         void filter(Tattribute a);
+
+        maxtree_node *up_tree_filter(maxtree_node *n, Tattribute lambda, boundary_tree *bt);
 
         uint64_t get_size();
         

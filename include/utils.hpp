@@ -27,7 +27,7 @@
 #define	COLOR_WHITE   "\033[0;37m"	
 #define COLOR_RESET   "\033[0m"
 
-const std::string COLORS[] = {COLOR_BLACK,
+const std::string COLORS[] = {COLOR_WHITE,
                               COLOR_RED,
                               COLOR_GREEN,
                               COLOR_YELLOW,
@@ -70,6 +70,8 @@ void print_stack(std::stack<maxtree_node*> s);
 
 bool is_blank(std::string s, std::vector<char> b = {' ', '\t', '\n', '\r'});
 
+std::string int_pair_to_string(std::pair<uint32_t, uint32_t> &p);
+
 std::string ltrim(std::string s, const std::string b = std::string(" \t\n\r"));
 
 std::string rtrim(std::string s, const std::string b = std::string(" \t\n\r"));
@@ -83,5 +85,10 @@ maxtree_node *min_gval(std::vector<maxtree_node*> *t);
 maxtree_node *min_gval(std::unordered_map<int, maxtree_node*> *t);
 
 void print_pq(std::priority_queue<maxtree_node*> pq);
+
+uint64_t get_levroot_pair_idx(std::unordered_map<int64_t, int64_t> &lrp, uint64_t idx);
+
+int64_t int_pow(int64_t base, int64_t exp);
+
 
 #endif

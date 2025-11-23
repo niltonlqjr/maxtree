@@ -4,25 +4,18 @@
 #include <iostream>
 #include <unordered_map>
 #include <sysexits.h>
+#include "const_enum_define.hpp"
+
+#ifndef __BOUNDARY_TREE_HPP__
+#define __BOUNDARY_TREE_HPP__
 
 #include "maxtree_node.hpp"
 #include "utils.hpp"
+#
 
-#ifndef __BOUNDARY_TREE__
-#define __BOUNDARY_TREE__
-
-#define NO_BORDER_LEVELROOT -1
-#define NO_BOUNDARY_PARENT -1
-#define NULL_IDX -1
-
-#define Tboundary_tree_lroot std::unordered_map<uint64_t, boundary_node*>
 class boundary_node;
 class boundary_tree;
 
-
-enum boundary_tree_field{
-    BOUNDARY_PARENT, MAXTREE_IDX, BOUNDARY_GVAL, BOUNDARY_BORDER_LR, BOUNDARY_GLOBAL_IDX, BOUNDARY_LABEL, BOUNDARY_ATTR, BOUNDARY_ALL_FIELDS
-};
 
 
 class boundary_node{
@@ -62,8 +55,9 @@ class boundary_tree{
         uint32_t w;
         uint32_t grid_i;
         uint32_t grid_j;
+        bool delete_nodes;
         
-        boundary_tree(uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j);
+        boundary_tree(uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j, bool dn=true);
         
         /*boundary_tree(std::vector<std::unordered_map<uint64_t, boundary_node *>*> *border_elements, 
              uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j);*/
@@ -125,9 +119,17 @@ class boundary_tree{
         bool is_root(uint64_t n_idx);
         
         /* merge two branches started at nodes this_node(from this tree) and t_node (from t tree) */
-        void merge_branches(boundary_node *x, boundary_node *y, std::unordered_map<uint64_t, bool> &accx, std::unordered_map<uint64_t, bool> &accy);
+        void merge_branches(boundary_node *x, boundary_node *y, 
+                            std::unordered_map<uint64_t, bool> &accx,
+                            std::unordered_map<uint64_t, bool> &accy,
+                            std::unordered_map<int64_t, int64_t> &levelroot_pairs);
         void merge_branches_gaz(boundary_node *x, boundary_node *y, std::unordered_map<uint64_t, bool> &acc);
         
+        void merge_branches_errado(boundary_node *x, boundary_node *y, 
+                                    std::unordered_map<uint64_t, bool> &accx,
+                                    std::unordered_map<uint64_t, bool> &accy,
+                                    std::unordered_map<int64_t, int64_t> &levelroot_pairs);
+
         /* get index given a position */
 
 
@@ -168,6 +170,9 @@ class boundary_tree{
 
         /* functions to help find bugs */
         bool search_cicle(int64_t s);
+
+        /* search for a node with attribute greater or equal than lambda */
+        maxtree_node *up_tree_filter(uint64_t gidx, Tattribute lambda);
 
 };
 
