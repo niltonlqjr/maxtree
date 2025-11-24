@@ -59,19 +59,19 @@ bool bag_of_tasks<Task>::get_task(Task &ret){
     
 }
 
-// template <class Task>
-// bool bag_of_tasks<Task>::get_task_by_position(Task &ret, int position){
-// /*     std::unique_lock<std::mutex> l(this->lock);
-//     if(this->num_task > 0 && position < this->tasks->size()){
-//         ret = this->at(position);
-//         this->tasks->remove_at(position);
-//         this->num_task--;
-//         this->no_task.notify_all();
-//         return true;
-//     }
-//     return false; */
-//     return false;
-// }
+template <class Task>
+bool bag_of_tasks<Task>::get_task_by_position(Task &ret, int position){
+    std::unique_lock<std::mutex> l(this->lock);
+    if(this->num_task > 0 && position < this->tasks->size()){
+        ret = this->at(position);
+        this->tasks->erase(this->tasks->begin() + position);
+        this->num_task--;
+        this->no_task.notify_all();
+        return true;
+    }
+    return false;
+    
+}
 
 template <class Task>
 template <class T> 
