@@ -4,7 +4,7 @@
 # the args names (lvalue) and values (rvalue) are preprocessed by a right trim and left trim
 
 # number of threads for the process 
-threads=12
+threads=2
 # grid lines
 glines=4
 # grid columns

@@ -3,12 +3,15 @@
 # blank lines also be ignored
 # the args names (lvalue) and values (rvalue) are preprocessed by a right trim and left trim
 
+
+# main server 
+server=10.1.1.2
 # number of threads for the process 
-threads=12
+threads=2
 # grid lines
-glines=4
+glines=3
 # grid columns
-gcolumns=4
+gcolumns=5
 
 # print some information(true/false)
 verbose=false
@@ -22,11 +25,7 @@ server = 10.1.1.2
 lambda=100000
 
 #output filename
-output=../output/parallel/8l8c/lambda_100000
+output=../output/parallel/3l5c/lambda_100000
 
 #output extension (only the libvips extensions)
 output_ext=png
-
-#generate the full image joining the tiles
-#join_image=true
-join_image=false

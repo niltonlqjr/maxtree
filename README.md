@@ -60,7 +60,7 @@ The variables TYPE and OPT can be used in those buildings.
     - Run sequential
         ```console
         $ cd parallel
-        $ ./exec/merge ../testes/dos_wp_bw.png ../configs/parallel_8l8c.txt
+        $ ./exec/merge ../testes/dos_wp_bw.png ../configs/parallel_8l8c_12th.txt
         ```
 
 Some configuration examples are available in [configs](configs/).
