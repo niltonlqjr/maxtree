@@ -395,16 +395,24 @@ void worker_search_pair(bag_of_tasks<boundary_tree_task *> &btrees_bag, bag_of_t
                     
                     if(!got_n){
                         btrees_bag.insert_task(btt);
-                    }else if (n->nb_distance == btt->nb_distance){
+                        // std::string s = "no neighbor" + std::to_string(btt->index.first) + "," + std::to_string(btt->index.second) + "\n";
+                        // std::cout << s;
+                    }else if (n->nb_distance.first == btt->nb_distance.first && n->nb_distance.second == btt->nb_distance.second){
 
                         if((merge_dir == MERGE_VERTICAL_BORDER) && (btt->bt->grid_j > n->bt->grid_j) ||
                            (merge_dir == MERGE_HORIZONTAL_BORDER) && (btt->bt->grid_i > n->bt->grid_i)){
-                            // std::cout << "swap btt with n\n";
+                            std::string s = "swap: " + int_pair_to_string(btt->index) + " and " + int_pair_to_string(n->index) + "\n";
+                            std::cout << s;
                             aux = btt;
                             btt = n;
                             n = aux;
                         }
-                        
+                        if(merge_dir == MERGE_HORIZONTAL_BORDER&& btt->bt->border_elements->at(BOTTOM_BORDER)->size() != n->bt->border_elements->at(TOP_BORDER)->size()){
+                            std::string s = int_pair_to_string(btt->index) + " and " + int_pair_to_string(n->index) + " borders differs in size\n";
+                            s += "distances:" + int_pair_to_string(btt->nb_distance) + " and " + int_pair_to_string(n->nb_distance) + "\n";
+                            std::cout << s;
+                        }
+
                         // s = "creating task with btt " + std::to_string(btt->bt->grid_i) + "," + std::to_string(btt->bt->grid_j) + "   ";
                         // s += "n: "  + std::to_string(n->bt->grid_i) + "," + std::to_string(n->bt->grid_j) + "distance ";
                         // s += int_pair_to_string(btt->nb_distance) +"\n";
@@ -412,11 +420,22 @@ void worker_search_pair(bag_of_tasks<boundary_tree_task *> &btrees_bag, bag_of_t
                         auto new_merge_task = new merge_btrees_task(btt->bt, n->bt, merge_dir, btt->nb_distance);
                         merge_bag.insert_task(new_merge_task);
                     }else{
-                        /* if(btt->next_merge_distance > n->next_merge_distance){
-                            n->next_merge_distance *= 2;
-                        }else if(n->next_merge_distance > btt->next_merge_distance){
-                            btt->next_merge_distance *= 2;
-                        } */
+                        // std::string s = "invalid distance:" + int_pair_to_string(btt->index) + " ->" + int_pair_to_string(btt->nb_distance) + "\n";
+                        // s+="invalid distance:" + int_pair_to_string(n->index) + " ->" + int_pair_to_string(n->nb_distance) + "\n=======\n";
+                        // std::cout << s;
+                        if(n->nb_distance.first == 0 && btt->nb_distance.first == 0){
+                            if(n->nb_distance.second > btt->nb_distance.second){
+                                btt->nb_distance.second = n->nb_distance.second;
+                            }else{
+                                n->nb_distance.second = btt->nb_distance.second;
+                            }
+                        }else if(n->nb_distance.second == 0 && btt->nb_distance.second == 0){
+                            if(n->nb_distance.first > btt->nb_distance.first){
+                                btt->nb_distance.first = n->nb_distance.first;
+                            }else{
+                                n->nb_distance.first = btt->nb_distance.first;
+                            }
+                        }
                         btrees_bag.insert_task(btt);
                         btrees_bag.insert_task(n);
                     }

@@ -203,7 +203,11 @@ uint64_t merge_btrees_task::size(){
 
 boundary_tree *merge_btrees_task::execute(){
     boundary_tree *new_btree;
-
+    // if(this->direction == MERGE_HORIZONTAL_BORDER){
+    //     if(this->bt1->border_elements->at(BOTTOM_BORDER)->size() != this->bt2->border_elements->at(TOP_BORDER)->size()){
+    //         return NULL;        
+    //     }
+    // }
     new_btree = this->bt1->merge(this->bt2, this->direction);
     new_btree->update_tree(new_btree);
     new_btree->compress_path();
