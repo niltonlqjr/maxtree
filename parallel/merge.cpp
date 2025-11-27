@@ -150,8 +150,7 @@ template<typename T>
 void wait_empty(bag_of_tasks<T> &b, uint64_t num_th);
 
 void verify_args(int argc, char *argv[]);
-void read_config(char conf_name[], 
-                 std::string &out_name, std::string &out_ext,
+void read_config(char conf_name[], std::string &input_name, std::string &out_name, std::string &out_ext,
                  uint32_t &glines, uint32_t &gcolumns, Tattribute &lambda,
                  uint8_t &pixel_connection, bool &colored, uint32_t &num_threads);
 void read_sequential_file(bag_of_tasks<input_tile_task*> &bag, vips::VImage *in, uint32_t glines, uint32_t gcolumns);
@@ -197,10 +196,9 @@ void wait_empty(bag_of_tasks<T> &b, uint64_t num_th){
 
 
 
-void read_config(char conf_name[], 
-                 std::string &out_name, std::string &out_ext, uint32_t &glines, uint32_t &gcolumns, 
-                 Tattribute &lambda, uint8_t &pixel_connection, bool &colored, uint32_t &num_threads,
-                bool &join_image){
+void read_config(char conf_name[], std::string &input_name, std::string &out_name, std::string &out_ext,
+                 uint32_t &glines, uint32_t &gcolumns, Tattribute &lambda, uint8_t &pixel_connection, 
+                 bool &colored, uint32_t &num_threads, bool &join_image){
     /*
         Reading configuration file
     */
@@ -209,6 +207,10 @@ void read_config(char conf_name[],
     
 
     auto configs = parse_config(conf_name);
+    input_name = "";
+    if(configs->find("input")!=configs->end()){
+        input_name = configs->at("input");
+    }
 
     if (configs->find("verbose") != configs->end()){
         if(configs->at("verbose") == "true"){
@@ -300,29 +302,29 @@ void worker_maxtree_calc(bag_of_tasks<input_tile_task *> &bag_tiles, bag_of_task
     input_tile_task *t;
     maxtree_task *mt;
     while(bag_tiles.is_running()){
-        // if(verbose){
-        //     std::ostringstream os("");
-        //     os << "thread " << std::this_thread::get_id() << " trying to get task\n";
-        //     std::string s = os.str();
-        //     std::cout << s;
-        // }
+        if(verbose){
+            std::ostringstream os("");
+            os << "thread " << std::this_thread::get_id() << " trying to get task\n";
+            std::string s = os.str();
+            std::cout << s;
+        }
         got_task=bag_tiles.get_task(t);
         if(got_task){
-            // if(verbose){
-            //     std::ostringstream os("");
-            //     os << "worker " <<  std::this_thread::get_id() << " got task " << t->i << ", " << t->j << " to calculate maxtree\n";
-            //     std::string s = os.str();
-            //     std::cout << s;
-            // }
+            if(verbose){
+                std::ostringstream os("");
+                os << "worker " <<  std::this_thread::get_id() << " got task " << t->i << ", " << t->j << " to calculate maxtree\n";
+                std::string s = os.str();
+                std::cout << s;
+            }
             mt = new maxtree_task(t);
             max_trees.insert_task(mt);
         }
-        // else if(verbose){
-        //     std::ostringstream os("");
-        //     os << "thread " << std::this_thread::get_id() << " couldnt get task\n";
-        //     std::string s = os.str();
-        //     std::cout << s; 
-        // }
+        if(verbose){
+            std::ostringstream os("");
+            os << "thread " << std::this_thread::get_id() << " couldnt get task\n";
+            std::string s = os.str();
+            std::cout << s; 
+        }
     }
 }
 
@@ -401,8 +403,10 @@ void worker_search_pair(bag_of_tasks<boundary_tree_task *> &btrees_bag, bag_of_t
 
                         if((merge_dir == MERGE_VERTICAL_BORDER) && (btt->bt->grid_j > n->bt->grid_j) ||
                            (merge_dir == MERGE_HORIZONTAL_BORDER) && (btt->bt->grid_i > n->bt->grid_i)){
-                            std::string s = "swap: " + int_pair_to_string(btt->index) + " and " + int_pair_to_string(n->index) + "\n";
-                            std::cout << s;
+                            if(verbose){
+                                std::string s = "swap: " + int_pair_to_string(btt->index) + " and " + int_pair_to_string(n->index) + "\n";
+                                std::cout << s;
+                            }
                             aux = btt;
                             btt = n;
                             n = aux;
@@ -420,22 +424,11 @@ void worker_search_pair(bag_of_tasks<boundary_tree_task *> &btrees_bag, bag_of_t
                         auto new_merge_task = new merge_btrees_task(btt->bt, n->bt, merge_dir, btt->nb_distance);
                         merge_bag.insert_task(new_merge_task);
                     }else{
-                        // std::string s = "invalid distance:" + int_pair_to_string(btt->index) + " ->" + int_pair_to_string(btt->nb_distance) + "\n";
-                        // s+="invalid distance:" + int_pair_to_string(n->index) + " ->" + int_pair_to_string(n->nb_distance) + "\n=======\n";
-                        // std::cout << s;
-                        // if(n->nb_distance.first == 0 && btt->nb_distance.first == 0){
-                        //     if(n->nb_distance.second > btt->nb_distance.second){
-                        //         btt->nb_distance.second = n->nb_distance.second;
-                        //     }else{
-                        //         n->nb_distance.second = btt->nb_distance.second;
-                        //     }
-                        // }else if(n->nb_distance.second == 0 && btt->nb_distance.second == 0){
-                        //     if(n->nb_distance.first > btt->nb_distance.first){
-                        //         btt->nb_distance.first = n->nb_distance.first;
-                        //     }else{
-                        //         n->nb_distance.first = btt->nb_distance.first;
-                        //     }
-                        // }
+                        if(verbose){
+                            std::string s = "invalid distance:" + int_pair_to_string(btt->index) + " ->" + int_pair_to_string(btt->nb_distance) + "\n";
+                            s+="invalid distance:" + int_pair_to_string(n->index) + " ->" + int_pair_to_string(n->nb_distance) + "\n=======\n";
+                            std::cout << s;
+                        }
                         btrees_bag.insert_task(n);
                         btrees_bag.insert_task(btt);
                     }
@@ -452,53 +445,30 @@ void worker_search_pair(bag_of_tasks<boundary_tree_task *> &btrees_bag, bag_of_t
             }else if (inside_rectangle(btt->index, GRID_DIMS)){ // the neighbor of btt is not inside the grid (it does not exist, so go to next merge)
                 if(btt->nb_distance.first == 0){
                     if(btt->nb_distance.second < GRID_DIMS.second){ //this tile doesn't need to merge, just try to found a neighbor further than the actual
-                        std::string s = int_pair_to_string(btt->index) + " line distance * 2 = "+ int_pair_to_string(btt->nb_distance) + "\n";
-                        std::cout << s;
+                        if(verbose){
+                            std::string s = int_pair_to_string(btt->index) + " line distance * 2 = "+ int_pair_to_string(btt->nb_distance) + "\n";
+                            std::cout << s;
+                        }
                         btt->nb_distance.second *= 2;
                     }else{ // there is no more neighbor on this line to merge, so this line must be merged with the other lines
-                        std::cout << "caso que eu acho q nao vai acontecer (linha).\n";
+                        
                         btt->nb_distance.first = 1; 
                         btt->nb_distance.second = 0;
                     }
                 }else if(btt->nb_distance.second == 0){
                     if(btt->nb_distance.first < GRID_DIMS.first){
-                        std::string s = int_pair_to_string(btt->index) + " column distance * 2 = "+ int_pair_to_string(btt->nb_distance) + "\n";
-                        std::cout << s;
+                        if(verbose){
+                            std::string s = int_pair_to_string(btt->index) + " column distance * 2 = "+ int_pair_to_string(btt->nb_distance) + "\n";
+                            std::cout << s;
+                        }
                         btt->nb_distance.first *= 2;
-                    }else{
-                        std::cout << "caso que eu acho q nao vai acontecer (coluna).\n";
                     }
                 }
-                btrees_bag.insert_task(btt);
-                
+                btrees_bag.insert_task(btt);   
             }
-            // else{  // the bounday tree in btt task is not inside grid, so its neighbor is.
-            //     if(n->nb_distance.first == 0){
-            //         if(n->nb_distance.second < GRID_DIMS.second){ //this tile doesn't need to merge, just try to found a neighbor further than the actual
-            //             std::string s = int_pair_to_string(n->index) + " line distance * 2 = "+ int_pair_to_string(n->nb_distance) + "\n";
-            //             std::cout << s;
-            //             n->nb_distance.second *= 2;
-            //         }else{ // there is no more neighbor on this line to merge, so this line must be merged with the other lines
-            //             std::cout << "caso que eu acho q nao vai acontecer (linha).\n";
-            //             n->nb_distance.first = 1; 
-            //             n->nb_distance.second = 0;
-            //         }
-            //     }else if(n->nb_distance.first == 0){
-            //         if(n->nb_distance.first < GRID_DIMS.first){
-            //             std::string s = int_pair_to_string(n->index) + " column distance * 2 = "+ int_pair_to_string(n->nb_distance) + "\n";
-            //             std::cout << s;
-            //             n->nb_distance.first *= 2;
-            //         }else{
-            //             std::cout << "caso que eu acho q nao vai acontecer (coluna).\n";
-            //         }
-            //     }
-
-            //     btrees_bag.insert_task(n);
-            // }
-            
         }
     }
-    std::cout << "end worker search pair\n";
+    if(verbose) std::cout << "end worker search pair\n";
 }
 void worker_merge_local(bag_of_tasks<merge_btrees_task *> &merge_bag, bag_of_tasks<boundary_tree_task *> &btrees_bag){
     merge_btrees_task *mbt;
@@ -510,24 +480,23 @@ void worker_merge_local(bag_of_tasks<merge_btrees_task *> &merge_bag, bag_of_tas
 
         bool got_mt = merge_bag.get_task(mbt);
         if(got_mt){
-            // if(verbose){
-            //     s = "-------------------TREE 1------------------\n";
-            //     // mbt->bt1->print_tree();
-            //     s+=mbt->bt1->border_to_string();
-            //     s+=mbt->bt1->lroot_to_string();
-            //     s+="\n-----------------------------------------------\n";
-            //     s = "-------------------TREE 2------------------\n";
-            //     // mbt->bt2->print_tree();
-            //     s+=mbt->bt2->border_to_string();
-            //     s+=mbt->bt2->lroot_to_string();
-            //     s+="\n-----------------------------------------------\n";
-            //     // std::cout << s;
-            // }
-            // if(mbt->bt1 != mbt->bt2){        
-            // std::cout << s;
-            s = "task will merge: " + std::to_string(mbt->bt1->grid_i) + ", " + std::to_string(mbt->bt1->grid_j) ;
-            s += " with " + std::to_string(mbt->bt2->grid_i) + ", " + std::to_string(mbt->bt2->grid_j) + " \n";
-            std::cout << s;
+            if(verbose){
+                s = "-------------------TREE 1------------------\n";
+                // mbt->bt1->print_tree();
+                s+=mbt->bt1->border_to_string();
+                s+=mbt->bt1->lroot_to_string();
+                s+="\n-----------------------------------------------\n";
+                s = "-------------------TREE 2------------------\n";
+                // mbt->bt2->print_tree();
+                s+=mbt->bt2->border_to_string();
+                s+=mbt->bt2->lroot_to_string();
+                s+="\n-----------------------------------------------\n";
+                // std::cout << s;
+                std::cout << s;
+                s = "task will merge: " + std::to_string(mbt->bt1->grid_i) + ", " + std::to_string(mbt->bt1->grid_j) ;
+                s += " with " + std::to_string(mbt->bt2->grid_i) + ", " + std::to_string(mbt->bt2->grid_j) + " \n";
+                std::cout << s;
+            }
             nbt = mbt->execute();
             
             dist.second = (mbt->bt2->grid_j - mbt->bt1->grid_j) * 2;
@@ -536,24 +505,27 @@ void worker_merge_local(bag_of_tasks<merge_btrees_task *> &merge_bag, bag_of_tas
                 dist.first = 1;
                 dist.second = 0;
             }else if(dist.second == 0 && dist.first >= GRID_DIMS.first){
-                // std::string s = "ending  merge --- dist:" + int_pair_to_string(dist) + " " ;
-                // s += std::to_string(mbt->bt1->grid_i) + ", " + std::to_string(mbt->bt1->grid_j) ;
-                // s += " with " + std::to_string(mbt->bt2->grid_i) + ", " + std::to_string(mbt->bt2->grid_j) + "\n";
-                // std::cout << s;
+                if(verbose){
+                    std::string s = "ending  merge --- dist:" + int_pair_to_string(dist) + " " ;
+                    s += std::to_string(mbt->bt1->grid_i) + ", " + std::to_string(mbt->bt1->grid_j) ;
+                    s += " with " + std::to_string(mbt->bt2->grid_i) + ", " + std::to_string(mbt->bt2->grid_j) + "\n";
+                    std::cout << s;
+                }
                 merge_bag.notify_end();
                 btrees_bag.notify_end();
             }
 
-            // if(verbose) nbt->print_tree();
+            if(verbose) nbt->print_tree();
             btt = new boundary_tree_task(nbt, dist);
-            // s += " task inserted with index:" + std::to_string(btt->bt->grid_i) + ", " + std::to_string(btt->bt->grid_j);
-            // s += " and distance " + int_pair_to_string(btt->nb_distance) + "\n";
-            // std::cout << s;
-            
+            if(verbose){
+                s += " task inserted with index:" + std::to_string(btt->bt->grid_i) + ", " + std::to_string(btt->bt->grid_j);
+                s += " and distance " + int_pair_to_string(btt->nb_distance) + "\n";
+                std::cout << s;
+            }
             btrees_bag.insert_task(btt);
         }
     }
-    std::cout << "end worker local merge\n";
+    if(verbose)std::cout << "end worker local merge\n";
 }
 
 
@@ -561,22 +533,26 @@ void worker_update_filter(bag_of_tasks<maxtree_task *> &src, bag_of_tasks<maxtre
     bool got_task;
     maxtree_task *mtt;
     std::string s;
-    std::cout << "worker update\n";
+    if(verbose) std::cout << "worker update\n";
     while(src.is_running()){
         got_task = src.get_task(mtt);
         // s = "updating (" + std::to_string(mtt->mt->grid_i) + "," + std::to_string(mtt->mt->grid_j) + ") \n";
         // std::cout << s;
-        mtt->mt->update_from_boundary_tree(global_bt);
-        dest.insert_task(mtt);
-        mtt->mt->filter(lambda, global_bt);
-        // s = "task of grid (" + std::to_string(mtt->mt->grid_i) + "," + std::to_string(mtt->mt->grid_j) + ") update\n";
-        // std::cout << s;
+        if(got_task){
+            mtt->mt->update_from_boundary_tree(global_bt);
+            dest.insert_task(mtt);
+            mtt->mt->filter(lambda, global_bt);
+        }
+        if(verbose) {
+            s = "task of grid (" + std::to_string(mtt->mt->grid_i) + "," + std::to_string(mtt->mt->grid_j) + ") update\n";
+            std::cout << s;
+        }
     }
 }
 
 int main(int argc, char *argv[]){
     vips::VImage *in;
-    std::string out_name, out_ext;
+    std::string out_name, out_ext, input_name;
     
     uint32_t glines, gcolumns;
     uint8_t pixel_connection;
@@ -593,9 +569,26 @@ int main(int argc, char *argv[]){
     bag_of_tasks<merge_btrees_task *> merge_bag;
 
     std::vector<std::thread*> threads_g1, threads_g2, threads_g3, threads_g4;
+    if(argc < 2){
+        std::cout << "usage:" << argv[0] << "<configuration file> [input image] [output prefix name]\n"
+                  << "ps: input image must have it extension\n"
+                  << "    the input image and output prefix can be specifyed at configuration file"
+                  << "    when these information were passed in command line, the configuration file values will be ignored\n";
+        exit(EX_USAGE); 
+    }
+    // verify_args(argc, argv);
+    read_config(argv[1], input_name, out_name, out_ext, glines, gcolumns, lambda, pixel_connection, colored, num_th, join_image);
 
-    verify_args(argc, argv);
-    read_config(argv[2], out_name, out_ext, glines, gcolumns, lambda, pixel_connection, colored, num_th, join_image);
+    if(argc >= 3){
+        input_name = argv[2];
+    }else if(input_name == ""){
+        std::cout << "input file not defined, please, define it in config file or in command line.";
+        exit(EX_NOINPUT);
+    }
+
+    if(argc >= 4){
+        out_name = argv[3];
+    }
 
     GRID_DIMS = std::make_pair(glines,gcolumns);
 
@@ -605,7 +598,7 @@ int main(int argc, char *argv[]){
     // SEE VIPS_CONCURRENCY
     // check https://github.com/libvips/libvips/discussions/4063 for improvements on read
     in = new vips::VImage(
-            vips::VImage::new_from_file(argv[1],
+            vips::VImage::new_from_file(input_name.c_str(),
             VImage::option()->set ("access",  VIPS_ACCESS_SEQUENTIAL)
         )
     );
@@ -677,7 +670,7 @@ int main(int argc, char *argv[]){
     
     maxtree_tiles.start();
     for(uint32_t i = 0; i < num_th; i++){
-        std::cout << "Creating thread\n";
+        
         threads_g3.push_back(new std::thread(worker_update_filter, std::ref(maxtree_tiles), std::ref(updated_trees),  btree_final_task->bt, lambda));
     }
     // std::cout << "waiting end of update\n";
@@ -687,7 +680,7 @@ int main(int argc, char *argv[]){
         threads_g3[i]->join();
         delete threads_g3[i];
     }
-    // std::cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>> update done <<<<<<<<<<<<<<<<<<<<<<<<<<<\n";
+     std::cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>> update done <<<<<<<<<<<<<<<<<<<<<<<<<<<\n";
 
     // vips::VImage end_img;
     // end_img.new_from_memory_copy(in->data(), sizof(Tpixel_value), in->width(), in->height(), 1,  VIPS_FORMAT_UCHAR);

@@ -22,7 +22,7 @@ server = 10.1.1.2
 lambda=100000
 
 #input filename
-input=../testes/dos_wp_bw.png 
+input=../testes/dos_wp_bw.png
 
 #output filename
 output=../output/parallel/8l8c/lambda_100000

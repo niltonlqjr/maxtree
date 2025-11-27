@@ -49,18 +49,27 @@ The variables TYPE and OPT can be used in those buildings.
 
 #### Run
 
-- To run you must pass the input image and the configuration file (in this order):
+- To run you must pass the the configuration file (optional arguments are input file and output prefix name):
+
+    - Run parallel
+        ```console
+        $ cd parallel
+        $ ./exec/merge example_config.txt
+        ```
+        ```console
+        $ cd parallel
+        $ ./exec/merge example_config.txt ../testes/dos_wp_bw.png 
+        ```
+        ```console
+        $ cd parallel
+        $ ././exec/merge example_config.txt ../testes/dos_wp_bw.png output_prefix
 
     - Run sequential 
         ```console
         $ cd sequential/flood
-        $ ./exec/recursive ../../testes/dos_wp_bw.png ../../configs/sequential_rec.txt
+        $ ./exec/recursive ../../testes/dos_wp_bw.png  ../../configs/sequential_rec.txt
         ```
 
-    - Run sequential
-        ```console
-        $ cd parallel
-        $ ./exec/merge ../testes/dos_wp_bw.png ../configs/parallel_8l8c_12th.txt
-        ```
+
 
 Some configuration examples are available in [configs](configs/).
