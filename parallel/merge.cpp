@@ -423,21 +423,21 @@ void worker_search_pair(bag_of_tasks<boundary_tree_task *> &btrees_bag, bag_of_t
                         // std::string s = "invalid distance:" + int_pair_to_string(btt->index) + " ->" + int_pair_to_string(btt->nb_distance) + "\n";
                         // s+="invalid distance:" + int_pair_to_string(n->index) + " ->" + int_pair_to_string(n->nb_distance) + "\n=======\n";
                         // std::cout << s;
-                        if(n->nb_distance.first == 0 && btt->nb_distance.first == 0){
-                            if(n->nb_distance.second > btt->nb_distance.second){
-                                btt->nb_distance.second = n->nb_distance.second;
-                            }else{
-                                n->nb_distance.second = btt->nb_distance.second;
-                            }
-                        }else if(n->nb_distance.second == 0 && btt->nb_distance.second == 0){
-                            if(n->nb_distance.first > btt->nb_distance.first){
-                                btt->nb_distance.first = n->nb_distance.first;
-                            }else{
-                                n->nb_distance.first = btt->nb_distance.first;
-                            }
-                        }
-                        btrees_bag.insert_task(btt);
+                        // if(n->nb_distance.first == 0 && btt->nb_distance.first == 0){
+                        //     if(n->nb_distance.second > btt->nb_distance.second){
+                        //         btt->nb_distance.second = n->nb_distance.second;
+                        //     }else{
+                        //         n->nb_distance.second = btt->nb_distance.second;
+                        //     }
+                        // }else if(n->nb_distance.second == 0 && btt->nb_distance.second == 0){
+                        //     if(n->nb_distance.first > btt->nb_distance.first){
+                        //         btt->nb_distance.first = n->nb_distance.first;
+                        //     }else{
+                        //         n->nb_distance.first = btt->nb_distance.first;
+                        //     }
+                        // }
                         btrees_bag.insert_task(n);
+                        btrees_bag.insert_task(btt);
                     }
                 }
                 catch(std::runtime_error &e){
@@ -449,11 +449,52 @@ void worker_search_pair(bag_of_tasks<boundary_tree_task *> &btrees_bag, bag_of_t
                 }catch(std::out_of_range &r){
                     std::cerr << "try to access an out of range element\n";
                 }
-            }else if (inside_rectangle(btt->index, GRID_DIMS)){ // the neighbor of btt is not inside the grid
+            }else if (inside_rectangle(btt->index, GRID_DIMS)){ // the neighbor of btt is not inside the grid (it does not exist, so go to next merge)
+                if(btt->nb_distance.first == 0){
+                    if(btt->nb_distance.second < GRID_DIMS.second){ //this tile doesn't need to merge, just try to found a neighbor further than the actual
+                        std::string s = int_pair_to_string(btt->index) + " line distance * 2 = "+ int_pair_to_string(btt->nb_distance) + "\n";
+                        std::cout << s;
+                        btt->nb_distance.second *= 2;
+                    }else{ // there is no more neighbor on this line to merge, so this line must be merged with the other lines
+                        std::cout << "caso que eu acho q nao vai acontecer (linha).\n";
+                        btt->nb_distance.first = 1; 
+                        btt->nb_distance.second = 0;
+                    }
+                }else if(btt->nb_distance.second == 0){
+                    if(btt->nb_distance.first < GRID_DIMS.first){
+                        std::string s = int_pair_to_string(btt->index) + " column distance * 2 = "+ int_pair_to_string(btt->nb_distance) + "\n";
+                        std::cout << s;
+                        btt->nb_distance.first *= 2;
+                    }else{
+                        std::cout << "caso que eu acho q nao vai acontecer (coluna).\n";
+                    }
+                }
                 btrees_bag.insert_task(btt);
-            }else{  // the bounday tree in btt task is not inside grid
-                btrees_bag.insert_task(n);
+                
             }
+            // else{  // the bounday tree in btt task is not inside grid, so its neighbor is.
+            //     if(n->nb_distance.first == 0){
+            //         if(n->nb_distance.second < GRID_DIMS.second){ //this tile doesn't need to merge, just try to found a neighbor further than the actual
+            //             std::string s = int_pair_to_string(n->index) + " line distance * 2 = "+ int_pair_to_string(n->nb_distance) + "\n";
+            //             std::cout << s;
+            //             n->nb_distance.second *= 2;
+            //         }else{ // there is no more neighbor on this line to merge, so this line must be merged with the other lines
+            //             std::cout << "caso que eu acho q nao vai acontecer (linha).\n";
+            //             n->nb_distance.first = 1; 
+            //             n->nb_distance.second = 0;
+            //         }
+            //     }else if(n->nb_distance.first == 0){
+            //         if(n->nb_distance.first < GRID_DIMS.first){
+            //             std::string s = int_pair_to_string(n->index) + " column distance * 2 = "+ int_pair_to_string(n->nb_distance) + "\n";
+            //             std::cout << s;
+            //             n->nb_distance.first *= 2;
+            //         }else{
+            //             std::cout << "caso que eu acho q nao vai acontecer (coluna).\n";
+            //         }
+            //     }
+
+            //     btrees_bag.insert_task(n);
+            // }
             
         }
     }
@@ -484,11 +525,11 @@ void worker_merge_local(bag_of_tasks<merge_btrees_task *> &merge_bag, bag_of_tas
             // }
             // if(mbt->bt1 != mbt->bt2){        
             // std::cout << s;
-            // s = "task will merge: " + std::to_string(mbt->bt1->grid_i) + ", " + std::to_string(mbt->bt1->grid_j) ;
-            // s += " with " + std::to_string(mbt->bt2->grid_i) + ", " + std::to_string(mbt->bt2->grid_j) + " ---";
-            
+            s = "task will merge: " + std::to_string(mbt->bt1->grid_i) + ", " + std::to_string(mbt->bt1->grid_j) ;
+            s += " with " + std::to_string(mbt->bt2->grid_i) + ", " + std::to_string(mbt->bt2->grid_j) + " \n";
+            std::cout << s;
             nbt = mbt->execute();
-
+            
             dist.second = (mbt->bt2->grid_j - mbt->bt1->grid_j) * 2;
             dist.first = (mbt->bt2->grid_i - mbt->bt1->grid_i) * 2;
             if(dist.second >= GRID_DIMS.second){
