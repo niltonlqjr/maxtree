@@ -47,6 +47,9 @@ enum maxtee_node_field {
 enum borders{
     LEFT_BORDER,    TOP_BORDER,     RIGHT_BORDER,   BOTTOM_BORDER
 };
+enum save_type{
+    NO_SAVE, SPLIT_IMAGE, FULL_IMAGE, SPLIT_AND_FULL_IMAGE 
+};
 static const std::vector<enum borders> TBordersVector({
     LEFT_BORDER,    TOP_BORDER,     RIGHT_BORDER,   BOTTOM_BORDER
 });

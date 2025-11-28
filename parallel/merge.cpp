@@ -198,7 +198,7 @@ void wait_empty(bag_of_tasks<T> &b, uint64_t num_th){
 
 void read_config(char conf_name[], std::string &input_name, std::string &out_name, std::string &out_ext,
                  uint32_t &glines, uint32_t &gcolumns, Tattribute &lambda, uint8_t &pixel_connection, 
-                 bool &colored, uint32_t &num_threads, bool &join_image){
+                 bool &colored, uint32_t &num_threads, enum save_type &out_save_type){
     /*
         Reading configuration file
     */
@@ -261,10 +261,12 @@ void read_config(char conf_name[], std::string &input_name, std::string &out_nam
         num_threads = std::stoi(configs->at("threads"));
     }
     
-    join_image = false;
+    out_save_type = FULL_IMAGE;
     if(configs->find("join_image") != configs->end()){
-        if(configs->at("join_image") == "true"){
-            join_image = true;
+        if(configs->at("join_image") == "save_split"){
+            out_save_type = SPLIT_IMAGE;
+        }else if(configs->at("join_image") == "no_save"){
+            out_save_type = NO_SAVE;
         }
     }
 
@@ -558,7 +560,7 @@ int main(int argc, char *argv[]){
     uint8_t pixel_connection;
     uint32_t num_th;
     bool colored;
-    bool join_image;
+    enum save_type out_save_type;
     Tattribute lambda=2;
     maxtree *t;
     input_tile_task *tile;
@@ -577,7 +579,7 @@ int main(int argc, char *argv[]){
         exit(EX_USAGE); 
     }
     // verify_args(argc, argv);
-    read_config(argv[1], input_name, out_name, out_ext, glines, gcolumns, lambda, pixel_connection, colored, num_th, join_image);
+    read_config(argv[1], input_name, out_name, out_ext, glines, gcolumns, lambda, pixel_connection, colored, num_th, out_save_type);
 
     if(argc >= 3){
         input_name = argv[2];
@@ -696,8 +698,10 @@ int main(int argc, char *argv[]){
             // std::cout << mtt->mt->grid_i << "," << mtt->mt->grid_j << "\n";
             // mtt->mt->filter(lambda, btree_final_task->bt);
             std::string name = out_name + "_" + std::to_string(mtt->mt->grid_i) + "-" + std::to_string(mtt->mt->grid_j) + "." + out_ext;
-            mtt->mt->save(name);
-            if(join_image){
+            if(out_save_type == SPLIT_IMAGE){
+                mtt->mt->save(name);
+            }
+            if(out_save_type == FULL_IMAGE){
                 for(int n = 0; n < mtt->mt->get_size(); n++){
                     maxtree_node *pix = mtt->mt->at_pos(n);
                     final_image->set_pixel(pix, pix->global_idx);
@@ -705,7 +709,7 @@ int main(int argc, char *argv[]){
             }
         }
     }
-    if(join_image){
+    if(out_save_type == FULL_IMAGE){
         final_image->save(out_name+"."+out_ext);
     }
 }

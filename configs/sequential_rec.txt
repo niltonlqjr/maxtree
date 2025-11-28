@@ -15,4 +15,4 @@ server = 10.1.1.2
 lambda=100000
 
 #output filename
-output=../../output/sequential/lambda_100000_rec.png
+output=lambda_100000_rec.png
