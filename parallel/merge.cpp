@@ -18,6 +18,7 @@
 #include "const_enum_define.hpp"
 #include "utils.hpp"
 #include "bag_of_task.hpp"
+#include "worker.hpp"
 #include "tasks.hpp"
 
 using namespace vips;
@@ -569,6 +570,8 @@ int main(int argc, char *argv[]){
     bag_of_tasks<maxtree_task*> maxtree_tiles_pre_btree, maxtree_tiles, updated_trees;
     bag_of_tasks<boundary_tree_task *> boundary_bag, boundary_bag_aux;
     bag_of_tasks<merge_btrees_task *> merge_bag;
+
+
 
     std::vector<std::thread*> threads_g1, threads_g2, threads_g3, threads_g4;
     if(argc < 2){
