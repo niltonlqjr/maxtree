@@ -11,6 +11,10 @@
 #define Tpixel_value uint8_t
 #define Tpixel_NULL 0
 #define Tboundary_tree_lroot std::unordered_map<uint64_t, boundary_node*>
+#define Tprocess_power double
+
+
+
 enum neighbor_direction{
     NB_AT_BOTTOM = 0, 
     NB_AT_RIGHT = 1, 

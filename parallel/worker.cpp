@@ -15,3 +15,8 @@ worker::~worker(){
 void worker::set_attr(std::string attr_name, double attr_val){
     (*this->attr)[attr_name] = attr_val;
 }
+
+Tprocess_power worker::get_process_power(){
+    return 0;
+}
+
