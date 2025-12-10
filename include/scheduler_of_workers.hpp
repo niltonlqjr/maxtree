@@ -1,5 +1,6 @@
 #include <unordered_map>
-
+#include <mutex>
+#include <condition_variable>
 #include "heap.hpp"
 
 #ifndef __SCHEDULER_OF_WORKERS_HPP__
@@ -10,6 +11,8 @@
 template <class Worker>
 class scheduler_of_workers{
     private:
+        std::mutex lock;
+        std::condition_variable cv;
         max_heap<Worker> *workers;
         uint64_t total_workers;
         uint64_t free_workers;
@@ -30,6 +33,7 @@ scheduler_of_workers<Worker>::scheduler_of_workers(){
 
 template <class Worker>
 void scheduler_of_workers<Worker>::insert_worker(Worker w){
+    std::lock_guard(this->lock);
     this->workers->insert(w);
     this->total_workers++;
     this->free_workers++;
@@ -42,6 +46,7 @@ if all workers are busy, it throws std::range_error
 */
 template <class Worker>
 Worker scheduler_of_workers<Worker>::get_best_worker(){
+    std::lock_guard(this->lock);
     if(this->total_workers == 0){
         throw std::length_error;
     }
@@ -57,7 +62,12 @@ Worker scheduler_of_workers<Worker>::get_best_worker(){
 
 template <class Worker>
 void scheduler_of_workers<Worker>::finish_worker(Worker w){
-    
+    for(int64_t i=0; i < this->workers->size(); i++){
+        auto worker = this->at(i);
+        if(worker == w){
+            this->workers->remove_at(i);
+        }
+    }
 }
 
 

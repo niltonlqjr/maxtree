@@ -1,5 +1,6 @@
 #include <cinttypes>
 #include <condition_variable>
+#include <mutex>
 #include <deque>
 
 #ifndef __BAG_OF_TASK_HPP__

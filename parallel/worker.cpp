@@ -17,6 +17,6 @@ void worker::set_attr(std::string attr_name, double attr_val){
 }
 
 Tprocess_power worker::get_process_power(){
-    return 0;
+    return 1;//this->attr->at("MHZ") * this->attr->at("NUMPROC");
 }
 
