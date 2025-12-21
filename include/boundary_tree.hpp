@@ -77,7 +77,7 @@ class boundary_tree{
         /* get node with global_idx at tree structure (boundary_tree_lroot)*/
         boundary_node *get_border_node(int64_t global_idx);
         
-
+        
         /* get a border from boundary tree*/
         // std::vector<boundary_node *> *get_border(enum borders b);
         std::vector<uint64_t> *get_border(enum borders b);
@@ -89,6 +89,7 @@ class boundary_tree{
         /* return a copy of the of this boundary tree (copy boundary nodes but keeps maxtree_nodes references)*/
         boundary_tree *get_copy(bool deepcopy = false);
         
+
         
 
         /* get the levelroot of the bounday_node with global_idx */
@@ -141,6 +142,12 @@ class boundary_tree{
 
         /* compress the path to remove duplicated levelroots after merge*/
         void compress_path();
+        
+        //serialize  boundary tree to send through network
+        void serialize();//https://github.com/jl2922/hps
+
+        //deserialize a boundary tree recieved from network
+        void deserialize();//https://github.com/jl2922/hps
 
         /* return number of nodes in boundary_tree_lroot */
         uint64_t get_lroot_tree_size();

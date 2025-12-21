@@ -1369,6 +1369,16 @@ void boundary_tree::compress_path(){
 }
 
 
+//serialize  boundary tree to send through network
+void serialize(){
+    //https://github.com/jl2922/hps
+}
+
+//deserialize a boundary tree recieved from network
+void deserialize(){
+    //https://github.com/jl2922/hps
+}
+
 void boundary_tree::update_borders(){
     /* boundary_node *e_parent;
     for(int i=0; i<NamesBordersVector.size(); i++){

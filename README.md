@@ -1,8 +1,10 @@
 ### Maxtree parallel implementations
 
 #### Prerequisites
-- libvips [libvips.org](https://www.libvips.org/)
+- libvips: [libvips.org](https://www.libvips.org/)
 - C++11 Compiler (tested on g++ 13.3.0)
+- ZeroMQ: [zeromq.org](https://zeromq.org/)
+    - [How to get](http://wiki.zeromq.org/intro:get-the-software)
 
 #### Docker ready to use
 
