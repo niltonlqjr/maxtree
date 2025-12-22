@@ -4,6 +4,8 @@
 #include "utils.hpp"
 #include "workers.hpp"
 #include "scheduler_of_workers.hpp"
+#include "const_enum_define.hpp"
+#include "message.hpp"
 
 void read_config(char conf_name[], std::string &port, std::string &protocol);
 
@@ -20,6 +22,10 @@ void read_config(char conf_name[], std::string &port, std::string &protocol){
     }
 }
 
+void manager_recv(scheduler_of_workers<worker *> *pool_of_workers, zmq::socket_t &s){
+    
+}
+
 
 int main(int argc, char *argv[]){
     scheduler_of_workers<worker *> *pool_of_workers;
@@ -34,6 +40,8 @@ int main(int argc, char *argv[]){
     zmq::socket_t socket (context, zmq::socket_type::rep);
     std::string address = protocol+"://*"+port;
     socket.bind(address);
+    zmq::message_t request;
+    s.recv(request);
 
 
 }

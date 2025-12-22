@@ -18,7 +18,7 @@
 #include "const_enum_define.hpp"
 #include "utils.hpp"
 #include "bag_of_task.hpp"
-#include "worker.hpp"
+#include "workers.hpp"
 #include "tasks.hpp"
 
 using namespace vips;

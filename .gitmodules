@@ -1,0 +1,3 @@
+[submodule "hps"]
+	path = hps
+	url = https://github.com/jl2922/hps.git

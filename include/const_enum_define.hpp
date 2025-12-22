@@ -61,4 +61,9 @@ static const std::vector<std::string> NamesBordersVector({
     "LEFT_BORDER",  "TOP_BORDER",   "RIGHT_BORDER", "BOTTOM_BORDER"
 });
 
+enum message_type{
+    MSG_REGISTRY,
+    MSG_BOUNDARY_TREE
+};
+
 #endif
