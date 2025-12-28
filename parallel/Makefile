@@ -7,13 +7,18 @@ maxtree_dir=../include
 boundary_tree_dir=../include
 utils_dir=../include
 heap_dir=../include
-hps_dir=../hps/src
+hps_dir=../hps
 
 
 tasks_dir=.
+message_dir=.
+workers_dir=.
+
 
 
 vips_args = `pkg-config vips-cpp --cflags --libs`
+zmq_args = `pkg-config libzmq --cflags --libs`
+
 
 ifeq (${TYPE},R)
 	OBJ_CPP_FLAGS=-c 
@@ -33,10 +38,12 @@ grow_name=grow_region
 
 source_grow=${grow_name}.cpp
 source_merge=${merge_name}.cpp
-source_merge_name_manager=${merge_name_manager}.cpp
+source_merge_manager=${merge_name_manager}.cpp
 source_merge_work=${merge_name_work}.cpp
 source_merge_s=${merge_s_name}.cpp
 source_divide=${divide_name}.cpp
+
+
 
 dest_grow = exec/${grow_name}
 dest_divide = exec/${divide_name}
@@ -68,29 +75,33 @@ all: ${dest_merge}
 
 ${dest_merge}: ${dest_merge_work} ${merge_name_manager} 
 
-${dest_merge_work}:base tasks.o
+${dest_merge_work}:base tasks.o message.o workers.o
 	@mkdir -p exec
-	g++ ${OPT} ${EXE_CPP_FLAGS} ${source_merge} \
+	g++ ${OPT} ${EXE_CPP_FLAGS} ${source_merge_work} \
 		${utils_dir}/utils.o \
 	 	${maxtree_node_dir}/maxtree_node.o \
 		${maxtree_dir}/maxtree.o \
 		${boundary_tree_dir}/boundary_tree.o \
 		${tasks_dir}/tasks.o \
+		${message_dir}/message.o \
+		${workers_dir}/workers.o \
 		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} -I${heap_dir} \
 		-I${hps_dir} \
-		${vips_args} -o ${dest_merge_work}
+		${vips_args} ${zmq_args} -o ${dest_merge_work}
 
-${merge_name_manager}:base tasks.o
+${merge_name_manager}:base tasks.o message.o workers.o
 	@mkdir -p exec
-	g++ ${OPT} ${EXE_CPP_FLAGS} ${source_merge} \
+	g++ ${OPT} ${EXE_CPP_FLAGS} ${source_merge_manager} \
 		${utils_dir}/utils.o \
 	 	${maxtree_node_dir}/maxtree_node.o \
 		${maxtree_dir}/maxtree.o \
 		${boundary_tree_dir}/boundary_tree.o \
 		${tasks_dir}/tasks.o \
+		${message_dir}/message.o \
+		${workers_dir}/workers.o \
 		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} -I${heap_dir} \
 		-I${hps_dir} \
-		${vips_args} -o ${merge_name_manager}
+		${vips_args} ${zmq_args} -o ${dest_merge_manager}
 
 
 
@@ -138,7 +149,13 @@ ${dest_grow}: base
 
 
 tasks.o: ${tasks_dir}/tasks.cpp ${tasks_dir}/tasks.hpp
-	g++ ${OBJ_CPP_FLAGS} ${tasks_dir}/tasks.cpp -I${tasks_dir} -I${maxtree_dir} ${vips_args} -o ${tasks_dir}/tasks.o
+	g++ ${OBJ_CPP_FLAGS} ${tasks_dir}/tasks.cpp -I${tasks_dir} -I${maxtree_dir} -I${hps_dir} ${vips_args}  -o ${tasks_dir}/tasks.o
+
+message.o: ${message_dir}/message.cpp ${message_dir}/message.hpp
+	g++ ${OBJ_CPP_FLAGS} ${message_dir}/message.cpp -I${message_dir} -I${maxtree_dir} -I${hps_dir} ${vips_args} -o ${message_dir}/message.o
+
+workers.o: ${workers_dir}/workers.cpp ${workers_dir}/workers.hpp
+	g++ ${OBJ_CPP_FLAGS} ${workers_dir}/workers.cpp -I${workers_dir} -I${maxtree_dir} -I${hps_dir} ${vips_args} -o ${workers_dir}/workers.o
 
 base: 
 	export TYPE=${TYPE}

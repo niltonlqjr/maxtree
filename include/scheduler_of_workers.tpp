@@ -1,6 +1,6 @@
 template <class Worker>
 scheduler_of_workers<Worker>::scheduler_of_workers(){
-    this->workers = new max_heap();
+    this->workers = new max_heap<Worker>();
     this->free_workers = 0;
     this->total_workers = 0;
 }
@@ -22,16 +22,17 @@ template <class Worker>
 Worker scheduler_of_workers<Worker>::get_best_worker(){
     std::lock_guard(this->lock);
     if(this->total_workers == 0){
-        throw std::length_error;
+        throw std::length_error("total workers equals 0");
     }
     if(this->free_workers > 0){
         Worker r = this->workers->at(0);
         this->workers->remove_at(0);
         this->free_workers--;
+        return r;
     }else{
-        throw std::range_error;
+        throw std::range_error("not free workers");
     }
-    return r;
+    
 }
 
 template <class Worker>

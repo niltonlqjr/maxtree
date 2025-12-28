@@ -1,0 +1,40 @@
+
+# comments will be ignored, and every comment must start the line with # (it can't have any char before, not even a blank space)
+# blank lines also be ignored
+# the args names (lvalue) and values (rvalue) are preprocessed by a right trim and left trim
+
+# number of threads for the process 
+threads=12
+# grid lines
+glines=8
+# grid columns
+gcolumns=8
+
+# print some information(true/false)
+verbose=false
+# print information with colors (true/false)
+colored = false
+
+# main server (IP address)
+server_ip = 127.0.0.1
+# main server port (to send messages)
+server_port = 7233
+
+# self port (to receive messages)
+self_port = 7233
+
+#atribute value to filter
+lambda=100000
+
+#input filename
+input=../testes/dos_wp_bw.png 
+
+#output filename
+output=../output/parallel/8l8c/lambda_100000
+
+#output extension (only the libvips extensions)
+output_ext=png
+
+#generate the full image joining the tiles
+#join_image=true
+join_image=false

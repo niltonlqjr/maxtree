@@ -10,6 +10,8 @@
 #include <mutex>
 #include <condition_variable>
 #include <cmath>
+#include <zmq.hpp>
+
 #include <sysexits.h>
 
 #include "maxtree.hpp"
@@ -18,8 +20,10 @@
 #include "const_enum_define.hpp"
 #include "utils.hpp"
 #include "bag_of_task.hpp"
-#include "worker.hpp"
+#include "workers.hpp"
 #include "tasks.hpp"
+#include "src/hps.h"
+#include "message.hpp"
 
 using namespace vips;
 bool print_only_trees;
@@ -35,7 +39,8 @@ void wait_empty(bag_of_tasks<T> &b, uint64_t num_th);
 void verify_args(int argc, char *argv[]);
 void read_config(char conf_name[], std::string &input_name, std::string &out_name, std::string &out_ext,
                  uint32_t &glines, uint32_t &gcolumns, Tattribute &lambda,
-                 uint8_t &pixel_connection, bool &colored, uint32_t &num_threads);
+                 uint8_t &pixel_connection, bool &colored, uint32_t &num_threads,
+                 std::string &server_ip, std::string server_port, std::string &self_port);
 void read_sequential_file(bag_of_tasks<input_tile_task*> &bag, vips::VImage *in, uint32_t glines, uint32_t gcolumns);
 bool inside_rectangle(std::pair<uint32_t, uint32_t> c, std::pair<uint32_t, uint32_t> r);
 std::pair<uint32_t, uint32_t> get_task_index(boundary_tree_task *t);
@@ -78,10 +83,17 @@ void wait_empty(bag_of_tasks<T> &b, uint64_t num_th){
 }
 
 
+std::string get_field(std::unordered_map<std::string, std::string> *conf, std::string field, std::string dft){
+    if(conf->find(field) != conf->end()){
+        return conf->at(field);
+    }
+    return dft;
+}
 
 void read_config(char conf_name[], std::string &input_name, std::string &out_name, std::string &out_ext,
                  uint32_t &glines, uint32_t &gcolumns, Tattribute &lambda, uint8_t &pixel_connection, 
-                 bool &colored, uint32_t &num_threads, enum save_type &out_save_type){
+                 bool &colored, uint32_t &num_threads, enum save_type &out_save_type,
+                 std::string &server_ip, std::string &server_port, std::string &self_port, std::string &protocol){
     /*
         Reading configuration file
     */
@@ -90,31 +102,6 @@ void read_config(char conf_name[], std::string &input_name, std::string &out_nam
     
 
     auto configs = parse_config(conf_name);
-    input_name = "";
-    if(configs->find("input")!=configs->end()){
-        input_name = configs->at("input");
-    }
-
-    if (configs->find("verbose") != configs->end()){
-        if(configs->at("verbose") == "true"){
-            verbose=true;
-        }
-    }
-    if(configs->find("print_only_trees") != configs->end()){
-        if(configs->at("print_only_trees") == "true"){
-            print_only_trees = true;
-        }
-    }
-
-    colored = false;
-    if(configs->find("colored") != configs->end()){
-        if(configs->at("colored") == "true"){
-            colored = true;
-        }
-    }
-    if(configs->find("lambda") != configs->end()){
-        lambda = std::stod(configs->at("lambda"));
-    }
 
     if(configs->find("glines") == configs->end() || configs->find("gcolumns") == configs->end()){
         std::cout << "you must specify the the image division on config file:" << conf_name <<"\n";
@@ -123,36 +110,44 @@ void read_config(char conf_name[], std::string &input_name, std::string &out_nam
         std::cout << "gcolumns=6 #divide image in 6 vertical tiles\n";
         exit(EX_CONFIG);
     }
-    
-    out_name = "output";
-    if (configs->find("output") != configs->end()){
-            out_name = configs->at("output");
-    }
-
-    out_ext = "png";
-    if(configs->find("output_ext") != configs->end()){
-        out_ext = configs->at("output_ext");
-    }
-
-    pixel_connection = 4;
-
     glines = std::stoi(configs->at("glines"));
     gcolumns = std::stoi(configs->at("gcolumns"));
-    num_threads = std::thread::hardware_concurrency();
 
-    if(configs->find("threads") != configs->end()){
-        num_threads = std::stoi(configs->at("threads"));
-    }
+    input_name = get_field(configs, "input", "");
     
-    out_save_type = FULL_IMAGE;
-    if(configs->find("join_image") != configs->end()){
-        if(configs->at("join_image") == "save_split"){
-            out_save_type = SPLIT_IMAGE;
-        }else if(configs->at("join_image") == "no_save"){
-            out_save_type = NO_SAVE;
-        }
-    }
+    auto str_lambda = get_field(configs, "lambda", "1");
+    lambda = std::stod(str_lambda);
+    
+    server_ip = get_field(configs, "server_ip", "127.0.0.1");
+    
+    server_port = get_field(configs, "server_port", DEFAULT_PORT);
 
+    self_port = get_field(configs, "self_port", DEFAULT_PORT);
+
+    protocol = get_field(configs, "protocol", "tcp");
+
+    out_name = get_field(configs, "output", "output");
+    
+    out_ext = get_field(configs, "output_ext", "png");
+    
+    auto str_num_threads = get_field(configs, "threads", "");
+    num_threads = std::stoi(str_num_threads);
+    
+    pixel_connection = 4;
+
+    auto str_verbose = get_field(configs, "verbose", "false");
+    verbose = str_verbose == "true";
+    
+    auto str_colored = get_field(configs, "colored", "false");
+    colored = str_colored == "true";
+
+    auto str_save = get_field(configs, "join_image", "full_image");
+    out_save_type = FULL_IMAGE;
+    if(str_save == "save_split"){
+        out_save_type = SPLIT_IMAGE;
+    }else if(str_save == "no_save"){
+        out_save_type = NO_SAVE;
+    }
 
     std::cout << "configurations:\n";
     print_unordered_map(configs);
@@ -437,23 +432,22 @@ void worker_update_filter(bag_of_tasks<maxtree_task *> &src, bag_of_tasks<maxtre
 
 int main(int argc, char *argv[]){
     vips::VImage *in;
-    std::string out_name, out_ext, input_name;
+    std::string out_name, out_ext, input_name, server_ip, self_ip, server_port, self_port, protocol;
     
-    uint32_t glines, gcolumns;
+    uint32_t glines, gcolumns, num_th;
     uint8_t pixel_connection;
-    uint32_t num_th;
+
     bool colored;
     enum save_type out_save_type;
     Tattribute lambda=2;
     maxtree *t;
     input_tile_task *tile;
+    std::vector<worker *> local_workers;
     
     bag_of_tasks<input_tile_task*> bag_tiles;
     bag_of_tasks<maxtree_task*> maxtree_tiles_pre_btree, maxtree_tiles, updated_trees;
     bag_of_tasks<boundary_tree_task *> boundary_bag, boundary_bag_aux;
     bag_of_tasks<merge_btrees_task *> merge_bag;
-
-
 
     std::vector<std::thread*> threads_g1, threads_g2, threads_g3, threads_g4;
     if(argc < 2){
@@ -463,8 +457,12 @@ int main(int argc, char *argv[]){
                   << "    when these information were passed in command line, the configuration file values will be ignored\n";
         exit(EX_USAGE); 
     }
+
+
     // verify_args(argc, argv);
-    read_config(argv[1], input_name, out_name, out_ext, glines, gcolumns, lambda, pixel_connection, colored, num_th, out_save_type);
+    read_config(argv[1], input_name, out_name, out_ext, glines, gcolumns, lambda, 
+                pixel_connection, colored, num_th, out_save_type, server_ip, server_port,
+                self_port, protocol);
 
     if(argc >= 3){
         input_name = argv[2];
@@ -477,7 +475,10 @@ int main(int argc, char *argv[]){
         out_name = argv[3];
     }
 
+    self_ip = "localhost";
+
     GRID_DIMS = std::make_pair(glines,gcolumns);
+
 
     if (VIPS_INIT(argv[0])) { 
         vips_error_exit (NULL);
@@ -489,13 +490,37 @@ int main(int argc, char *argv[]){
             VImage::option()->set ("access",  VIPS_ACCESS_SEQUENTIAL)
         )
     );
+
+
+    zmq::context_t context(1);
+    zmq::socket_t socket(context, zmq::socket_type::req);
+    std::string server_addr = protocol + "://" + server_ip + ":" + server_port;
+    std::string self_addr = protocol + "://" + self_ip + ":" + self_port;
+    socket.connect(server_addr);
+
+    for(uint16_t id_worker=0; id_worker < num_th; id_worker++){
+        worker *w = new worker(id_worker, nullptr);
+        w->set_attr("MHZ", 4000.041);
+        w->set_attr("L3", 16.0*1024.0*1024.0);
+        
+        local_workers.push_back(w);
+        std::string msg_content = hps::to_string(*w);
+        message msg(MSG_REGISTRY, msg_content, msg_content.size());
+        std::string s_msg = hps::to_string(msg);
+        zmq::message_t message_0mq(s_msg.size());
+        memcpy(message_0mq.data(), s_msg.data(), s_msg.size());
+        socket.send(message_0mq, zmq::send_flags::none);
+    }
+
     std::cout << "number of threads "<< num_th << "\n";  
     std::cout << "start\n";
-    read_sequential_file(bag_tiles, in, glines, gcolumns);
+    //read_sequential_file(bag_tiles, in, glines, gcolumns);
     std::cout << "bag_tiles.get_num_task:" << bag_tiles.get_num_task() << "\n";
     // bag_tiles.start();
 
-    bag_tiles.start();
+
+
+/*     bag_tiles.start();
     for(uint32_t i=0; i<num_th; i++){
         threads_g1.push_back(new std::thread(worker_maxtree_calc, std::ref(bag_tiles), std::ref(maxtree_tiles_pre_btree)));
     }
@@ -596,5 +621,5 @@ int main(int argc, char *argv[]){
     }
     if(out_save_type == FULL_IMAGE){
         final_image->save(out_name+"."+out_ext);
-    }
+    } */
 }

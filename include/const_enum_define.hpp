@@ -1,6 +1,9 @@
 #ifndef __CONST_ENUM_DEFINE_HPP__
 #define __CONST_ENUM_DEFINE_HPP__
 
+#include <vector>
+#include <unordered_map>
+
 #define NO_BORDER_LEVELROOT -1
 #define NO_BOUNDARY_PARENT -1
 #define NO_PARENT -1
@@ -12,7 +15,7 @@
 #define Tpixel_NULL 0
 #define Tboundary_tree_lroot std::unordered_map<uint64_t, boundary_node*>
 #define Tprocess_power double
-
+#define DEFAULT_PORT "7233"
 
 
 enum neighbor_direction{
@@ -62,6 +65,7 @@ static const std::vector<std::string> NamesBordersVector({
 });
 
 enum message_type{
+    MSG_NULL,
     MSG_REGISTRY,
     MSG_BOUNDARY_TREE
 };

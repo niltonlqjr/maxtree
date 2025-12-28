@@ -3,21 +3,31 @@
 
 #include <string>
 
+#include "src/hps.h"
 #include "const_enum_define.hpp"
 
 class message{
-    private:
-        enum message_type type;
-        void *content;
-        size_t size;
+    
     public:
-        message(enum message_type type, void *content, size_t size);
+        std::string content;
+        size_t size;
+        enum message_type type;
+        
+        message();
+        message(enum message_type type, std::string &content, size_t size);
+
         template <class B>
-        void serialize(B &buf) const;
+        void serialize(B &buf) const{
+            buf << (unsigned int) this->type << this->size << this->content;
+        }
+
+
         template <class B>
-        void parse(b &buf);
+        void parse(B &buf){
+            buf >> (unsigned int&) this->type >> this->size >> this->content;
+        }
 
             
-}
+};
 
 #endif

@@ -6,13 +6,18 @@
 #include "scheduler_of_workers.hpp"
 #include "const_enum_define.hpp"
 #include "message.hpp"
+#include "src/hps.h"
+
+using namespace vips;
+bool print_only_trees;
+bool verbose;
 
 void read_config(char conf_name[], std::string &port, std::string &protocol);
 
 void read_config(char conf_name[], std::string &port, std::string &protocol){
 
-    auto config = parse_config(conf_name);
-    port="7233"; 
+    std::unordered_map<std::string, std::string> *config = parse_config(conf_name);
+    port=DEFAULT_PORT; 
     if(config->find("port") != config->end()){
         port = config->at("port");
     }
@@ -23,7 +28,17 @@ void read_config(char conf_name[], std::string &port, std::string &protocol){
 }
 
 void manager_recv(scheduler_of_workers<worker *> *pool_of_workers, zmq::socket_t &s){
-    
+    zmq::message_t request;
+    while (true){
+        s.recv(request);
+        std::string rec = std::string((char*)request.data());
+        message r = hps::from_string<message>(rec);
+        std::cout << r.type;
+        if(r.type == MSG_REGISTRY){
+            worker w = hps::from_string<worker>(r.content);
+            w.print();
+        }
+    }
 }
 
 
@@ -32,16 +47,15 @@ int main(int argc, char *argv[]){
     std::string port, protocol;
 
 
-    auto config = read_config(argv[1], port, protocol);
+    read_config(argv[1], port, protocol);
 
     //  Prepare our context and socket
     static const int nth = 2;
     zmq::context_t context (nth);
     zmq::socket_t socket (context, zmq::socket_type::rep);
-    std::string address = protocol+"://*"+port;
+    std::string address = protocol+"://*:"+port;
     socket.bind(address);
-    zmq::message_t request;
-    s.recv(request);
+    manager_recv(pool_of_workers, socket);
 
 
 }
