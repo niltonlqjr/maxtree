@@ -30,14 +30,21 @@ void read_config(char conf_name[], std::string &port, std::string &protocol){
 void manager_recv(scheduler_of_workers<worker *> *pool_of_workers, zmq::socket_t &s){
     zmq::message_t request;
     while (true){
-        s.recv(request);
-        std::string rec = std::string((char*)request.data());
+        s.recv(request, zmq::recv_flags::none);
+        std::string rec;
+        rec.resize(request.size());
+        memcpy(rec.data(), request.data(), request.size());
+        std::cout << "receieved:" << rec << "\n";
         message r = hps::from_string<message>(rec);
-        std::cout << r.type;
+        std::cout << "message type" << r.type << "\n";
         if(r.type == MSG_REGISTRY){
             worker w = hps::from_string<worker>(r.content);
             w.print();
         }
+        constexpr std::string_view reply_string = "OK";
+        zmq::message_t reply (reply_string.length());
+        memcpy (reply.data (), reply_string.data(), reply_string.length());
+        s.send (reply, zmq::send_flags::none);
     }
 }
 

@@ -501,15 +501,25 @@ int main(int argc, char *argv[]){
     for(uint16_t id_worker=0; id_worker < num_th; id_worker++){
         worker *w = new worker(id_worker, nullptr);
         w->set_attr("MHZ", 4000.041);
-        w->set_attr("L3", 16.0*1024.0*1024.0);
+        w->set_attr("L3", 16.0);
         
         local_workers.push_back(w);
         std::string msg_content = hps::to_string(*w);
+        std::cout << "msg content:" << msg_content << "\n";
         message msg(MSG_REGISTRY, msg_content, msg_content.size());
         std::string s_msg = hps::to_string(msg);
+        std::cout << "sending: " << s_msg << "\n";
         zmq::message_t message_0mq(s_msg.size());
         memcpy(message_0mq.data(), s_msg.data(), s_msg.size());
-        socket.send(message_0mq, zmq::send_flags::none);
+        std::string ack="";
+        while(ack != "OK"){
+            socket.send(message_0mq, zmq::send_flags::none);
+            zmq::message_t reply;
+            socket.recv(reply, zmq::recv_flags::none);
+            ack.resize(reply.size());
+            memcpy(ack.data(), (char*)reply.data(), reply.size()) ;
+        }
+        std::cout << ack << " recv\n";
     }
 
     std::cout << "number of threads "<< num_th << "\n";  

@@ -1,7 +1,7 @@
 #include "workers.hpp"
 
 worker::worker(uint16_t id, std::unordered_map<std::string, double> *attr){
-    if(attr == NULL){
+    if(attr == NULL || attr == nullptr){
         this->attr = new std::unordered_map<std::string, double>();
     }else{
         this->attr = attr;
@@ -27,7 +27,7 @@ Tprocess_power worker::get_process_power(){
 }
 
 void worker::print(){
-    std::cout << "local id" << this->id;
+    std::cout << "local id:" << this->id << " -- ";
     std::cout << "attributes:\n";
     for(auto elem: *this->attr){
         std::cout << "(" << elem.first << "," << elem.second << ") ";
