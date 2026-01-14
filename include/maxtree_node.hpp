@@ -35,6 +35,16 @@ class maxtree_node{
         bool operator<=(const maxtree_node &r);
         bool operator==(const maxtree_node &r);
         bool operator!=(const maxtree_node &r);
+
+        template <class B>
+        void serialize(B &buf) const{
+            buf << this->parent << this->global_parent << this->label << this->idx << this->global_idx << this->gval << this->attr_final << this->labeled << this->attribute;
+        }
+
+        template <class B>
+        void parse(B &buf){
+            buf >> this->parent >> this->global_parent >> this->label >> this->idx >> this->global_idx >> this->gval >> this->attr_final >> this->labeled >> this->attribute;
+        }
 };
 
 #endif

@@ -11,7 +11,7 @@
 
 #include "maxtree_node.hpp"
 #include "utils.hpp"
-#
+
 
 class boundary_node;
 class boundary_tree;
@@ -40,6 +40,9 @@ class boundary_node{
         std::string to_string();
         void accumulate_attr(boundary_node *merged);
         void accumulate_attr(Tattribute value);
+
+        
+
 };
 
 class boundary_tree{
@@ -180,6 +183,18 @@ class boundary_tree{
 
         /* search for a node with attribute greater or equal than lambda */
         maxtree_node *up_tree_filter(uint64_t gidx, Tattribute lambda);
+
+
+
+        template <class B>
+        void serialize(B &buf) const{
+            buf << (*(this->attr)) << this->id;
+        }
+
+        template <class B>
+        void parse(B &buf){
+            buf >> (*(this->attr)) >> this->id;
+        }
 
 };
 
