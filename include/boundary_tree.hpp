@@ -4,6 +4,8 @@
 #include <iostream>
 #include <unordered_map>
 #include <sysexits.h>
+
+#include "src/hps.h"
 #include "const_enum_define.hpp"
 
 #ifndef __BOUNDARY_TREE_HPP__
@@ -15,8 +17,6 @@
 
 class boundary_node;
 class boundary_tree;
-
-
 
 class boundary_node{
     public:
@@ -41,7 +41,6 @@ class boundary_node{
         void accumulate_attr(boundary_node *merged);
         void accumulate_attr(Tattribute value);
 
-        
 
 };
 
@@ -59,6 +58,39 @@ class boundary_tree{
         uint32_t grid_i;
         uint32_t grid_j;
         bool delete_nodes;
+
+        template <class B>
+        void serialize(B &buf) const{
+            buf << this->h << this->w << this->grid_i << this->grid_j
+                << *(this->tile_borders) << this->boundary_tree_lroot->size();
+            std::ostringstream oss;
+             for(auto e: *(this->boundary_tree_lroot)){
+                auto p = std::make_pair<uint64_t, boundary_node>((uint64_t)e.first, (boundary_node)*(e.second));
+                hps::to_stream<std::pair<uint64_t, boundary_node>>(p,oss);
+            }
+            buf << oss.str(); 
+        };
+
+        template<class B>
+        void parse(B &buf){
+            std::size_t size_tree;
+            std::unordered_map<uint64_t, boundary_node> rec_bord_elem;
+            buf >> this->h >> this->w >> this->grid_i >> this->grid_j
+                >> *(this->tile_borders) >> size_tree >>rec_bord_elem;
+
+            for(int i=0; i<size_tree; i++){
+                
+                std::pair<uint64_t, boundary_node> p = rec_bord_elem[i];
+                std::cout << "inserting ";
+                std::cout << p.first << " ";
+                
+                std::cout << "\n";
+                // this->v.push_back(new base(x.x, x.y));
+                this->boundary_tree_lroot->emplace(p.first, new boundary_node(p.second));
+            }
+        };
+        
+
         
         boundary_tree(uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j, bool dn=true);
         
@@ -85,15 +117,11 @@ class boundary_tree{
         // std::vector<boundary_node *> *get_border(enum borders b);
         std::vector<uint64_t> *get_border(enum borders b);
         
-        
         /* merge the calling tree with t */
         boundary_tree *merge(boundary_tree *t, enum merge_directions d, uint8_t connection = 4);
         
         /* return a copy of the of this boundary tree (copy boundary nodes but keeps maxtree_nodes references)*/
         boundary_tree *get_copy(bool deepcopy = false);
-        
-
-        
 
         /* get the levelroot of the bounday_node with global_idx */
         boundary_node *get_bnode_levelroot(int64_t global_idx);
@@ -145,12 +173,6 @@ class boundary_tree{
 
         /* compress the path to remove duplicated levelroots after merge*/
         void compress_path();
-        
-        //serialize  boundary tree to send through network
-        void serialize();//https://github.com/jl2922/hps
-
-        //deserialize a boundary tree recieved from network
-        void deserialize();//https://github.com/jl2922/hps
 
         /* return number of nodes in boundary_tree_lroot */
         uint64_t get_lroot_tree_size();
@@ -186,17 +208,19 @@ class boundary_tree{
 
 
 
-        template <class B>
-        void serialize(B &buf) const{
-            buf << (*(this->attr)) << this->id;
-        }
 
-        template <class B>
-        void parse(B &buf){
-            buf >> (*(this->attr)) >> this->id;
-        }
 
 };
 
 
 #endif
+/*
+        std::vector<bool> *tile_borders;
+        std::vector<std::vector<uint64_t> *> *border_elements;
+        std::unordered_map<uint64_t, boundary_node*> *boundary_tree_lroot;
+        uint32_t h;
+        uint32_t w;
+        uint32_t grid_i;
+        uint32_t grid_j;
+        bool delete_nodes;
+*/

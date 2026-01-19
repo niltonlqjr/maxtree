@@ -1,6 +1,8 @@
 #include <string>
 #include <cinttypes>
 #include <vector>
+
+#include "src/hps.h"
 #include "const_enum_define.hpp"
 
 #ifndef __MAXTREE_NODE_HPP__
@@ -38,12 +40,16 @@ class maxtree_node{
 
         template <class B>
         void serialize(B &buf) const{
-            buf << this->parent << this->global_parent << this->label << this->idx << this->global_idx << this->gval << this->attr_final << this->labeled << this->attribute;
+            buf << this->parent << this->global_parent << this->label 
+                << this->idx << this->global_idx << this->gval
+                << this->attr_final << this->labeled << this->attribute;
         }
 
         template <class B>
         void parse(B &buf){
-            buf >> this->parent >> this->global_parent >> this->label >> this->idx >> this->global_idx >> this->gval >> this->attr_final >> this->labeled >> this->attribute;
+            buf >> this->parent >> this->global_parent >> this->label
+                >> this->idx >> this->global_idx >> this->gval 
+                >> this->attr_final >> this->labeled >> this->attribute;
         }
 };
 

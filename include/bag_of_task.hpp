@@ -66,7 +66,6 @@ class prio_bag_of_tasks{
         void print();
         bool empty();
         template <class T> uint64_t search_by_field(T value, T getter(Task), bool lock=false);
-
 };
 
 #include "bag_of_task.tpp"

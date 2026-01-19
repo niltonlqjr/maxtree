@@ -1,6 +1,7 @@
 **/*.o
 **/saidas/*
 **/**/saidas/*
+parallel/logs/**
 outros/*
 output/*
 util/*.txt

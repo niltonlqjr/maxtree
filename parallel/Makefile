@@ -85,8 +85,8 @@ ${dest_merge_work}:base tasks.o message.o workers.o
 		${tasks_dir}/tasks.o \
 		${message_dir}/message.o \
 		${workers_dir}/workers.o \
-		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} -I${heap_dir} \
-		-I${hps_dir} \
+		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} \
+		-I${heap_dir} -I${hps_dir} \
 		${vips_args} ${zmq_args} -o ${dest_merge_work}
 
 ${merge_name_manager}:base tasks.o message.o workers.o
@@ -99,8 +99,8 @@ ${merge_name_manager}:base tasks.o message.o workers.o
 		${tasks_dir}/tasks.o \
 		${message_dir}/message.o \
 		${workers_dir}/workers.o \
-		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} -I${heap_dir} \
-		-I${hps_dir} \
+		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} \
+		-I${heap_dir} -I${hps_dir} \
 		${vips_args} ${zmq_args} -o ${dest_merge_manager}
 
 
@@ -114,7 +114,8 @@ ${dest_merge_s}: base
 	 	${maxtree_node_dir}/maxtree_node.o \
 		${maxtree_dir}/maxtree.o \
 		${boundary_tree_dir}/boundary_tree.o \
-		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} -I${heap_dir} \
+		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} \
+		-I${heap_dir} -I${hps_dir} \
 		${vips_args} -o ${dest_merge_s}
 
 ${dest_divide}: base
@@ -124,7 +125,8 @@ ${dest_divide}: base
 	 	${maxtree_node_dir}/maxtree_node.o \
 		${maxtree_dir}/maxtree.o \
 		${boundary_tree_dir}/boundary_tree.o \
-		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} -I${heap_dir} \
+		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} \
+		-I${heap_dir} -I${hps_dir} \
 		${vips_args} -o ${dest_divide}
 
 vips_region: base
@@ -134,7 +136,8 @@ vips_region: base
 	 	${maxtree_node_dir}/maxtree_node.o \
 		${maxtree_dir}/maxtree.o \
 		${boundary_tree_dir}/boundary_tree.o \
-		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} -I${heap_dir} \
+		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} \
+		-I${heap_dir} -I${hps_dir} \
 		${vips_args} -o teste_region
 
 ${dest_grow}: base
@@ -144,7 +147,8 @@ ${dest_grow}: base
 	 	${maxtree_node_dir}/maxtree_node.o \
 		${maxtree_dir}/maxtree.o \
 		${boundary_tree_dir}/boundary_tree.o \
-		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} -I${heap_dir} \
+		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} \
+		-I${heap_dir} -I${hps_dir} \
 		${vips_args} -o ${dest_grow}
 
 
