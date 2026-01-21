@@ -69,28 +69,42 @@ class boundary_tree{
                 hps::to_stream<std::pair<uint64_t, boundary_node>>(p,oss);
             }
             buf << oss.str(); 
+            buf << this->border_elements->size();
+            std::vector<std::vector<uint64_t>> v;
+            std::ostringstream s;
+            for(std::vector<uint64_t> *data: *(this->border_elements)){
+                std::cout << data->size() << "\n";
+                hps::to_stream<std::vector<uint64_t>>(*data,s);
+            }
+            buf << s.str();
+
         };
 
         template<class B>
         void parse(B &buf){
-            std::size_t size_tree;
+            std::size_t size_tree, num_borders;
+            
             std::unordered_map<uint64_t, boundary_node> rec_bord_elem;
             buf >> this->h >> this->w >> this->grid_i >> this->grid_j
-                >> *(this->tile_borders) >> size_tree >>rec_bord_elem;
+                >> *(this->tile_borders) >> size_tree >> rec_bord_elem;
 
             for(int i=0; i<size_tree; i++){
-                
                 std::pair<uint64_t, boundary_node> p = rec_bord_elem[i];
-                std::cout << "inserting ";
-                std::cout << p.first << " ";
-                
-                std::cout << "\n";
-                // this->v.push_back(new base(x.x, x.y));
                 this->boundary_tree_lroot->emplace(p.first, new boundary_node(p.second));
             }
+            
+            std::vector<std::vector<uint64_t>> v;
+            buf >> num_borders >> v;
+            
+            this->border_elements = new std::vector<std::vector<uint64_t> *>();
+            for(int i=0; i<num_borders; i++){
+                std::vector<uint64_t> *new_vec = new std::vector<uint64_t>();
+                for(int j=0; j<v[i].size(); j++){
+                    new_vec->push_back(v[i][j]);
+                }
+                this->border_elements->push_back(new_vec);
+            }
         };
-        
-
         
         boundary_tree(uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j, bool dn=true);
         
