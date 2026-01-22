@@ -31,28 +31,89 @@ bool verbose;
 
 extern std::pair<uint32_t, uint32_t> GRID_DIMS;
 
+bag_of_tasks<input_tile_task *> bag_tiles;
+bag_of_tasks<maxtree_task *> maxtrees;
+bag_of_tasks<boundary_tree_task *> boundary_trees;
+bag_of_tasks<maxtree_task *> maxtree_dest;
+
+std::string server_ip, self_ip;
+std::string server_port, self_port;
+std::string protocol;
+
+enum save_type out_save_type;
+
+uint8_t pixel_connection;
+bool colored;
+
+std::string input_name;
+std::string out_name;
+std::string out_ext;
+
+Tattribute lambda;
+uint32_t glines;
+uint32_t gcolumns;
+uint32_t num_threads;
+
+
+
 
 /* ======================= signatures ================================= */
 template<typename T>
 void wait_empty(bag_of_tasks<T> &b, uint64_t num_th);
 
 void verify_args(int argc, char *argv[]);
-void read_config(char conf_name[], std::string &input_name, std::string &out_name, std::string &out_ext,
-                 uint32_t &glines, uint32_t &gcolumns, Tattribute &lambda,
-                 uint8_t &pixel_connection, bool &colored, uint32_t &num_threads,
-                 std::string &server_ip, std::string server_port, std::string &self_port);
+void read_config(char conf_name[]);
 void read_sequential_file(bag_of_tasks<input_tile_task*> &bag, vips::VImage *in, uint32_t glines, uint32_t gcolumns);
 bool inside_rectangle(std::pair<uint32_t, uint32_t> c, std::pair<uint32_t, uint32_t> r);
 std::pair<uint32_t, uint32_t> get_task_index(boundary_tree_task *t);
-
 void worker_maxtree_calc(bag_of_tasks<input_tile_task *> &bag_tiles, bag_of_tasks<maxtree_task *> &max_trees);
-void worker_get_boundary_tree(bag_of_tasks<maxtree_task *> &maxtrees, bag_of_tasks<boundary_tree_task *> &boundary_trees, bag_of_tasks<maxtree_task *> &maxtree_dest);
-void worker_search_pair(bag_of_tasks<boundary_tree_task *> &btrees_bag, bag_of_tasks<merge_btrees_task *> &merge_bag);
-void worker_merge_local(bag_of_tasks<merge_btrees_task *> &merge_bag, bag_of_tasks<boundary_tree_task *> &btrees_bag);
-void worker_update(bag_of_tasks<maxtree_task *> &src, bag_of_tasks<maxtree_task *> &dest, boundary_tree *global_bt);
+
+
 
 /* ======================= implementations ================================= */
 
+
+void local_manager(uint32_t num_th, std::vector<worker *> local_workers){
+    zmq::context_t context(1);
+    zmq::socket_t socket(context, zmq::socket_type::req);
+    std::string server_addr = protocol + "://" + server_ip + ":" + server_port;
+    std::string self_addr = protocol + "://" + self_ip + ":" + self_port;
+    socket.connect(server_addr);
+
+    for(uint16_t id_worker=0; id_worker < num_th; id_worker++){
+        worker *w = new worker(id_worker, nullptr);
+        w->set_attr("MHZ", 4000.041);
+        w->set_attr("L3", 16.0);
+        
+        local_workers.push_back(w);
+        std::string msg_content = hps::to_string(*w);
+        std::cout << "msg content:" << msg_content << "\n";
+        message msg(MSG_REGISTRY, msg_content, msg_content.size());
+        std::string s_msg = hps::to_string(msg);
+        std::cout << "sending: " << s_msg << "\n";
+        zmq::message_t message_0mq(s_msg.size());
+        memcpy(message_0mq.data(), s_msg.data(), s_msg.size());
+        std::string ack="";
+        while(ack != "OK"){
+            socket.send(message_0mq, zmq::send_flags::none);
+            zmq::message_t reply;
+            socket.recv(reply, zmq::recv_flags::none);
+            ack.resize(reply.size());
+            memcpy(ack.data(), (char*)reply.data(), reply.size()) ;
+        }
+        std::cout << ack << " recv\n";
+    }
+
+    std::cout << "number of threads "<< num_th << "\n";  
+    std::cout << "start\n";
+    // read_sequential_file(bag_tiles, in, glines, gcolumns);
+    std::cout << "bag_tiles.get_num_task:" << bag_tiles.get_num_task() << "\n";
+    
+    /* bag_tiles.start();
+    for(uint32_t i=0; i<num_th; i++){
+        threads_g1.push_back(new std::thread(worker_maxtree_calc, std::ref(bag_tiles), std::ref(maxtree_tiles_pre_btree)));
+    }*/
+}
 
 void verify_args(int argc, char *argv[]){
     std::cout << "argc: " << argc << " argv:" ;
@@ -89,14 +150,16 @@ std::string get_field(std::unordered_map<std::string, std::string> *conf, std::s
     }
     return dft;
 }
-
+/*
 void read_config(char conf_name[], std::string &input_name, std::string &out_name, std::string &out_ext,
                  uint32_t &glines, uint32_t &gcolumns, Tattribute &lambda, uint8_t &pixel_connection, 
                  bool &colored, uint32_t &num_threads, enum save_type &out_save_type,
                  std::string &server_ip, std::string &server_port, std::string &self_port, std::string &protocol){
-    /*
         Reading configuration file
     */
+
+/* Read configuration file to global variables */    
+void read_config(char conf_name[]){
     verbose=false;
     print_only_trees=false;
     
@@ -232,8 +295,6 @@ void worker_get_boundary_tree(bag_of_tasks<maxtree_task *> &maxtrees,
 std::pair<uint32_t, uint32_t> get_task_index(boundary_tree_task *t){
     return t->index;
 }
-
-
 void worker_search_pair(bag_of_tasks<boundary_tree_task *> &btrees_bag, bag_of_tasks<merge_btrees_task *> &merge_bag){
     boundary_tree_task *btt, *n, *aux;
     std::pair<uint32_t, uint32_t> idx_nb;
@@ -432,7 +493,7 @@ void worker_update_filter(bag_of_tasks<maxtree_task *> &src, bag_of_tasks<maxtre
 
 int main(int argc, char *argv[]){
     vips::VImage *in;
-    std::string out_name, out_ext, input_name, server_ip, self_ip, server_port, self_port, protocol;
+    std::string out_name, out_ext, input_name;// server_ip, self_ip, server_port, self_port, protocol;
     
     uint32_t glines, gcolumns, num_th;
     uint8_t pixel_connection;
@@ -460,9 +521,10 @@ int main(int argc, char *argv[]){
 
 
     // verify_args(argc, argv);
-    read_config(argv[1], input_name, out_name, out_ext, glines, gcolumns, lambda, 
-                pixel_connection, colored, num_th, out_save_type, server_ip, server_port,
-                self_port, protocol);
+    // read_config(argv[1], input_name, out_name, out_ext, glines, gcolumns, lambda, 
+    //             pixel_connection, colored, num_th, out_save_type, server_ip, server_port,
+    //             self_port, protocol);
+    read_config(argv[1]);
 
     if(argc >= 3){
         input_name = argv[2];
@@ -479,7 +541,6 @@ int main(int argc, char *argv[]){
 
     GRID_DIMS = std::make_pair(glines,gcolumns);
 
-
     if (VIPS_INIT(argv[0])) { 
         vips_error_exit (NULL);
     } 
@@ -492,48 +553,10 @@ int main(int argc, char *argv[]){
     );
 
 
-    zmq::context_t context(1);
-    zmq::socket_t socket(context, zmq::socket_type::req);
-    std::string server_addr = protocol + "://" + server_ip + ":" + server_port;
-    std::string self_addr = protocol + "://" + self_ip + ":" + self_port;
-    socket.connect(server_addr);
-
-    for(uint16_t id_worker=0; id_worker < num_th; id_worker++){
-        worker *w = new worker(id_worker, nullptr);
-        w->set_attr("MHZ", 4000.041);
-        w->set_attr("L3", 16.0);
-        
-        local_workers.push_back(w);
-        std::string msg_content = hps::to_string(*w);
-        std::cout << "msg content:" << msg_content << "\n";
-        message msg(MSG_REGISTRY, msg_content, msg_content.size());
-        std::string s_msg = hps::to_string(msg);
-        std::cout << "sending: " << s_msg << "\n";
-        zmq::message_t message_0mq(s_msg.size());
-        memcpy(message_0mq.data(), s_msg.data(), s_msg.size());
-        std::string ack="";
-        while(ack != "OK"){
-            socket.send(message_0mq, zmq::send_flags::none);
-            zmq::message_t reply;
-            socket.recv(reply, zmq::recv_flags::none);
-            ack.resize(reply.size());
-            memcpy(ack.data(), (char*)reply.data(), reply.size()) ;
-        }
-        std::cout << ack << " recv\n";
-    }
-
-    std::cout << "number of threads "<< num_th << "\n";  
-    std::cout << "start\n";
-    //read_sequential_file(bag_tiles, in, glines, gcolumns);
-    std::cout << "bag_tiles.get_num_task:" << bag_tiles.get_num_task() << "\n";
-    // bag_tiles.start();
 
 
 
-/*     bag_tiles.start();
-    for(uint32_t i=0; i<num_th; i++){
-        threads_g1.push_back(new std::thread(worker_maxtree_calc, std::ref(bag_tiles), std::ref(maxtree_tiles_pre_btree)));
-    }
+    /*
     maxtree_task *mtt;
     wait_empty<input_tile_task *>(bag_tiles, num_th);
     
@@ -610,6 +633,7 @@ int main(int argc, char *argv[]){
     // std::vector<Tpixel_value> data(in->width()*in->height(), 0);
     // input_tile_task aux;
     updated_trees.start();
+    
     maxtree *final_image = new maxtree(in->height(),in->width(),0,0);
     final_image->get_data()->resize(in->height()*in->width());
     while(!updated_trees.empty()){
