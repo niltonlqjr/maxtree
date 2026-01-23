@@ -24,6 +24,7 @@
 #include "tasks.hpp"
 #include "src/hps.h"
 #include "message.hpp"
+#include "scheduler_of_workers.hpp"
 
 using namespace vips;
 bool print_only_trees;
@@ -54,8 +55,8 @@ uint32_t glines;
 uint32_t gcolumns;
 uint32_t num_threads;
 
-
-
+scheduler_of_workers<worker *> local_workers;
+std::vector<std::thread *> workers_threads;
 
 /* ======================= signatures ================================= */
 template<typename T>
@@ -73,47 +74,6 @@ void worker_maxtree_calc(bag_of_tasks<input_tile_task *> &bag_tiles, bag_of_task
 /* ======================= implementations ================================= */
 
 
-void local_manager(uint32_t num_th, std::vector<worker *> local_workers){
-    zmq::context_t context(1);
-    zmq::socket_t socket(context, zmq::socket_type::req);
-    std::string server_addr = protocol + "://" + server_ip + ":" + server_port;
-    std::string self_addr = protocol + "://" + self_ip + ":" + self_port;
-    socket.connect(server_addr);
-
-    for(uint16_t id_worker=0; id_worker < num_th; id_worker++){
-        worker *w = new worker(id_worker, nullptr);
-        w->set_attr("MHZ", 4000.041);
-        w->set_attr("L3", 16.0);
-        
-        local_workers.push_back(w);
-        std::string msg_content = hps::to_string(*w);
-        std::cout << "msg content:" << msg_content << "\n";
-        message msg(MSG_REGISTRY, msg_content, msg_content.size());
-        std::string s_msg = hps::to_string(msg);
-        std::cout << "sending: " << s_msg << "\n";
-        zmq::message_t message_0mq(s_msg.size());
-        memcpy(message_0mq.data(), s_msg.data(), s_msg.size());
-        std::string ack="";
-        while(ack != "OK"){
-            socket.send(message_0mq, zmq::send_flags::none);
-            zmq::message_t reply;
-            socket.recv(reply, zmq::recv_flags::none);
-            ack.resize(reply.size());
-            memcpy(ack.data(), (char*)reply.data(), reply.size()) ;
-        }
-        std::cout << ack << " recv\n";
-    }
-
-    std::cout << "number of threads "<< num_th << "\n";  
-    std::cout << "start\n";
-    // read_sequential_file(bag_tiles, in, glines, gcolumns);
-    std::cout << "bag_tiles.get_num_task:" << bag_tiles.get_num_task() << "\n";
-    
-    /* bag_tiles.start();
-    for(uint32_t i=0; i<num_th; i++){
-        threads_g1.push_back(new std::thread(worker_maxtree_calc, std::ref(bag_tiles), std::ref(maxtree_tiles_pre_btree)));
-    }*/
-}
 
 void verify_args(int argc, char *argv[]){
     std::cout << "argc: " << argc << " argv:" ;
@@ -150,13 +110,7 @@ std::string get_field(std::unordered_map<std::string, std::string> *conf, std::s
     }
     return dft;
 }
-/*
-void read_config(char conf_name[], std::string &input_name, std::string &out_name, std::string &out_ext,
-                 uint32_t &glines, uint32_t &gcolumns, Tattribute &lambda, uint8_t &pixel_connection, 
-                 bool &colored, uint32_t &num_threads, enum save_type &out_save_type,
-                 std::string &server_ip, std::string &server_port, std::string &self_port, std::string &protocol){
-        Reading configuration file
-    */
+
 
 /* Read configuration file to global variables */    
 void read_config(char conf_name[]){
@@ -288,10 +242,9 @@ void worker_get_boundary_tree(bag_of_tasks<maxtree_task *> &maxtrees,
             boundary_trees.insert_task(btt);
             maxtree_dest.insert_task(mtt);
         }
-
     }
-
 }
+
 std::pair<uint32_t, uint32_t> get_task_index(boundary_tree_task *t){
     return t->index;
 }
@@ -491,6 +444,58 @@ void worker_update_filter(bag_of_tasks<maxtree_task *> &src, bag_of_tasks<maxtre
     }
 }
 
+
+void registry(worker *w){
+    zmq::context_t context(1);
+    zmq::socket_t socket(context, zmq::socket_type::req);
+    std::string server_addr = protocol + "://" + server_ip + ":" + server_port;
+    std::string self_addr = protocol + "://" + self_ip + ":" + self_port;
+    socket.connect(server_addr);
+    std::string msg_content = hps::to_string(*w);
+    std::cout << "msg content:" << msg_content << "\n";
+    message msg(MSG_REGISTRY, msg_content, msg_content.size());
+    std::string s_msg = hps::to_string(msg);
+    std::cout << "sending: " << s_msg << "\n";
+    zmq::message_t message_0mq(s_msg.size());
+    memcpy(message_0mq.data(), s_msg.data(), s_msg.size());
+    std::string ack="";
+    while(ack != "OK"){
+        socket.send(message_0mq, zmq::send_flags::none);
+        zmq::message_t reply;
+        socket.recv(reply, zmq::recv_flags::none);
+        ack.resize(reply.size());
+        memcpy(ack.data(), (char*)reply.data(), reply.size()) ;
+    }
+    std::cout << ack << " recv\n";
+}
+void start_worker(worker *w){
+
+}
+
+void registry_threads(uint32_t num_th){
+
+    //workers register phase
+    for(uint16_t local_id=0; local_id < num_th; local_id++){
+        worker *w = new worker(local_id, nullptr);
+        w->set_attr("MHZ", 4000.041);
+        w->set_attr("L3", 16.0);
+        
+        local_workers.insert_worker(w);
+        workers_threads.push_back(new std::thread(registry, w));
+        start_worker(w);
+    }
+
+    std::cout << "number of threads "<< num_th << "\n";  
+    std::cout << "start\n";
+    // read_sequential_file(bag_tiles, in, glines, gcolumns);
+    std::cout << "bag_tiles.get_num_task:" << bag_tiles.get_num_task() << "\n";
+
+    /* bag_tiles.start();
+    for(uint32_t i=0; i<num_th; i++){
+        threads_g1.push_back(new std::thread(worker_maxtree_calc, std::ref(bag_tiles), std::ref(maxtree_tiles_pre_btree)));
+    }*/
+}
+
 int main(int argc, char *argv[]){
     vips::VImage *in;
     std::string out_name, out_ext, input_name;// server_ip, self_ip, server_port, self_port, protocol;
@@ -518,7 +523,6 @@ int main(int argc, char *argv[]){
                   << "    when these information were passed in command line, the configuration file values will be ignored\n";
         exit(EX_USAGE); 
     }
-
 
     // verify_args(argc, argv);
     // read_config(argv[1], input_name, out_name, out_ext, glines, gcolumns, lambda, 
@@ -552,10 +556,7 @@ int main(int argc, char *argv[]){
         )
     );
 
-
-
-
-
+    
     /*
     maxtree_task *mtt;
     wait_empty<input_tile_task *>(bag_tiles, num_th);
@@ -577,7 +578,6 @@ int main(int argc, char *argv[]){
     for(uint32_t i=0; i<num_th; i++){
         threads_g1[i]->join();
         delete threads_g1[i];
-        
     }
     threads_g1.erase(threads_g1.begin(),threads_g1.end());
     
