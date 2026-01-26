@@ -1,6 +1,8 @@
 #include <unordered_map>
+#include <vector>
 #include <mutex>
 #include <condition_variable>
+
 #include "heap.hpp"
 
 #ifndef __SCHEDULER_OF_WORKERS_HPP__
@@ -20,7 +22,9 @@ class scheduler_of_workers{
         scheduler_of_workers();
         void insert_worker(Worker w);
         Worker get_best_worker();
-        void finish_worker(Worker w);    
+        void finish_worker(Worker w);
+        Worker at(size_t i);
+        size_t size();
 };
 
 

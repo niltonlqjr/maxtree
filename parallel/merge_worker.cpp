@@ -452,10 +452,10 @@ void registry(worker *w){
     std::string self_addr = protocol + "://" + self_ip + ":" + self_port;
     socket.connect(server_addr);
     std::string msg_content = hps::to_string(*w);
-    std::cout << "msg content:" << msg_content << "\n";
+    // std::cout << "msg content:" << msg_content << "\n";
     message msg(MSG_REGISTRY, msg_content, msg_content.size());
     std::string s_msg = hps::to_string(msg);
-    std::cout << "sending: " << s_msg << "\n";
+    // std::cout << "sending: " << s_msg << "\n";
     zmq::message_t message_0mq(s_msg.size());
     memcpy(message_0mq.data(), s_msg.data(), s_msg.size());
     std::string ack="";
@@ -465,15 +465,16 @@ void registry(worker *w){
         socket.recv(reply, zmq::recv_flags::none);
         ack.resize(reply.size());
         memcpy(ack.data(), (char*)reply.data(), reply.size()) ;
+        // std::cout << "ack received:" << ack << "\n";
     }
-    std::cout << ack << " recv\n";
 }
 void start_worker(worker *w){
 
 }
 
 void registry_threads(uint32_t num_th){
-
+    std::cout << "number of threads "<< num_th << "\n";  
+    std::cout << "start registration\n";
     //workers register phase
     for(uint16_t local_id=0; local_id < num_th; local_id++){
         worker *w = new worker(local_id, nullptr);
@@ -481,12 +482,12 @@ void registry_threads(uint32_t num_th){
         w->set_attr("L3", 16.0);
         
         local_workers.insert_worker(w);
+        
+        std::cout << "registring id:" << local_id << "of total" << num_th << " threads\n";
         workers_threads.push_back(new std::thread(registry, w));
+        // registry(w);
         start_worker(w);
     }
-
-    std::cout << "number of threads "<< num_th << "\n";  
-    std::cout << "start\n";
     // read_sequential_file(bag_tiles, in, glines, gcolumns);
     std::cout << "bag_tiles.get_num_task:" << bag_tiles.get_num_task() << "\n";
 
@@ -500,7 +501,7 @@ int main(int argc, char *argv[]){
     vips::VImage *in;
     std::string out_name, out_ext, input_name;// server_ip, self_ip, server_port, self_port, protocol;
     
-    uint32_t glines, gcolumns, num_th;
+    uint32_t glines, gcolumns;
     uint8_t pixel_connection;
 
     bool colored;
@@ -555,105 +556,12 @@ int main(int argc, char *argv[]){
             VImage::option()->set ("access",  VIPS_ACCESS_SEQUENTIAL)
         )
     );
-
+    registry_threads(num_threads);
     
-    /*
-    maxtree_task *mtt;
-    wait_empty<input_tile_task *>(bag_tiles, num_th);
-    
-    for(uint32_t i=0; i<num_th; i++){
-        threads_g1[i]->join();
-        delete threads_g1[i];
+    for(size_t i=0; i<workers_threads.size(); i++){
+        workers_threads[i]->join();
     }
-    threads_g1.erase(threads_g1.begin(),threads_g1.end());
-
-    std::cout << "max_trees_tiles.get_num_task:" << maxtree_tiles_pre_btree.get_num_task() << "\n";
-    
-    maxtree_tiles_pre_btree.start();
-    for(uint32_t i=0; i<num_th;i++){
-       threads_g1.push_back(new std::thread( worker_get_boundary_tree, std::ref(maxtree_tiles_pre_btree), std::ref(boundary_bag), std::ref(maxtree_tiles) ));
+    for(size_t i=0; i<workers_threads.size(); i++){
+        delete workers_threads[i];
     }
-    wait_empty<maxtree_task *>(maxtree_tiles_pre_btree, num_th);
-
-    for(uint32_t i=0; i<num_th; i++){
-        threads_g1[i]->join();
-        delete threads_g1[i];
-    }
-    threads_g1.erase(threads_g1.begin(),threads_g1.end());
-    
-    //ver possibilidade de transformar as bags em filas hierarquicas
-    //task to get pairs of boundary trees.
-
-    boundary_bag.start();
-    merge_bag.start();
-
-    for(uint32_t i=0; i<num_th;i++){
-        threads_g1.push_back(new std::thread(worker_search_pair, std::ref(boundary_bag), std::ref(merge_bag) ));
-        // threads_g3.push_back(new std::thread(worker_search_pair, &boundary_bag, &merge_bag ));
-    }
-    
-    for(uint32_t i=0; i<num_th;i++){
-        threads_g2.push_back(new std::thread(worker_merge_local, std::ref(merge_bag), std::ref(boundary_bag) ));
-        // threads_g4.push_back(new std::thread(worker_merge_local, &merge_bag, &boundary_bag ));
-    }
-
-    for(uint32_t i=0; i<num_th; i++){
-        threads_g1[i]->join();
-        delete threads_g1[i];
-    } 
-    threads_g1.erase(threads_g1.begin(),threads_g1.end());
-
-    for(uint32_t i=0; i<num_th; i++){
-        threads_g2[i]->join();
-        delete threads_g2[i];
-    } 
-    threads_g2.erase(threads_g2.begin(),threads_g2.end());
-    std::cout << "merge done\n";
-    boundary_tree_task *btree_final_task;
-    boundary_bag.get_task(btree_final_task);
-    // std::cout << btree_final_task->bt->grid_i << "," << btree_final_task->bt->grid_j << "\n";
-    
-    maxtree_tiles.start();
-    for(uint32_t i = 0; i < num_th; i++){
-        
-        threads_g3.push_back(new std::thread(worker_update_filter, std::ref(maxtree_tiles), std::ref(updated_trees),  btree_final_task->bt, lambda));
-    }
-    // std::cout << "waiting end of update\n";
-    wait_empty<maxtree_task*>(maxtree_tiles, num_th);
-
-    for(uint32_t i=0; i < num_th; i++){
-        threads_g3[i]->join();
-        delete threads_g3[i];
-    }
-     std::cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>> update done <<<<<<<<<<<<<<<<<<<<<<<<<<<\n";
-
-    // vips::VImage end_img;
-    // end_img.new_from_memory_copy(in->data(), sizof(Tpixel_value), in->width(), in->height(), 1,  VIPS_FORMAT_UCHAR);
-    
-    // std::vector<Tpixel_value> data(in->width()*in->height(), 0);
-    // input_tile_task aux;
-    updated_trees.start();
-    
-    maxtree *final_image = new maxtree(in->height(),in->width(),0,0);
-    final_image->get_data()->resize(in->height()*in->width());
-    while(!updated_trees.empty()){
-        bool got = updated_trees.get_task(mtt);
-        if(got){
-            // std::cout << mtt->mt->grid_i << "," << mtt->mt->grid_j << "\n";
-            // mtt->mt->filter(lambda, btree_final_task->bt);
-            std::string name = out_name + "_" + std::to_string(mtt->mt->grid_i) + "-" + std::to_string(mtt->mt->grid_j) + "." + out_ext;
-            if(out_save_type == SPLIT_IMAGE){
-                mtt->mt->save(name);
-            }
-            if(out_save_type == FULL_IMAGE){
-                for(int n = 0; n < mtt->mt->get_size(); n++){
-                    maxtree_node *pix = mtt->mt->at_pos(n);
-                    final_image->set_pixel(pix, pix->global_idx);
-                }
-            }
-        }
-    }
-    if(out_save_type == FULL_IMAGE){
-        final_image->save(out_name+"."+out_ext);
-    } */
 }

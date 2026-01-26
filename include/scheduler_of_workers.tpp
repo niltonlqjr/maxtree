@@ -44,3 +44,13 @@ void scheduler_of_workers<Worker>::finish_worker(Worker w){
         }
     }
 }
+
+template <class Worker>
+Worker scheduler_of_workers<Worker>::at(size_t i){
+    return this->workers->at(i);
+}
+
+template <class Worker>
+size_t scheduler_of_workers<Worker>::size(){
+    return this->total_workers;
+}

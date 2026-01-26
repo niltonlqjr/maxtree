@@ -14,16 +14,28 @@ worker::worker(){
     this->id = 0;
 }
 
-worker::~worker(){
-    delete this->attr;
-}
+// worker::~worker(){
+//     delete this->attr;
+// }
 
 void worker::set_attr(std::string attr_name, double attr_val){
     (*this->attr)[attr_name] = attr_val;
 }
 
 Tprocess_power worker::get_process_power(){
-    return 1;//this->attr->at("MHZ") * this->attr->at("NUMPROC");
+    return this->attr->at("MHZ") * this->attr->at("NUMPROC");
+}
+
+bool worker::operator<(worker &r) {
+    return this->get_process_power() < r.get_process_power();
+}
+
+bool worker::operator>(worker &r){
+    return this->get_process_power() > r.get_process_power();
+}
+
+bool worker::operator==(worker &r){
+    return this->get_process_power() == r.get_process_power();
 }
 
 void worker::print(){

@@ -16,13 +16,16 @@ class worker{
     public:
         worker(uint16_t id, std::unordered_map<std::string, double> *attr);
         worker();
-        ~worker();
+        // ~worker();
         void set_attr(std::string, double val);
         //virtual void run() = 0;
         Tprocess_power get_process_power();
 
+        bool operator<(worker &r);
+        bool operator>(worker &r);
+        bool operator==(worker &r);
+        
         void print();
-
 
         template <class B>
         void serialize(B &buf) const{
