@@ -576,7 +576,19 @@ int main(int argc, char *argv[]){
     message m = message(msg_content, msg_content.size(), MSG_BOUNDARY_TREE);
 
     zmq::context_t context(1);
-    zmq::socket_t socket(context, zmq::socket_type::req);
+    zmq::socket_t socket(context, zmq::socket_type::req);std::string s_msg = hps::to_string(msg);
+    // std::cout << "sending: " << s_msg << "\n";
+    zmq::message_t message_0mq(s_msg.size());
+    memcpy(message_0mq.data(), s_msg.data(), s_msg.size());
+    std::string ack="";
+    while(ack != "OK"){
+        socket.send(message_0mq, zmq::send_flags::none);
+        zmq::message_t reply;
+        socket.recv(reply, zmq::recv_flags::none);
+        ack.resize(reply.size());
+        memcpy(ack.data(), (char*)reply.data(), reply.size()) ;
+        // std::cout << "ack received:" << ack << "\n";
+    }
     socket.connect(server_addr);
 
     std::string s_msg = hps::to_string(m);
