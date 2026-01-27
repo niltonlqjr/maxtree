@@ -445,15 +445,13 @@ void worker_update_filter(bag_of_tasks<maxtree_task *> &src, bag_of_tasks<maxtre
 }
 
 
-void registry(worker *w){
+void registry(worker *w, std::string server_addr, std::string self_addr){
     zmq::context_t context(1);
     zmq::socket_t socket(context, zmq::socket_type::req);
-    std::string server_addr = protocol + "://" + server_ip + ":" + server_port;
-    std::string self_addr = protocol + "://" + self_ip + ":" + self_port;
     socket.connect(server_addr);
     std::string msg_content = hps::to_string(*w);
     // std::cout << "msg content:" << msg_content << "\n";
-    message msg(MSG_REGISTRY, msg_content, msg_content.size());
+    message msg(msg_content, msg_content.size(),MSG_REGISTRY);
     std::string s_msg = hps::to_string(msg);
     // std::cout << "sending: " << s_msg << "\n";
     zmq::message_t message_0mq(s_msg.size());
@@ -472,7 +470,7 @@ void start_worker(worker *w){
 
 }
 
-void registry_threads(uint32_t num_th){
+void registry_threads(uint32_t num_th, std::string server_addr, std::string self_addr){
     std::cout << "number of threads "<< num_th << "\n";  
     std::cout << "start registration\n";
     //workers register phase
@@ -484,7 +482,7 @@ void registry_threads(uint32_t num_th){
         local_workers.insert_worker(w);
         
         std::cout << "registring id:" << local_id << "of total" << num_th << " threads\n";
-        workers_threads.push_back(new std::thread(registry, w));
+        workers_threads.push_back(new std::thread(registry, w, server_addr, self_addr));
         // registry(w);
         start_worker(w);
     }
@@ -556,12 +554,56 @@ int main(int argc, char *argv[]){
             VImage::option()->set ("access",  VIPS_ACCESS_SEQUENTIAL)
         )
     );
-    registry_threads(num_threads);
+
+    std::string server_addr = protocol + "://" + server_ip + ":" + server_port;
+    std::string self_addr = protocol + "://" + self_ip + ":" + self_port;
+
+    registry_threads(num_threads, server_addr, self_addr);
+    input_tile_task *task = new input_tile_task(1,1);
+    task->prepare(in,3,3);
+    task->read_tile(in);
+
+    maxtree_task *mttask = new maxtree_task(task);
+
+    t=mttask->mt;
     
+    std::cout << "maxtree to string: \n" << t->to_string() << "\n";
+    boundary_tree *bt = t->get_boundary_tree();
+    // std::cout << "lroot string:" << bt->lroot_to_string(BOUNDARY_GVAL, " - ") << "\n=======================\n";
+    bt->print_tree();
+
+    std::string msg_content = hps::to_string(*bt);
+    message m = message(msg_content, msg_content.size(), MSG_BOUNDARY_TREE);
+
+    zmq::context_t context(1);
+    zmq::socket_t socket(context, zmq::socket_type::req);
+    socket.connect(server_addr);
+
+    std::string s_msg = hps::to_string(m);
+    
+    zmq::message_t message_0mq(s_msg.size());
+    memcpy(message_0mq.data(), s_msg.data(), s_msg.size());
+    std::string ack="";
+    while(ack != "OK"){
+        socket.send(message_0mq, zmq::send_flags::none);
+        zmq::message_t reply;
+        socket.recv(reply, zmq::recv_flags::none);
+        ack.resize(reply.size());
+        memcpy(ack.data(), (char*)reply.data(), reply.size()) ;
+        // std::cout << "ack received:" << ack << "\n";
+    }
+
+
+
+
+
     for(size_t i=0; i<workers_threads.size(); i++){
         workers_threads[i]->join();
     }
+
     for(size_t i=0; i<workers_threads.size(); i++){
         delete workers_threads[i];
     }
+
+    
 }

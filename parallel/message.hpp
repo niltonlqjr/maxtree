@@ -14,7 +14,7 @@ class message{
         enum message_type type;
         
         message();
-        message(enum message_type type, std::string &content, size_t size);
+        message(std::string &content, size_t size=0, enum message_type type=MSG_NULL);
 
         template <class B>
         void serialize(B &buf) const{

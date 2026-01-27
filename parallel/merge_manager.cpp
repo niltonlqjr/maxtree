@@ -5,6 +5,7 @@
 #include "workers.hpp"
 #include "scheduler_of_workers.hpp"
 #include "const_enum_define.hpp"
+#include "boundary_tree.hpp"
 #include "message.hpp"
 #include "src/hps.h"
 
@@ -43,6 +44,9 @@ void manager_recv(scheduler_of_workers<worker *> *pool_of_workers, zmq::socket_t
             worker w = hps::from_string<worker>(r.content);
             w.print();
             system_workers.insert_worker(new worker(w));
+        }else if(r.type == MSG_BOUNDARY_TREE){
+            boundary_tree bt = hps::from_string<boundary_tree>(r.content);
+            bt.print_tree();
         }
 
         constexpr std::string_view reply_string = "OK";

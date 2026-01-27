@@ -20,6 +20,7 @@ maxtree_node_dir=../../include
 utils_dir=../../include
 maxtree_dir=../../include
 boundary_tree_dir=../../include
+hps_dir=../../hps
 
 
 source_non_rec_wilk= ${non_rec_wilk_name}.cpp
@@ -45,19 +46,22 @@ non_rec: base
 	${MKDIR} -p exec
 	g++ ${OPT} ${source_non_rec} ${utils_dir}/utils.o ${maxtree_node_dir}/maxtree_node.o \
 		${maxtree_dir}/maxtree.o ${boundary_tree_dir}/boundary_tree.o \
-        -I${maxtree_node_dir}  -I${maxtree_dir} -I${utils_dir}  ${vips_args} -o ${dest_nonrec}
+        -I${maxtree_node_dir}  -I${maxtree_dir} -I${utils_dir} -I${hps_dir} \
+		${vips_args} -o ${dest_nonrec}
 
 rec: base
 	${MKDIR} -p exec
 	g++ ${OPT} ${source_rec} ${utils_dir}/utils.o ${maxtree_node_dir}/maxtree_node.o \
 		${boundary_tree_dir}/boundary_tree.o ${maxtree_dir}/maxtree.o \
-        -I${maxtree_node_dir}  -I${maxtree_dir} -I${utils_dir} ${vips_args} -o ${dest_rec}
+        -I${maxtree_node_dir}  -I${maxtree_dir} -I${utils_dir} -I${hps_dir} \
+		${vips_args} -o ${dest_rec}
 
 wilkinson: base
 	${MKDIR} -p exec
 	g++ ${OPT} ${source_non_rec_wilk} ${utils_dir}/utils.o ${maxtree_node_dir}/maxtree_node.o \
 		${boundary_tree_dir}/boundary_tree.o ${maxtree_dir}/maxtree.o \
-    	-I${maxtree_node_dir}  -I${maxtree_dir} -I${utils_dir} ${vips_args} -o ${dest_nonrec_wilk}
+    	-I${maxtree_node_dir}  -I${maxtree_dir} -I${utils_dir} -I${hps_dir} \
+		${vips_args} -o ${dest_nonrec_wilk}
 
 base: 
 	@make -C ${maxtree_node_dir}

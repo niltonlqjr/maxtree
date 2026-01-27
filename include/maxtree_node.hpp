@@ -22,7 +22,7 @@ class maxtree_node{
         bool labeled; // already get its output label? (its greylevel in filtered image)
         Tattribute attribute;
 
-        maxtree_node(Tpixel_value g, uint64_t i, uint64_t global_idx = 0, Tattribute attr = Tattr_default, int64_t global_parent = NO_PARENT);
+        maxtree_node(Tpixel_value g=Tattr_default, uint64_t i=0, uint64_t global_idx = 0, Tattribute attr = Tattr_default, int64_t global_parent = NO_PARENT);
         // void compute_attribute(Tattribute);
         
         // set the label of node and mark its field "labeled" as true

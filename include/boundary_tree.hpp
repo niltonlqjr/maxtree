@@ -33,11 +33,30 @@ class boundary_node{
                       uint64_t global_idx, Tattribute a = Tattr_default, 
                       int64_t bound_parent = NO_BOUNDARY_PARENT, 
                       int64_t border_lr = NO_BORDER_LEVELROOT); */
-        boundary_node(maxtree_node *n, boundary_tree *bound_tree_ptr, 
+        boundary_node(maxtree_node *n=NULL, boundary_tree *bound_tree_ptr=NULL, 
                       int64_t bound_parent = NO_BOUNDARY_PARENT, 
                       int64_t border_lr = NO_BORDER_LEVELROOT);
         boundary_node(boundary_node *b);           
         std::string to_string();
+
+        template <class B>
+        void serialize(B &buf) const{
+            buf << this->border_lr << this->boundary_parent 
+                << hps::to_string(*this->ptr_node) 
+                << this->in_lroot_tree << this->visited;
+        }
+
+        template <class B>
+        void parse(B &buf){
+            std::string tmp;
+            buf >> this->border_lr >> this->boundary_parent 
+                >> tmp >> this->in_lroot_tree >> this->visited;
+
+            maxtree_node new_node = hps::from_string<maxtree_node>(tmp);
+            this->ptr_node = new maxtree_node(new_node);
+
+        }
+
         void accumulate_attr(boundary_node *merged);
         void accumulate_attr(Tattribute value);
 
@@ -64,7 +83,7 @@ class boundary_tree{
             buf << this->h << this->w << this->grid_i << this->grid_j
                 << *(this->tile_borders) << this->boundary_tree_lroot->size();
             std::ostringstream oss;
-             for(auto e: *(this->boundary_tree_lroot)){
+            for(auto e: *(this->boundary_tree_lroot)){
                 auto p = std::make_pair<uint64_t, boundary_node>((uint64_t)e.first, (boundary_node)*(e.second));
                 hps::to_stream<std::pair<uint64_t, boundary_node>>(p,oss);
             }
@@ -84,15 +103,15 @@ class boundary_tree{
         void parse(B &buf){
             std::size_t size_tree, num_borders;
             
-            std::unordered_map<uint64_t, boundary_node> rec_bord_elem;
+            std::unordered_map<uint64_t, boundary_node> map_tree;
             buf >> this->h >> this->w >> this->grid_i >> this->grid_j
-                >> *(this->tile_borders) >> size_tree >> rec_bord_elem;
+                >> *(this->tile_borders) >> size_tree >> map_tree;
 
-            for(int i=0; i<size_tree; i++){
-                std::pair<uint64_t, boundary_node> p = rec_bord_elem[i];
+            /* for(int i=0; i<size_tree; i++){
+                std::pair<uint64_t, boundary_node> p = map_tree[i];
                 this->boundary_tree_lroot->emplace(p.first, new boundary_node(p.second));
             }
-            
+             */
             std::vector<std::vector<uint64_t>> v;
             buf >> num_borders >> v;
             
@@ -105,7 +124,8 @@ class boundary_tree{
                 this->border_elements->push_back(new_vec);
             }
         };
-        
+
+        boundary_tree();
         boundary_tree(uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j, bool dn=true);
         
         /*boundary_tree(std::vector<std::unordered_map<uint64_t, boundary_node *>*> *border_elements, 

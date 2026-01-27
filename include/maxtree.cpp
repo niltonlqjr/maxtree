@@ -140,7 +140,7 @@ std::vector<maxtree_node *> *maxtree::get_levelroots(){
 }
 
 
-void maxtree::fill_from_VImage(vips::VImage &img_in, uint32_t global_nlines, uint32_t global_ncols){
+void maxtree::fill_from_VImage(vips::VImage &img_in){
     this->h = img_in.height();
     this->w = img_in.width();
     vips::VImage img = img_in.copy_memory();

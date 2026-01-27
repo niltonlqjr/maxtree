@@ -7,7 +7,7 @@ message::message(){
     this->type = MSG_NULL;
 }
 
-message::message(enum message_type type, std::string &content, size_t size){
+message::message(std::string &content, size_t size, enum message_type type){
     this->type = type;
     this->size = size;
     this->content = content;

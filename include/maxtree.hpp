@@ -83,7 +83,7 @@ class maxtree{
 
         void set_pixel(maxtree_node *p, int64_t idx);
         // void set_pixel(maxtree_node &p, int64_t idx);
-        void fill_from_VImage(vips::VImage &img, uint32_t global_nlines=0, uint32_t global_ncols=0);
+        void fill_from_VImage(vips::VImage &img);
         void fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t base_w,
                                uint32_t l_tiles, uint32_t c_tiles);
         void save(std::string name, enum maxtee_node_field f = LABEL);
