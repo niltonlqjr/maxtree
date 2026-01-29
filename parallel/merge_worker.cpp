@@ -532,7 +532,7 @@ int main(int argc, char *argv[]){
     if(argc >= 3){
         input_name = argv[2];
     }else if(input_name == ""){
-        std::cout << "input file not defined, please, define it in config file or in command line.";
+        std::cout << "input file not defined, please, define it in config file or in command line.\n";
         exit(EX_NOINPUT);
     }
 
@@ -559,6 +559,8 @@ int main(int argc, char *argv[]){
     std::string self_addr = protocol + "://" + self_ip + ":" + self_port;
 
     registry_threads(num_threads, server_addr, self_addr);
+    
+    
     input_tile_task *task = new input_tile_task(1,1);
     task->prepare(in,3,3);
     task->read_tile(in);
@@ -572,42 +574,30 @@ int main(int argc, char *argv[]){
     // std::cout << "lroot string:" << bt->lroot_to_string(BOUNDARY_GVAL, " - ") << "\n=======================\n";
     bt->print_tree();
 
+
+
     std::string msg_content = hps::to_string(*bt);
     message m = message(msg_content, msg_content.size(), MSG_BOUNDARY_TREE);
 
     zmq::context_t context(1);
-    zmq::socket_t socket(context, zmq::socket_type::req);std::string s_msg = hps::to_string(msg);
-    // std::cout << "sending: " << s_msg << "\n";
-    zmq::message_t message_0mq(s_msg.size());
-    memcpy(message_0mq.data(), s_msg.data(), s_msg.size());
-    std::string ack="";
-    while(ack != "OK"){
-        socket.send(message_0mq, zmq::send_flags::none);
-        zmq::message_t reply;
-        socket.recv(reply, zmq::recv_flags::none);
-        ack.resize(reply.size());
-        memcpy(ack.data(), (char*)reply.data(), reply.size()) ;
-        // std::cout << "ack received:" << ack << "\n";
-    }
+    zmq::socket_t socket(context, zmq::socket_type::req);
+
     socket.connect(server_addr);
-
     std::string s_msg = hps::to_string(m);
-    
-    zmq::message_t message_0mq(s_msg.size());
-    memcpy(message_0mq.data(), s_msg.data(), s_msg.size());
+    // std::cout << "sending: " << s_msg << "\n";
+    std::cout << "sending tree\n";
+    zmq::message_t *message_0mq = new zmq::message_t(s_msg.size());
+    memcpy(message_0mq->data(), s_msg.data(), s_msg.size());
     std::string ack="";
     while(ack != "OK"){
-        socket.send(message_0mq, zmq::send_flags::none);
+        socket.send(*message_0mq, zmq::send_flags::none);
         zmq::message_t reply;
         socket.recv(reply, zmq::recv_flags::none);
         ack.resize(reply.size());
         memcpy(ack.data(), (char*)reply.data(), reply.size()) ;
         // std::cout << "ack received:" << ack << "\n";
     }
-
-
-
-
+    delete message_0mq;
 
     for(size_t i=0; i<workers_threads.size(); i++){
         workers_threads[i]->join();

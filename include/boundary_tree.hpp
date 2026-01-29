@@ -81,21 +81,25 @@ class boundary_tree{
         template <class B>
         void serialize(B &buf) const{
             buf << this->h << this->w << this->grid_i << this->grid_j
-                << *(this->tile_borders) << this->boundary_tree_lroot->size();
-            std::ostringstream oss;
-            for(auto e: *(this->boundary_tree_lroot)){
-                auto p = std::make_pair<uint64_t, boundary_node>((uint64_t)e.first, (boundary_node)*(e.second));
-                hps::to_stream<std::pair<uint64_t, boundary_node>>(p,oss);
-            }
-            buf << oss.str(); 
-            buf << this->border_elements->size();
-            std::vector<std::vector<uint64_t>> v;
-            std::ostringstream s;
-            for(std::vector<uint64_t> *data: *(this->border_elements)){
-                std::cout << data->size() << "\n";
-                hps::to_stream<std::vector<uint64_t>>(*data,s);
-            }
-            buf << s.str();
+                << *(this->tile_borders)
+                << this->boundary_tree_lroot->size();
+            // std::ostringstream oss;
+            // for(auto e: *(this->boundary_tree_lroot)){
+            //     std::cout << e.second->to_string() << "\n";
+            //     auto p = std::make_pair<uint64_t, boundary_node>((uint64_t)e.first, (boundary_node)*(e.second));
+            //     hps::to_stream<std::pair<uint64_t, boundary_node>>(p,oss);
+            // }
+            // buf << oss.str(); 
+            // // buf << oss;
+            // buf << this->border_elements->size();
+            // std::vector<std::vector<uint64_t>> v;
+            // std::ostringstream s;
+            // for(std::vector<uint64_t> *data: *(this->border_elements)){
+            //     std::cout << data->size() << "\n";
+            //     hps::to_stream<std::vector<uint64_t>>(*data,s);
+            // }
+            // buf << s.str();
+            // buf << s;
 
         };
 
@@ -103,26 +107,34 @@ class boundary_tree{
         void parse(B &buf){
             std::size_t size_tree, num_borders;
             
+            
             std::unordered_map<uint64_t, boundary_node> map_tree;
             buf >> this->h >> this->w >> this->grid_i >> this->grid_j
-                >> *(this->tile_borders) >> size_tree >> map_tree;
-
-            /* for(int i=0; i<size_tree; i++){
-                std::pair<uint64_t, boundary_node> p = map_tree[i];
-                this->boundary_tree_lroot->emplace(p.first, new boundary_node(p.second));
+                >> *(this->tile_borders)
+                >> size_tree; 
+            std::cout << "size of tree" << size_tree << "\n";
+            for(auto x: *(this->tile_borders)){
+                std::cout << x << " ";
             }
-             */
-            std::vector<std::vector<uint64_t>> v;
-            buf >> num_borders >> v;
+            std::cout << "\n\n";
+            // buf >> map_tree;
+            // for(int i=0; i<size_tree; i++){
+            //     // std::pair<uint64_t, boundary_node> p = map_tree[i];
+            //     boundary_node p = map_tree[i];
+            //     this->boundary_tree_lroot->emplace(p.ptr_node->global_idx, new boundary_node(p));
+            // }
             
-            this->border_elements = new std::vector<std::vector<uint64_t> *>();
-            for(int i=0; i<num_borders; i++){
-                std::vector<uint64_t> *new_vec = new std::vector<uint64_t>();
-                for(int j=0; j<v[i].size(); j++){
-                    new_vec->push_back(v[i][j]);
-                }
-                this->border_elements->push_back(new_vec);
-            }
+            // std::vector<std::vector<uint64_t>> v;
+            // buf >> num_borders >> v;
+            
+            // this->border_elements = new std::vector<std::vector<uint64_t> *>();
+            // for(int i=0; i<num_borders; i++){
+            //     std::vector<uint64_t> *new_vec = new std::vector<uint64_t>();
+            //     for(int j=0; j<v[i].size(); j++){
+            //         new_vec->push_back(v[i][j]);
+            //     }
+            //     this->border_elements->push_back(new_vec);
+            // }
         };
 
         boundary_tree();

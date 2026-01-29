@@ -37,14 +37,16 @@ void manager_recv(scheduler_of_workers<worker *> *pool_of_workers, zmq::socket_t
         std::string rec;
         rec.resize(request.size());
         memcpy(rec.data(), request.data(), request.size());
-        std::cout << "receieved:" << rec << "\n";
+        // std::cout << "receieved:" << rec << "\n";
         message r = hps::from_string<message>(rec);
         std::cout << "message type" << r.type << "\n";
         if(r.type == MSG_REGISTRY){
             worker w = hps::from_string<worker>(r.content);
+            std::cout << "Registry" << "\n";
             w.print();
             system_workers.insert_worker(new worker(w));
         }else if(r.type == MSG_BOUNDARY_TREE){
+            std::cout << "tree" << "\n";
             boundary_tree bt = hps::from_string<boundary_tree>(r.content);
             bt.print_tree();
         }
@@ -53,7 +55,7 @@ void manager_recv(scheduler_of_workers<worker *> *pool_of_workers, zmq::socket_t
         zmq::message_t reply (reply_string.length());
         memcpy (reply.data (), reply_string.data(), reply_string.length());
         s.send (reply, zmq::send_flags::none);
-        std::cout << "registered workers:\n";
+        std::cout << "registered workers:\n\n\n\n";
         for(size_t i=0; i < system_workers.size(); i++){
             worker *w = system_workers.at(i);
             w->print();
