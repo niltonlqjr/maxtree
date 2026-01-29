@@ -80,69 +80,62 @@ class boundary_tree{
 
         template <class B>
         void serialize(B &buf) const{
-            buf << this->h << this->w << this->grid_i << this->grid_j
-                << *(this->tile_borders)
-                << this->boundary_tree_lroot->size();
-            // std::ostringstream oss;
-            // for(auto e: *(this->boundary_tree_lroot)){
-            //     std::cout << e.second->to_string() << "\n";
-            //     auto p = std::make_pair<uint64_t, boundary_node>((uint64_t)e.first, (boundary_node)*(e.second));
-            //     hps::to_stream<std::pair<uint64_t, boundary_node>>(p,oss);
-            // }
-            // buf << oss.str(); 
-            // // buf << oss;
-            // buf << this->border_elements->size();
-            // std::vector<std::vector<uint64_t>> v;
-            // std::ostringstream s;
-            // for(std::vector<uint64_t> *data: *(this->border_elements)){
-            //     std::cout << data->size() << "\n";
-            //     hps::to_stream<std::vector<uint64_t>>(*data,s);
-            // }
-            // buf << s.str();
-            // buf << s;
+            buf << this->h << this->w << this->grid_i << this->grid_j;
+            buf << *(this->tile_borders);
+            buf << this->boundary_tree_lroot->size();
+            
+            std::ostringstream bn, n;
 
+            for(auto e: *(this->boundary_tree_lroot)){
+                auto p = std::make_pair<uint64_t, boundary_node>((uint64_t)e.first, (boundary_node)*e.second);
+                hps::to_stream<std::pair<uint64_t, boundary_node>>(p,bn);
+                hps::to_stream<maxtree_node>(*(p.second.ptr_node),n);
+            }
+            buf << bn.str();
+            buf << n.str();
         };
 
         template<class B>
         void parse(B &buf){
-            std::size_t size_tree, num_borders;
+            std::size_t size_btree, num_borders;
+            std::vector<std::pair<uint64_t, boundary_node>> map_tree;
+            std::vector<maxtree_node> mt_nodes;
             
+            this->tile_borders = new std::vector<bool>();
             
-            std::unordered_map<uint64_t, boundary_node> map_tree;
-            buf >> this->h >> this->w >> this->grid_i >> this->grid_j
-                >> *(this->tile_borders)
-                >> size_tree; 
-            std::cout << "size of tree" << size_tree << "\n";
+            buf >> this->h >> this->w >> this->grid_i >> this->grid_j;
+            buf >> *(this->tile_borders);
+            buf >> size_btree;
+            std::cout << "size of tree" << size_btree << "\n";
             for(auto x: *(this->tile_borders)){
                 std::cout << x << " ";
             }
-            std::cout << "\n\n";
-            // buf >> map_tree;
-            // for(int i=0; i<size_tree; i++){
-            //     // std::pair<uint64_t, boundary_node> p = map_tree[i];
-            //     boundary_node p = map_tree[i];
-            //     this->boundary_tree_lroot->emplace(p.ptr_node->global_idx, new boundary_node(p));
-            // }
-            
-            // std::vector<std::vector<uint64_t>> v;
-            // buf >> num_borders >> v;
-            
-            // this->border_elements = new std::vector<std::vector<uint64_t> *>();
-            // for(int i=0; i<num_borders; i++){
-            //     std::vector<uint64_t> *new_vec = new std::vector<uint64_t>();
-            //     for(int j=0; j<v[i].size(); j++){
-            //         new_vec->push_back(v[i][j]);
-            //     }
-            //     this->border_elements->push_back(new_vec);
-            // }
+
+            buf >> map_tree >> mt_nodes;
+            std::cout << "rec sizes:";
+            std::cout << map_tree.size() << " " <<  mt_nodes.size() << "\n";
+            for(size_t i=0; i<size_btree; i++){
+                std::pair<uint64_t, boundary_node> p = map_tree[i];
+                std::cout << "inserting ";
+                std::cout << p.first << "\n";
+                
+                maxtree_node aux_node = mt_nodes[i];
+                p.second.ptr_node = new maxtree_node(aux_node); 
+                this->insert_bnode_lroot_tree(&p.second,true);
+            }
+            std::cout <<" lroot tree: " << this->lroot_to_string() << "\n";
+
+
+
+            std::cout << "fim\n\n";
         };
 
         boundary_tree();
         boundary_tree(uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j, bool dn=true);
-        
+        ~boundary_tree();
         /*boundary_tree(std::vector<std::unordered_map<uint64_t, boundary_node *>*> *border_elements, 
              uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j);*/
-        ~boundary_tree();
+        void delete_boundary_tree();
         
         /* create a copy of n and insert it at border structure (border_elements). Return the pointer of the created copy */
         // boundary_node *insert_border_element(boundary_node &n, enum borders b);

@@ -30,14 +30,20 @@ void read_config(char conf_name[], std::string &port, std::string &protocol){
     }
 }
 
-void manager_recv(scheduler_of_workers<worker *> *pool_of_workers, zmq::socket_t &s){
+void manager_recv(scheduler_of_workers<worker *> *pool_of_workers, zmq::socket_t &r){
     zmq::message_t request;
     while (true){
-        s.recv(request, zmq::recv_flags::none);
+        std::cout << "------>new iteration\n";
+        r.recv(request, zmq::recv_flags::none);
         std::string rec;
         rec.resize(request.size());
         memcpy(rec.data(), request.data(), request.size());
         // std::cout << "receieved:" << rec << "\n";
+        std::cout << "receieved: --> ";
+        for(char c: rec){
+            std::cout << " " << (int) c;
+        }
+        std::cout << " <--\n";
         message r = hps::from_string<message>(rec);
         std::cout << "message type" << r.type << "\n";
         if(r.type == MSG_REGISTRY){
@@ -45,21 +51,18 @@ void manager_recv(scheduler_of_workers<worker *> *pool_of_workers, zmq::socket_t
             std::cout << "Registry" << "\n";
             w.print();
             system_workers.insert_worker(new worker(w));
+            std::cout << "========================== registered workers: ==========================\n";
+            for(size_t i=0; i < system_workers.size(); i++){
+                worker *w = system_workers.at(i);
+                w->print();
+            }
         }else if(r.type == MSG_BOUNDARY_TREE){
             std::cout << "tree" << "\n";
             boundary_tree bt = hps::from_string<boundary_tree>(r.content);
-            bt.print_tree();
+            std::cout << "tree ok\n";
+            // bt.print_tree();
         }
-
-        constexpr std::string_view reply_string = "OK";
-        zmq::message_t reply (reply_string.length());
-        memcpy (reply.data (), reply_string.data(), reply_string.length());
-        s.send (reply, zmq::send_flags::none);
-        std::cout << "registered workers:\n\n\n\n";
-        for(size_t i=0; i < system_workers.size(); i++){
-            worker *w = system_workers.at(i);
-            w->print();
-        }
+        std::cout << "end iteration<--------\n";
     }
 }
 
@@ -73,10 +76,10 @@ int main(int argc, char *argv[]){
     //  Prepare our context and socket
     static const int nth = 2;
     zmq::context_t context (nth);
-    zmq::socket_t socket (context, zmq::socket_type::rep);
+    zmq::socket_t  receiver(context, zmq::socket_type::pull);
     std::string address = protocol+"://*:"+port;
-    socket.bind(address);
-    manager_recv(pool_of_workers, socket);
+    receiver.bind(address);
+    manager_recv(pool_of_workers, receiver);
 
 
 }
