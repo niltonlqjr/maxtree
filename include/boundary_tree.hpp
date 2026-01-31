@@ -80,29 +80,38 @@ class boundary_tree{
 
         template <class B>
         void serialize(B &buf) const{
+            std::vector<std::pair<uint64_t, boundary_node>> map_tree;
+            std::vector<maxtree_node> mt_nodes;
+            std::vector<std::vector<uint64_t>> send_bord_elem;
+
             buf << this->h << this->w << this->grid_i << this->grid_j;
             buf << *(this->tile_borders);
             buf << this->boundary_tree_lroot->size();
-            
-            std::ostringstream bn, n;
-
             for(auto e: *(this->boundary_tree_lroot)){
                 auto p = std::make_pair<uint64_t, boundary_node>((uint64_t)e.first, (boundary_node)*e.second);
-                hps::to_stream<std::pair<uint64_t, boundary_node>>(p,bn);
-                hps::to_stream<maxtree_node>(*(p.second.ptr_node),n);
+                map_tree.push_back(p);
+                mt_nodes.push_back(*(p.second.ptr_node));
             }
-            buf << bn.str();
-            buf << n.str();
+            buf << map_tree;
+            buf << mt_nodes;
+            for(auto b: TBordersVector){
+                send_bord_elem.push_back(std::vector<uint64_t>());
+            }
+            for(auto border: TBordersVector){
+                send_bord_elem.at(border) = *(this->border_elements->at(border));
+                std::cout << "sending border: " << NamesBordersVector[border] << "\n";
+            }
+            buf << send_bord_elem;
         };
 
         template<class B>
         void parse(B &buf){
-            std::size_t size_btree, num_borders;
             std::vector<std::pair<uint64_t, boundary_node>> map_tree;
             std::vector<maxtree_node> mt_nodes;
-            
+            std::vector<std::vector<uint64_t>> recv_bord_elem;
+            std::size_t size_btree, num_borders;
+
             this->tile_borders = new std::vector<bool>();
-            
             buf >> this->h >> this->w >> this->grid_i >> this->grid_j;
             buf >> *(this->tile_borders);
             buf >> size_btree;
@@ -110,23 +119,22 @@ class boundary_tree{
             for(auto x: *(this->tile_borders)){
                 std::cout << x << " ";
             }
-
             buf >> map_tree >> mt_nodes;
-            std::cout << "rec sizes:";
-            std::cout << map_tree.size() << " " <<  mt_nodes.size() << "\n";
             for(size_t i=0; i<size_btree; i++){
                 std::pair<uint64_t, boundary_node> p = map_tree[i];
                 std::cout << "inserting ";
                 std::cout << p.first << "\n";
-                
                 maxtree_node aux_node = mt_nodes[i];
                 p.second.ptr_node = new maxtree_node(aux_node); 
+                std::cout << "new node created\n";
                 this->insert_bnode_lroot_tree(&p.second,true);
             }
             std::cout <<" lroot tree: " << this->lroot_to_string() << "\n";
-
-
-
+            
+            buf >> recv_bord_elem;
+            for(auto border: TBordersVector){
+                *(this->border_elements->at(border)) = recv_bord_elem.at(border);
+            }
             std::cout << "fim\n\n";
         };
 

@@ -573,8 +573,6 @@ int main(int argc, char *argv[]){
     boundary_tree *bt = t->get_boundary_tree();
     // std::cout << "lroot string:" << bt->lroot_to_string(BOUNDARY_GVAL, " - ") << "\n=======================\n";
     bt->print_tree();
-
-
     
 
     std::string msg_content = hps::to_string(*bt);
@@ -597,6 +595,7 @@ int main(int argc, char *argv[]){
     memcpy(message_0mq->data(), s_msg.data(), s_msg.size());
     socket.send(*message_0mq, zmq::send_flags::none);
 
+    std::cout << "tree sent\n";
     delete message_0mq;
 
     for(size_t i=0; i<workers_threads.size(); i++){

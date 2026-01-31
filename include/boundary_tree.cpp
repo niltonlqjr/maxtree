@@ -60,9 +60,8 @@ void boundary_node::accumulate_attr(Tattribute value){
 }
  */
 
-boundary_tree::boundary_tree(){
-    boundary_tree(0,0,0,0);
-}
+boundary_tree::boundary_tree(): boundary_tree(0,0,0,0){}
+
 
 boundary_tree::boundary_tree(uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j, bool dn){
     this->h = h;

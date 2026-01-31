@@ -34,7 +34,8 @@ void manager_recv(scheduler_of_workers<worker *> *pool_of_workers, zmq::socket_t
     zmq::message_t request;
     while (true){
         std::cout << "------>new iteration\n";
-        r.recv(request, zmq::recv_flags::none);
+        auto res_recv = r.recv(request);
+        
         std::string rec;
         rec.resize(request.size());
         memcpy(rec.data(), request.data(), request.size());
@@ -60,7 +61,8 @@ void manager_recv(scheduler_of_workers<worker *> *pool_of_workers, zmq::socket_t
             std::cout << "tree" << "\n";
             boundary_tree bt = hps::from_string<boundary_tree>(r.content);
             std::cout << "tree ok\n";
-            // bt.print_tree();
+            std::cout << "-------------------------- Boundary Tree ----------------------------\n";
+            bt.print_tree();
         }
         std::cout << "end iteration<--------\n";
     }
