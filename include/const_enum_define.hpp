@@ -31,25 +31,15 @@ enum merge_directions{
     MERGE_HORIZONTAL_BORDER, MERGE_VERTICAL_BORDER
 };
 enum boundary_tree_field{
-    BOUNDARY_PARENT, 
-    MAXTREE_IDX, 
-    BOUNDARY_GVAL, 
-    BOUNDARY_BORDER_LR, 
-    BOUNDARY_GLOBAL_IDX, 
-    BOUNDARY_LABEL, 
-    BOUNDARY_ATTR, 
-    BOUNDARY_ALL_FIELDS
+    BOUNDARY_PARENT, MAXTREE_IDX, 
+    BOUNDARY_GVAL, BOUNDARY_BORDER_LR, 
+    BOUNDARY_GLOBAL_IDX, BOUNDARY_LABEL,
+    BOUNDARY_ATTR, BOUNDARY_ALL_FIELDS
 };
 enum maxtee_node_field {
-    PARENT, 
-    PARENT_IJ, 
-    LABEL, 
-    IDX, 
-    IDX_IJ, 
-    GVAL, 
-    LEVELROOT, 
-    ATTRIBUTE, 
-    GLOBAL_IDX
+    PARENT, PARENT_IJ, LABEL, 
+    IDX, IDX_IJ, GVAL, LEVELROOT, 
+    ATTRIBUTE, GLOBAL_IDX
 };
 enum borders{
     LEFT_BORDER,    TOP_BORDER,     RIGHT_BORDER,   BOTTOM_BORDER
@@ -65,8 +55,7 @@ static const std::vector<std::string> NamesBordersVector({
 });
 
 enum message_type{
-    MSG_NULL,
-    MSG_REGISTRY,
+    MSG_NULL, MSG_REGISTRY,
     MSG_BOUNDARY_TREE
 };
 

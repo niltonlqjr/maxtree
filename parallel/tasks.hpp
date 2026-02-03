@@ -14,6 +14,7 @@
 class comparable_task{
     public:
         virtual uint64_t size() = 0;
+        
 };
 
 class input_tile_task: public comparable_task{
