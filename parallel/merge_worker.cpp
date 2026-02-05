@@ -236,7 +236,7 @@ void registry_threads(uint32_t num_th, std::string server_addr, std::string self
 
 int main(int argc, char *argv[]){
     vips::VImage *in;
-    std::string out_name, out_ext, input_name;// server_ip, self_ip, server_port, self_port, protocol;
+    std::string out_name, out_ext;// server_ip, self_ip, server_port, self_port, protocol;
     
     uint32_t glines, gcolumns;
     uint8_t pixel_connection;

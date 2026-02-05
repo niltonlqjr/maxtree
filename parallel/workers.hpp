@@ -18,17 +18,17 @@ std::pair<uint32_t, uint32_t> get_task_index(boundary_tree_task *t);
 
 class worker{
     private:
-        uint16_t id;
+        TWorkerIdx id;
         std::unordered_map<std::string, double> *attr;
         bool busy;
     public:
-        worker(uint16_t id, std::unordered_map<std::string, double> *attr);
+        worker(TWorkerIdx id, std::unordered_map<std::string, double> *attr);
         worker();
         // ~worker();
         void set_attr(std::string, double val);
         //virtual void run() = 0;
         Tprocess_power get_process_power();
-
+        
         bool operator<(worker &r);
         bool operator>(worker &r);
         bool operator==(worker &r);
@@ -44,7 +44,7 @@ class worker{
         void parse(B &buf){
             buf >> (*(this->attr)) >> this->id;
         }
-
+        void update_index(TWorkerIdx new_idx);
         //get a task from bag and compute maxtree of the tile of this task
         void maxtree_calc(bag_of_tasks<input_tile_task *> &bag_tiles, 
                           bag_of_tasks<maxtree_task *> &max_trees);

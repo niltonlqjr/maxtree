@@ -15,7 +15,7 @@ std::pair<uint32_t, uint32_t> get_task_index(boundary_tree_task *t){
 }
 
 
-worker::worker(uint16_t id, std::unordered_map<std::string, double> *attr){
+worker::worker(TWorkerIdx id, std::unordered_map<std::string, double> *attr){
     if(attr == NULL || attr == nullptr){
         this->attr = new std::unordered_map<std::string, double>();
     }else{
@@ -51,6 +51,10 @@ bool worker::operator>(worker &r){
 
 bool worker::operator==(worker &r){
     return this->get_process_power() == r.get_process_power();
+}
+
+void worker::update_index(TWorkerIdx new_idx){
+    this->id = new_idx;
 }
 
 void worker::print(){

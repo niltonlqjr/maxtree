@@ -13,6 +13,8 @@ using namespace vips;
 bool print_only_trees;
 bool verbose;
 
+TWorkerIdx idx_at_manager=0;
+
 scheduler_of_workers<worker*> system_workers;
 
 void read_config(char conf_name[], std::string &port, std::string &protocol);
@@ -32,6 +34,7 @@ void read_config(char conf_name[], std::string &port, std::string &protocol){
 
 void manager_recv(scheduler_of_workers<worker *> *pool_of_workers, zmq::socket_t &r){
     zmq::message_t request;
+    std::pair<uint32_t, uint32_t> grid_idx;
     while (true){
         std::cout << "------>new iteration\n";
         auto res_recv = r.recv(request);
@@ -48,21 +51,27 @@ void manager_recv(scheduler_of_workers<worker *> *pool_of_workers, zmq::socket_t
         message r = hps::from_string<message>(rec);
         std::cout << "message type" << r.type << "\n";
         if(r.type == MSG_REGISTRY){
-            worker w = hps::from_string<worker>(r.content);
+            worker w_rec = hps::from_string<worker>(r.content);
             std::cout << "Registry" << "\n";
-            w.print();
-            system_workers.insert_worker(new worker(w));
+            w_rec.print();
+            w_rec.update_index(idx_at_manager++);
+            worker *w_at_manager = new worker(w_rec);
+            system_workers.insert_worker(w_at_manager);
             std::cout << "========================== registered workers: ==========================\n";
             for(size_t i=0; i < system_workers.size(); i++){
                 worker *w = system_workers.at(i);
                 w->print();
             }
+
         }else if(r.type == MSG_BOUNDARY_TREE){
             std::cout << "tree" << "\n";
             boundary_tree bt = hps::from_string<boundary_tree>(r.content);
             std::cout << "tree ok\n";
             std::cout << "-------------------------- Boundary Tree ----------------------------\n";
             bt.print_tree();
+        }else if(r.type == MSG_GET_GRID){
+            // grid_idx = get_grid_for_worker()
+
         }
         std::cout << "end iteration<--------\n";
     }

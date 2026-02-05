@@ -18,6 +18,7 @@ class scheduler_of_workers{
         max_heap<Worker> *workers;
         uint64_t total_workers;
         uint64_t free_workers;
+        std::vector<Worker *> workers_ptr;
     public:
         scheduler_of_workers();
         void insert_worker(Worker w);

@@ -21,13 +21,10 @@ class message{
             buf << (unsigned int) this->type << this->size << this->content;
         }
 
-
         template <class B>
         void parse(B &buf){
             buf >> (unsigned int&) this->type >> this->size >> this->content;
-        }
-
-            
+        }         
 };
 
 #endif
