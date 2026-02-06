@@ -16,6 +16,7 @@
 #define Tboundary_tree_lroot std::unordered_map<uint64_t, boundary_node*>
 #define Tprocess_power double
 #define TWorkerIdx uint16_t
+#define TWorkerAttr double
 
 #define DEFAULT_PORT "7233"
 

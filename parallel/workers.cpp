@@ -15,7 +15,7 @@ std::pair<uint32_t, uint32_t> get_task_index(boundary_tree_task *t){
 }
 
 
-worker::worker(TWorkerIdx id, std::unordered_map<std::string, double> *attr){
+worker::worker(TWorkerIdx id, std::unordered_map<std::string, TWorkerAttr> *attr){
     if(attr == NULL || attr == nullptr){
         this->attr = new std::unordered_map<std::string, double>();
     }else{
@@ -25,7 +25,7 @@ worker::worker(TWorkerIdx id, std::unordered_map<std::string, double> *attr){
 }
 
 worker::worker(){
-    this->attr = new std::unordered_map<std::string, double>();
+    this->attr = new std::unordered_map<std::string, TWorkerAttr>();
     this->id = 0;
 }
 
@@ -33,8 +33,20 @@ worker::worker(){
 //     delete this->attr;
 // }
 
-void worker::set_attr(std::string attr_name, double attr_val){
+void worker::set_attr(std::string attr_name, TWorkerAttr attr_val){
     (*this->attr)[attr_name] = attr_val;
+}
+
+
+
+TWorkerAttr worker::get_attr(std::string s){
+    if(this->attr->find(s) != this->attr->end()){
+        return this->attr->at(s);
+        
+    }
+    std::string err_msg;
+    err_msg = "worker\n" + this->to_string() + "\n has no attribute '"+ s +"'";
+    throw std::out_of_range(err_msg);
 }
 
 Tprocess_power worker::get_process_power(){
@@ -53,18 +65,33 @@ bool worker::operator==(worker &r){
     return this->get_process_power() == r.get_process_power();
 }
 
+TWorkerIdx worker::get_index(){
+    return this->id;
+}
+
 void worker::update_index(TWorkerIdx new_idx){
     this->id = new_idx;
 }
 
+std::string worker::to_string(){
+    std::ostringstream wstr;
+    wstr << "local id:" << this->id << " -- ";
+    wstr << "attributes:\n";
+    for(auto elem: *this->attr){
+        wstr << "(" << elem.first << "," << elem.second << ") ";
+    }
+    wstr << "\n";
+    return wstr.str();
+}
+
 void worker::print(){
-    std::cout << "local id:" << this->id << " -- ";
+    /* std::cout << "local id:" << this->id << " -- ";
     std::cout << "attributes:\n";
     for(auto elem: *this->attr){
         std::cout << "(" << elem.first << "," << elem.second << ") ";
     }
-    std::cout << "\n";
-
+    std::cout << "\n"; */
+    std::cout << this->to_string();
 }
 
 void worker::get_boundary_tree(bag_of_tasks<maxtree_task *> &maxtrees,

@@ -190,7 +190,7 @@ void registry(worker *w, std::string server_addr, std::string self_addr){
     socket.connect(server_addr);
     std::string msg_content = hps::to_string(*w);
     // std::cout << "msg content:" << msg_content << "\n";
-    message msg(msg_content, msg_content.size(),MSG_REGISTRY);
+    message msg(msg_content, msg_content.size(),MSG_REGISTRY,self_addr);
     std::string s_msg = hps::to_string(msg);
     // std::cout << "sending: " << s_msg << "\n";
     zmq::message_t message_0mq(s_msg.size());

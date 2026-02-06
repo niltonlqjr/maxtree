@@ -1,5 +1,6 @@
 #include <unordered_map>
 #include <string>
+#include <iostream>
 
 #include "src/hps.h"
 
@@ -19,20 +20,24 @@ std::pair<uint32_t, uint32_t> get_task_index(boundary_tree_task *t);
 class worker{
     private:
         TWorkerIdx id;
-        std::unordered_map<std::string, double> *attr;
+        std::unordered_map<std::string, TWorkerAttr> *attr;
         bool busy;
     public:
-        worker(TWorkerIdx id, std::unordered_map<std::string, double> *attr);
+        worker(TWorkerIdx id, std::unordered_map<std::string, TWorkerAttr> *attr);
         worker();
         // ~worker();
-        void set_attr(std::string, double val);
+        void set_attr(std::string s, TWorkerAttr val);
         //virtual void run() = 0;
+        TWorkerAttr get_attr(std::string s);
+        TWorkerIdx get_index();
+
         Tprocess_power get_process_power();
         
         bool operator<(worker &r);
         bool operator>(worker &r);
         bool operator==(worker &r);
-        
+
+        std::string to_string();
         void print();
 
         template <class B>
