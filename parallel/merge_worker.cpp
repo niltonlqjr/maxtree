@@ -27,6 +27,7 @@
 #include "scheduler_of_workers.hpp"
 
 using namespace vips;
+
 bool print_only_trees;
 bool verbose;
 
@@ -186,24 +187,24 @@ void read_sequential_file(bag_of_tasks<input_tile_task*> &bag, vips::VImage *in,
 
 void registry(worker *w, std::string server_addr, std::string self_addr){
     zmq::context_t context(1);
-    zmq::socket_t socket(context, zmq::socket_type::push);
-    socket.connect(server_addr);
+    zmq::socket_t conect_manager(context, zmq::socket_type::req);
+    conect_manager.connect(server_addr);
     std::string msg_content = hps::to_string(*w);
     // std::cout << "msg content:" << msg_content << "\n";
-    message msg(msg_content, msg_content.size(),MSG_REGISTRY,self_addr);
-    std::string s_msg = hps::to_string(msg);
+    message requirement(msg_content, msg_content.size(), MSG_REGISTRY, self_addr);
+    std::string s_msg = hps::to_string(requirement);
     // std::cout << "sending: " << s_msg << "\n";
     zmq::message_t message_0mq(s_msg.size());
     memcpy(message_0mq.data(), s_msg.data(), s_msg.size());
-    // std::string ack="";
-    // while(ack != "OK"){
-        socket.send(message_0mq, zmq::send_flags::none);
-        // zmq::message_t reply;
-        // socket.recv(reply, zmq::recv_flags::none);
-        // ack.resize(reply.size());
-        // memcpy(ack.data(), (char*)reply.data(), reply.size()) ;
-        // std::cout << "ack received:" << ack << "\n";
-    // }
+    std::string global_id="";
+
+    conect_manager.send(message_0mq, zmq::send_flags::none);
+    zmq::message_t reply_0mq;
+    auto resp_val = conect_manager.recv(reply_0mq, zmq::recv_flags::none);
+    TWorkerIdx reply; // = hps::from_string<TWorkerIdx>(reply_0mq);
+    memcpy(&reply, reply_0mq.data(), sizeof(TWorkerIdx));
+    std::cout << "reply: "<< reply << "\n";
+    w->update_index(reply);
 }
 
 
@@ -218,11 +219,10 @@ void registry_threads(uint32_t num_th, std::string server_addr, std::string self
         w->set_attr("MHZ", 4000.041);
         w->set_attr("L3", 16.0+local_id);
         
-        local_workers.insert_worker(w);
         
-        std::cout << "registring id:" << local_id << "of total" << num_th << " threads\n";
+        std::cout << "registring id: " << local_id << " of total " << num_th << " threads\n";
         workers_threads.push_back(new std::thread(registry, w, server_addr, self_addr));
-        
+        local_workers.insert_worker(w);
         
     }
     // read_sequential_file(bag_tiles, in, glines, gcolumns);
@@ -246,7 +246,7 @@ int main(int argc, char *argv[]){
     Tattribute lambda=2;
     maxtree *t;
     input_tile_task *tile;
-    std::vector<worker *> local_workers;
+
     
     bag_of_tasks<input_tile_task*> bag_tiles;
     bag_of_tasks<maxtree_task*> maxtree_tiles_pre_btree, maxtree_tiles, updated_trees;
@@ -311,19 +311,20 @@ int main(int argc, char *argv[]){
     std::cout << "maxtree to string: \n" << t->to_string() << "\n";
     boundary_tree *bt = t->get_boundary_tree();
     // std::cout << "lroot string:" << bt->lroot_to_string(BOUNDARY_GVAL, " - ") << "\n=======================\n";
-    bt->print_tree();
+    // bt->print_tree();
     
 
     std::string msg_content = hps::to_string(*bt);
     message m = message(msg_content, msg_content.size(), MSG_BOUNDARY_TREE);
 
     zmq::context_t context(1);
-    zmq::socket_t socket(context, zmq::socket_type::push);
+    
+    zmq::socket_t sender(context, zmq::socket_type::req);
 
-    socket.connect(server_addr);
+    sender.connect(server_addr);
     std::string s_msg = hps::to_string(m);
 
-    // std::cout << "sending: -->" << s_msg << "<--\n";
+    std::cout << "sending: -->" << s_msg << "<--\n";
     std::cout << "sending: -->";
     for(char c: s_msg){
         std::cout << " " << (int) c;
@@ -332,7 +333,7 @@ int main(int argc, char *argv[]){
     std::cout << "sending tree\n";
     zmq::message_t *message_0mq = new zmq::message_t(s_msg.size());
     memcpy(message_0mq->data(), s_msg.data(), s_msg.size());
-    socket.send(*message_0mq, zmq::send_flags::none);
+    sender.send(*message_0mq, zmq::send_flags::none);
 
     std::cout << "tree sent\n";
     delete message_0mq;
@@ -344,6 +345,9 @@ int main(int argc, char *argv[]){
     for(size_t i=0; i<workers_threads.size(); i++){
         delete workers_threads[i];
     }
-
+    for(size_t i=0; i < local_workers.size(); i++){
+        worker *w = local_workers.at(i);
+        std::cout << "worker local: " <<  i << " registered as " << w->get_index() << " at manager\n";
+    }
     
 }

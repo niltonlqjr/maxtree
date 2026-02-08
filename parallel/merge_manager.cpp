@@ -1,4 +1,6 @@
 #include <string>
+#include <thread>
+
 #include <zmq.hpp>
 
 #include "utils.hpp"
@@ -12,6 +14,8 @@
 using namespace vips;
 bool print_only_trees;
 bool verbose;
+
+bool running;
 
 static const int nth = 2;
 
@@ -48,13 +52,13 @@ bool reply_to(std::string ip, worker *w){
     return false;
 }
 
-void manager_recv(scheduler_of_workers<worker *> *pool_of_workers, zmq::socket_t &rec){
+void manager_recv(scheduler_of_workers<worker *> *pool_of_workers, zmq::socket_t &sock){
     zmq::message_t request;
     std::pair<uint32_t, uint32_t> grid_idx;
     TWorkerIdx current_idx;
-    while (true){
+    while (running){
         std::cout << "------>new iteration\n";
-        auto res_recv = rec.recv(request);
+        auto res_recv = sock.recv(request);
         
         std::string rec_msg;
         rec_msg.resize(request.size());
@@ -80,9 +84,12 @@ void manager_recv(scheduler_of_workers<worker *> *pool_of_workers, zmq::socket_t
                 worker *w = system_workers.at(i);
                 w->print();
             }
-            if(!reply_to(recv_msg.sender, w_at_manager)){
-                std::cerr << "fail to reply global index to worker: \n" << w_at_manager->to_string();
-            }
+            std::cout << "==========================  ==========================\n";
+            
+            zmq::message_t msg_new_id(sizeof(TWorkerIdx));
+            memcpy(msg_new_id.data(), &current_idx, sizeof(TWorkerIdx));
+            
+            auto reply_return = sock.send(msg_new_id, zmq::send_flags::none);
 
         }else if(recv_msg.type == MSG_BOUNDARY_TREE){
             std::cout << "tree" << "\n";
@@ -90,10 +97,17 @@ void manager_recv(scheduler_of_workers<worker *> *pool_of_workers, zmq::socket_t
             std::cout << "tree ok\n";
             std::cout << "-------------------------- Boundary Tree ----------------------------\n";
             bt.print_tree();
+            auto reply_return = sock.send(zmq::buffer("TREE_RECV"), zmq::send_flags::none);
         }else if(recv_msg.type == MSG_GET_GRID){
             // grid_idx = get_grid_for_worker()
 
         }
+        else{
+            std::cout << "invalid message received from " << recv_msg.sender << "\n";
+            running = false;
+            sock.send(zmq::buffer("FAIL"), zmq::send_flags::none);
+        }
+
         std::cout << "end iteration<--------\n";
     }
 }
@@ -105,16 +119,22 @@ int main(int argc, char *argv[]){
 
     read_config(argv[1], port, protocol);
 
-    //  Prepare our context and socket
+    //  Prepare contexts and sockets
     
-    zmq::context_t context (nth);
-    zmq::socket_t  receiver(context, zmq::socket_type::pull);
-    // zmq::socket_t  receiver(context, zmq::socket_type::rep);
+    zmq::context_t context_rec(nth);
+    zmq::context_t context_reg(nth);
+    zmq::socket_t  receiver_sock(context_rec, zmq::socket_type::pull);
+    zmq::socket_t  registry_sock(context_reg, zmq::socket_type::rep);
 
+    
     
 
     std::string address = protocol+"://*:"+port;
-    receiver.bind(address);
-    manager_recv(pool_of_workers, receiver);
+    registry_sock.bind(address);
+    
+    running=true;
+    std::thread *r = new std::thread(manager_recv, std::ref(pool_of_workers), std::ref(registry_sock));
+
+    r->join();
     
 }
