@@ -53,6 +53,13 @@ bool reply_to(std::string ip, worker *w){
 }
 
 void manager_recv(scheduler_of_workers<worker *> *pool_of_workers, zmq::socket_t &sock){
+
+    // todos os trabalhadores devem procurar um balanceamento na equação 1.
+    //      trabalho_realizado = poder_de_processamento * 1/peso_das_tarefas_realizadas (1)
+    // sendo assim, todas solicitações vão procurar responder com o trabalhador que tem
+    // o menor coeficiente de trabalho_realizado dentre os disponíveis.
+    // é uma estratégia gulosa.
+
     zmq::message_t request;
     std::pair<uint32_t, uint32_t> grid_idx;
     TWorkerIdx current_idx;

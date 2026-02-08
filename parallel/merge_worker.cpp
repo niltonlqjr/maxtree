@@ -234,6 +234,49 @@ void registry_threads(uint32_t num_th, std::string server_addr, std::string self
     }*/
 }
 
+
+void test(vips::VImage *in, std::string server_addr){
+    input_tile_task *task = new input_tile_task(1,1);
+    task->prepare(in,3,3);
+    task->read_tile(in);
+
+    maxtree_task *mttask = new maxtree_task(task);
+
+    maxtree *t = mttask->mt;
+    
+    std::cout << "maxtree to string: \n" << t->to_string() << "\n";
+    boundary_tree *bt = t->get_boundary_tree();
+    // std::cout << "lroot string:" << bt->lroot_to_string(BOUNDARY_GVAL, " - ") << "\n=======================\n";
+    // bt->print_tree();
+    
+
+    std::string msg_content = hps::to_string(*bt);
+    message m = message(msg_content, msg_content.size(), MSG_BOUNDARY_TREE);
+
+    zmq::context_t context(1);
+    
+    zmq::socket_t sender(context, zmq::socket_type::req);
+
+    sender.connect(server_addr);
+    std::string s_msg = hps::to_string(m);
+
+    std::cout << "sending: -->" << s_msg << "<--\n";
+    std::cout << "sending: -->";
+    for(char c: s_msg){
+        std::cout << " " << (int) c;
+    }
+    std::cout << " <--\n";
+    std::cout << "sending tree\n";
+    zmq::message_t *message_0mq = new zmq::message_t(s_msg.size());
+    memcpy(message_0mq->data(), s_msg.data(), s_msg.size());
+    sender.send(*message_0mq, zmq::send_flags::none);
+
+    std::cout << "tree sent\n";
+    delete message_0mq;
+
+   
+}
+
 int main(int argc, char *argv[]){
     vips::VImage *in;
     std::string out_name, out_ext;// server_ip, self_ip, server_port, self_port, protocol;
@@ -299,44 +342,16 @@ int main(int argc, char *argv[]){
 
     registry_threads(num_threads, server_addr, self_addr);
     
+    test(in, server_addr);
     
-    input_tile_task *task = new input_tile_task(1,1);
-    task->prepare(in,3,3);
-    task->read_tile(in);
+    // apos registrar as threads, o fluxo será o seguinte:
+    // pedir tile, calcular maxtree e boundary tree responder boundary tree
 
-    maxtree_task *mttask = new maxtree_task(task);
-
-    t=mttask->mt;
-    
-    std::cout << "maxtree to string: \n" << t->to_string() << "\n";
-    boundary_tree *bt = t->get_boundary_tree();
-    // std::cout << "lroot string:" << bt->lroot_to_string(BOUNDARY_GVAL, " - ") << "\n=======================\n";
-    // bt->print_tree();
+    // com todas boundary trees calculadas, agora o fluxo será
+    // pedir tarefa de merge, realizar merge;
     
 
-    std::string msg_content = hps::to_string(*bt);
-    message m = message(msg_content, msg_content.size(), MSG_BOUNDARY_TREE);
 
-    zmq::context_t context(1);
-    
-    zmq::socket_t sender(context, zmq::socket_type::req);
-
-    sender.connect(server_addr);
-    std::string s_msg = hps::to_string(m);
-
-    std::cout << "sending: -->" << s_msg << "<--\n";
-    std::cout << "sending: -->";
-    for(char c: s_msg){
-        std::cout << " " << (int) c;
-    }
-    std::cout << " <--\n";
-    std::cout << "sending tree\n";
-    zmq::message_t *message_0mq = new zmq::message_t(s_msg.size());
-    memcpy(message_0mq->data(), s_msg.data(), s_msg.size());
-    sender.send(*message_0mq, zmq::send_flags::none);
-
-    std::cout << "tree sent\n";
-    delete message_0mq;
 
     for(size_t i=0; i<workers_threads.size(); i++){
         workers_threads[i]->join();
@@ -349,5 +364,6 @@ int main(int argc, char *argv[]){
         worker *w = local_workers.at(i);
         std::cout << "worker local: " <<  i << " registered as " << w->get_index() << " at manager\n";
     }
+    
     
 }
