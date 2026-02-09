@@ -60,6 +60,8 @@ uint32_t num_threads;
 scheduler_of_workers<worker *> local_workers;
 std::vector<std::thread *> workers_threads;
 
+
+
 /* ======================= signatures ================================= */
 template<typename T>
 void wait_empty(bag_of_tasks<T> &b, uint64_t num_th);
@@ -187,8 +189,8 @@ void read_sequential_file(bag_of_tasks<input_tile_task*> &bag, vips::VImage *in,
 
 void registry(worker *w, std::string server_addr, std::string self_addr){
     zmq::context_t context(1);
-    zmq::socket_t conect_manager(context, zmq::socket_type::req);
-    conect_manager.connect(server_addr);
+    zmq::socket_t connect_manager(context, zmq::socket_type::req);
+    connect_manager.connect(server_addr);
     std::string msg_content = hps::to_string(*w);
     // std::cout << "msg content:" << msg_content << "\n";
     message requirement(msg_content, msg_content.size(), MSG_REGISTRY, self_addr);
@@ -198,13 +200,14 @@ void registry(worker *w, std::string server_addr, std::string self_addr){
     memcpy(message_0mq.data(), s_msg.data(), s_msg.size());
     std::string global_id="";
 
-    conect_manager.send(message_0mq, zmq::send_flags::none);
+    connect_manager.send(message_0mq, zmq::send_flags::none);
     zmq::message_t reply_0mq;
-    auto resp_val = conect_manager.recv(reply_0mq, zmq::recv_flags::none);
+    auto resp_val = connect_manager.recv(reply_0mq, zmq::recv_flags::none);
     TWorkerIdx reply; // = hps::from_string<TWorkerIdx>(reply_0mq);
     memcpy(&reply, reply_0mq.data(), sizeof(TWorkerIdx));
     std::cout << "reply: "<< reply << "\n";
     w->update_index(reply);
+    connect_manager.disconnect(server_addr);
 }
 
 
@@ -218,12 +221,11 @@ void registry_threads(uint32_t num_th, std::string server_addr, std::string self
         worker *w = new worker(local_id, nullptr);
         w->set_attr("MHZ", 4000.041);
         w->set_attr("L3", 16.0+local_id);
-        
-        
+            
         std::cout << "registring id: " << local_id << " of total " << num_th << " threads\n";
         workers_threads.push_back(new std::thread(registry, w, server_addr, self_addr));
         local_workers.insert_worker(w);
-        
+        sleep(1);
     }
     // read_sequential_file(bag_tiles, in, glines, gcolumns);
     std::cout << "bag_tiles.get_num_task:" << bag_tiles.get_num_task() << "\n";
@@ -232,6 +234,15 @@ void registry_threads(uint32_t num_th, std::string server_addr, std::string self
     for(uint32_t i=0; i<num_th; i++){
         threads_g1.push_back(new std::thread(worker_maxtree_calc, std::ref(bag_tiles), std::ref(maxtree_tiles_pre_btree)));
     }*/
+}
+
+void calc_tile_boundary_tree(std::string server_addr, std::string self_addr){
+    // zmq::context_t context(1);
+    // zmq::socket_t connect_manager(context, zmq::socket_type::req);
+    // connect_manager.connect(server_addr);
+    // connect_manager.disconnect(server_addr);
+    worker *lw = local_workers.get_best_worker();
+    
 }
 
 
@@ -249,7 +260,6 @@ void test(vips::VImage *in, std::string server_addr){
     // std::cout << "lroot string:" << bt->lroot_to_string(BOUNDARY_GVAL, " - ") << "\n=======================\n";
     // bt->print_tree();
     
-
     std::string msg_content = hps::to_string(*bt);
     message m = message(msg_content, msg_content.size(), MSG_BOUNDARY_TREE);
 
@@ -272,9 +282,7 @@ void test(vips::VImage *in, std::string server_addr){
     sender.send(*message_0mq, zmq::send_flags::none);
 
     std::cout << "tree sent\n";
-    delete message_0mq;
-
-   
+    delete message_0mq;   
 }
 
 int main(int argc, char *argv[]){
@@ -290,13 +298,12 @@ int main(int argc, char *argv[]){
     maxtree *t;
     input_tile_task *tile;
 
-    
     bag_of_tasks<input_tile_task*> bag_tiles;
     bag_of_tasks<maxtree_task*> maxtree_tiles_pre_btree, maxtree_tiles, updated_trees;
     bag_of_tasks<boundary_tree_task *> boundary_bag, boundary_bag_aux;
     bag_of_tasks<merge_btrees_task *> merge_bag;
-
     std::vector<std::thread*> threads_g1, threads_g2, threads_g3, threads_g4;
+
     if(argc < 2){
         std::cout << "usage:" << argv[0] << "<configuration file> [input image] [output prefix name]\n"
                   << "ps: input image must have it extension\n"
@@ -305,10 +312,6 @@ int main(int argc, char *argv[]){
         exit(EX_USAGE); 
     }
 
-    // verify_args(argc, argv);
-    // read_config(argv[1], input_name, out_name, out_ext, glines, gcolumns, lambda, 
-    //             pixel_connection, colored, num_th, out_save_type, server_ip, server_port,
-    //             self_port, protocol);
     read_config(argv[1]);
 
     if(argc >= 3){
@@ -323,7 +326,6 @@ int main(int argc, char *argv[]){
     }
 
     self_ip = "localhost";
-
     GRID_DIMS = std::make_pair(glines,gcolumns);
 
     if (VIPS_INIT(argv[0])) { 
@@ -333,7 +335,7 @@ int main(int argc, char *argv[]){
     // check https://github.com/libvips/libvips/discussions/4063 for improvements on read
     in = new vips::VImage(
             vips::VImage::new_from_file(input_name.c_str(),
-            VImage::option()->set ("access",  VIPS_ACCESS_SEQUENTIAL)
+            VImage::option()->set("access",  VIPS_ACCESS_SEQUENTIAL)
         )
     );
 
@@ -341,7 +343,7 @@ int main(int argc, char *argv[]){
     std::string self_addr = protocol + "://" + self_ip + ":" + self_port;
 
     registry_threads(num_threads, server_addr, self_addr);
-    
+    calc_tile_boundary_tree(server_addr, self_addr);
     test(in, server_addr);
     
     // apos registrar as threads, o fluxo será o seguinte:
@@ -349,9 +351,6 @@ int main(int argc, char *argv[]){
 
     // com todas boundary trees calculadas, agora o fluxo será
     // pedir tarefa de merge, realizar merge;
-    
-
-
 
     for(size_t i=0; i<workers_threads.size(); i++){
         workers_threads[i]->join();

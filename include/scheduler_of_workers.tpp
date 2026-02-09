@@ -20,7 +20,7 @@ if all workers are busy, it throws std::range_error
 */
 template <class Worker>
 Worker scheduler_of_workers<Worker>::get_best_worker(){
-    std::lock_guard(this->lock);
+    std::lock_guard l(this->lock);
     if(this->total_workers == 0){
         throw std::length_error("total workers equals 0");
     }
@@ -31,6 +31,17 @@ Worker scheduler_of_workers<Worker>::get_best_worker(){
         return r;
     }else{
         throw std::range_error("not free workers");
+    }
+    
+}
+
+
+
+template<class Worker>
+void scheduler_of_workers<Worker>::wait_free_worker(){
+    std::lock_guard l(this->lock);
+    while(this->free_workers < 0){
+        this->cv.wait(l);
     }
     
 }
