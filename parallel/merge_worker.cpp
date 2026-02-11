@@ -30,6 +30,7 @@ using namespace vips;
 
 bool print_only_trees;
 bool verbose;
+bool running;
 
 extern std::pair<uint32_t, uint32_t> GRID_DIMS;
 
@@ -42,23 +43,19 @@ bag_of_tasks<maxtree_task *> maxtree_dest;
 std::string server_ip, self_ip;
 std::string server_port, self_port;
 std::string protocol;
-
 enum save_type out_save_type;
-
 uint8_t pixel_connection;
 bool colored;
-
 std::string input_name;
 std::string out_name;
 std::string out_ext;
-
 Tattribute lambda;
 uint32_t glines;
 uint32_t gcolumns;
 uint32_t num_threads;
 
 scheduler_of_workers<worker *> local_workers;
-std::vector<std::thread *> workers_threads;
+// std::vector<std::thread *> workers_threads;
 
 
 
@@ -216,6 +213,7 @@ void registry(worker *w, std::string server_addr, std::string self_addr){
 void registry_threads(uint32_t num_th, std::string server_addr, std::string self_addr){
     std::cout << "number of threads "<< num_th << "\n";  
     std::cout << "start registration\n";
+    std::vector<std::thread *> workers_threads;
     //workers register phase
     for(uint16_t local_id=0; local_id < num_th; local_id++){
         worker *w = new worker(local_id, nullptr);
@@ -225,25 +223,53 @@ void registry_threads(uint32_t num_th, std::string server_addr, std::string self
         std::cout << "registring id: " << local_id << " of total " << num_th << " threads\n";
         workers_threads.push_back(new std::thread(registry, w, server_addr, self_addr));
         local_workers.insert_worker(w);
-        sleep(1);
+        // sleep(1);
+    }
+    for(size_t i=0; i<workers_threads.size(); i++){
+        workers_threads[i]->join();
+    }
+    for(size_t i=0; i<workers_threads.size(); i++){
+        delete workers_threads[i];
     }
     // read_sequential_file(bag_tiles, in, glines, gcolumns);
     std::cout << "bag_tiles.get_num_task:" << bag_tiles.get_num_task() << "\n";
 
-    /* bag_tiles.start();
-    for(uint32_t i=0; i<num_th; i++){
-        threads_g1.push_back(new std::thread(worker_maxtree_calc, std::ref(bag_tiles), std::ref(maxtree_tiles_pre_btree)));
-    }*/
 }
 
-void calc_tile_boundary_tree(std::string server_addr, std::string self_addr){
+void process_tiles(uint32_t num_th, std::string server_addr, std::string self_addr){
+    uint64_t num_tiles = glines * gcolumns;
+    std::vector<std::thread *> input_threads;
+    bag_tiles.start();
+    for(uint64_t tile_id = 0; tile_id < num_tiles; tile_id+=num_th){
+        uint32_t i = tile_id / gcolumns;
+        uint32_t j = tile_id % gcolumns;
+        input_tile_task *task = new input_tile_task(i,j);
+        bag_tiles.insert_task(task);
+    }
+}
+
+void calc_tile_boundary_tree(uint32_t num_th, std::string server_addr, std::string self_addr){
     // zmq::context_t context(1);
     // zmq::socket_t connect_manager(context, zmq::socket_type::req);
     // connect_manager.connect(server_addr);
     // connect_manager.disconnect(server_addr);
-    worker *lw = local_workers.get_best_worker();
-    
+    std::vector<std::thread*> ths;
+    std::pair<worker*, input_tile_task*> assignments;
+    for(uint16_t th=0; th < num_th; th++){
+        worker *lw = local_workers.get_best_worker(false);
+        
+        std::cout << "worker: " << lw->get_index() << " doing its job\n";
+        std::thread *t = new std::thread(process_tiles, num_th, server_addr, self_addr);
+        ths.push_back(t);
+        
+    }
+
+    for(auto t: ths){
+        t->join();
+        delete t;
+    }
 }
+
 
 
 void test(vips::VImage *in, std::string server_addr){
@@ -289,10 +315,9 @@ int main(int argc, char *argv[]){
     vips::VImage *in;
     std::string out_name, out_ext;// server_ip, self_ip, server_port, self_port, protocol;
     
-    uint32_t glines, gcolumns;
     uint8_t pixel_connection;
 
-    bool colored;
+    
     enum save_type out_save_type;
     Tattribute lambda=2;
     maxtree *t;
@@ -343,8 +368,8 @@ int main(int argc, char *argv[]){
     std::string self_addr = protocol + "://" + self_ip + ":" + self_port;
 
     registry_threads(num_threads, server_addr, self_addr);
-    calc_tile_boundary_tree(server_addr, self_addr);
-    test(in, server_addr);
+    calc_tile_boundary_tree(num_threads, server_addr, self_addr);
+    // test(in, server_addr);
     
     // apos registrar as threads, o fluxo será o seguinte:
     // pedir tile, calcular maxtree e boundary tree responder boundary tree
@@ -352,17 +377,13 @@ int main(int argc, char *argv[]){
     // com todas boundary trees calculadas, agora o fluxo será
     // pedir tarefa de merge, realizar merge;
 
-    for(size_t i=0; i<workers_threads.size(); i++){
-        workers_threads[i]->join();
-    }
 
-    for(size_t i=0; i<workers_threads.size(); i++){
-        delete workers_threads[i];
-    }
     for(size_t i=0; i < local_workers.size(); i++){
         worker *w = local_workers.at(i);
         std::cout << "worker local: " <<  i << " registered as " << w->get_index() << " at manager\n";
     }
+
+    
     
     
 }
