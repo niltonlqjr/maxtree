@@ -3,10 +3,12 @@
 #include <iostream>
 
 #include "src/hps.h"
+#include "zmq.hpp"
 
 #include "const_enum_define.hpp"
 #include "bag_of_task.hpp"
 #include "tasks.hpp"
+#include "message.hpp"
 
 #ifndef __WORKERS_HPP__
 #define __WORKERS_HPP__
@@ -22,8 +24,10 @@ class worker{
         TWorkerIdx id;
         std::unordered_map<std::string, TWorkerAttr> *attr;
         bool busy;
+        std::string manager;
+        std::string address;
     public:
-        worker(TWorkerIdx id, std::unordered_map<std::string, TWorkerAttr> *attr);
+        worker(TWorkerIdx id, std::unordered_map<std::string, TWorkerAttr> *attr, std::string address="");
         worker();
         // ~worker();
         void set_attr(std::string s, TWorkerAttr val);
@@ -49,7 +53,9 @@ class worker{
         void parse(B &buf){
             buf >> (*(this->attr)) >> this->id;
         }
+        
         void update_index(TWorkerIdx new_idx);
+
         //get a task from bag and compute maxtree of the tile of this task
         void maxtree_calc(bag_of_tasks<input_tile_task *> &bag_tiles, 
                           bag_of_tasks<maxtree_task *> &max_trees);
@@ -68,6 +74,10 @@ class worker{
                            bag_of_tasks<maxtree_task *> &dest,
                            boundary_tree *global_bt,
                            Tattribute lambda);
+        
+        void registry_at(std::string server_addr);
+
+        std::pair<uint32_t,uint32_t> request_tile();
 };
 
 #endif

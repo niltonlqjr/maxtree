@@ -61,14 +61,10 @@ scheduler_of_workers<worker *> local_workers;
 
 /* ======================= signatures ================================= */
 template<typename T>
-void wait_empty(bag_of_tasks<T> &b, uint64_t num_th);
-
+void wait_empty(bag_of_tasks<T> &b, uint64_t num_th);  
+std::string get_field(std::unordered_map<std::string, std::string> *conf, std::string field, std::string dft);
 void verify_args(int argc, char *argv[]);
 void read_config(char conf_name[]);
-void read_sequential_file(bag_of_tasks<input_tile_task*> &bag, vips::VImage *in, uint32_t glines, uint32_t gcolumns);
-void worker_maxtree_calc(bag_of_tasks<input_tile_task *> &bag_tiles, bag_of_tasks<maxtree_task *> &max_trees);
-
-
 
 /* ======================= implementations ================================= */
 
@@ -104,6 +100,7 @@ void wait_empty(bag_of_tasks<T> &b, uint64_t num_th){
 
 
 std::string get_field(std::unordered_map<std::string, std::string> *conf, std::string field, std::string dft){
+    //dft is the default value (reserved keyword for cpp)
     if(conf->find(field) != conf->end()){
         return conf->at(field);
     }
@@ -184,31 +181,6 @@ void read_sequential_file(bag_of_tasks<input_tile_task*> &bag, vips::VImage *in,
 
 }
 
-void registry(worker *w, std::string server_addr, std::string self_addr){
-    zmq::context_t context(1);
-    zmq::socket_t connect_manager(context, zmq::socket_type::req);
-    connect_manager.connect(server_addr);
-    std::string msg_content = hps::to_string(*w);
-    // std::cout << "msg content:" << msg_content << "\n";
-    message requirement(msg_content, msg_content.size(), MSG_REGISTRY, self_addr);
-    std::string s_msg = hps::to_string(requirement);
-    // std::cout << "sending: " << s_msg << "\n";
-    zmq::message_t message_0mq(s_msg.size());
-    memcpy(message_0mq.data(), s_msg.data(), s_msg.size());
-    std::string global_id="";
-
-    connect_manager.send(message_0mq, zmq::send_flags::none);
-    zmq::message_t reply_0mq;
-    auto resp_val = connect_manager.recv(reply_0mq, zmq::recv_flags::none);
-    TWorkerIdx reply; // = hps::from_string<TWorkerIdx>(reply_0mq);
-    memcpy(&reply, reply_0mq.data(), sizeof(TWorkerIdx));
-    std::cout << "reply: "<< reply << "\n";
-    w->update_index(reply);
-    connect_manager.disconnect(server_addr);
-}
-
-
-
 
 void registry_threads(uint32_t num_th, std::string server_addr, std::string self_addr){
     std::cout << "number of threads "<< num_th << "\n";  
@@ -221,7 +193,8 @@ void registry_threads(uint32_t num_th, std::string server_addr, std::string self
         w->set_attr("L3", 16.0+local_id);
             
         std::cout << "registring id: " << local_id << " of total " << num_th << " threads\n";
-        workers_threads.push_back(new std::thread(registry, w, server_addr, self_addr));
+        // workers_threads.push_back(new std::thread(w->registry_at, server_addr));
+        workers_threads.push_back(new std::thread(&worker::registry_at, w, server_addr));
         local_workers.insert_worker(w);
         // sleep(1);
     }
@@ -236,16 +209,28 @@ void registry_threads(uint32_t num_th, std::string server_addr, std::string self
 
 }
 
-void process_tiles(uint32_t num_th, std::string server_addr, std::string self_addr){
+void process_tiles(worker *w, std::string server_addr, std::string self_addr){
     uint64_t num_tiles = glines * gcolumns;
     std::vector<std::thread *> input_threads;
-    bag_tiles.start();
-    for(uint64_t tile_id = 0; tile_id < num_tiles; tile_id+=num_th){
-        uint32_t i = tile_id / gcolumns;
-        uint32_t j = tile_id % gcolumns;
-        input_tile_task *task = new input_tile_task(i,j);
-        bag_tiles.insert_task(task);
-    }
+    uint64_t tile_id;
+    std::pair <uint32_t, uint32_t> grid_idx;
+    message m;
+
+    zmq::context_t context(1);
+    zmq::socket_t connect_manager(context, zmq::socket_type::req);
+    connect_manager.connect(server_addr);
+
+    std::string msg_content = hps::to_string(w->get_index());
+    m.type = MSG_GET_TILE;
+    m.content = msg_content;
+    m.sender = self_addr;
+    m.size = msg_content.size();
+    
+
+
+
+    
+    
 }
 
 void calc_tile_boundary_tree(uint32_t num_th, std::string server_addr, std::string self_addr){
@@ -254,12 +239,12 @@ void calc_tile_boundary_tree(uint32_t num_th, std::string server_addr, std::stri
     // connect_manager.connect(server_addr);
     // connect_manager.disconnect(server_addr);
     std::vector<std::thread*> ths;
-    std::pair<worker*, input_tile_task*> assignments;
+    std::unordered_map<std::thread*, worker*> assignments;
     for(uint16_t th=0; th < num_th; th++){
         worker *lw = local_workers.get_best_worker(false);
         
         std::cout << "worker: " << lw->get_index() << " doing its job\n";
-        std::thread *t = new std::thread(process_tiles, num_th, server_addr, self_addr);
+        std::thread *t = new std::thread(process_tiles, lw, server_addr, self_addr);
         ths.push_back(t);
         
     }
@@ -272,7 +257,7 @@ void calc_tile_boundary_tree(uint32_t num_th, std::string server_addr, std::stri
 
 
 
-void test(vips::VImage *in, std::string server_addr){
+void test_send_bound_tree(vips::VImage *in, std::string server_addr){
     input_tile_task *task = new input_tile_task(1,1);
     task->prepare(in,3,3);
     task->read_tile(in);
@@ -310,6 +295,14 @@ void test(vips::VImage *in, std::string server_addr){
     std::cout << "tree sent\n";
     delete message_0mq;   
 }
+
+void test_get_tile_idx(std::string server_addr){
+    auto w = local_workers.at(0);
+    auto tile = w->request_tile();
+    std::cout << "tile received: ()" << tile.first << "," << tile.second << ")\n";
+
+}
+
 
 int main(int argc, char *argv[]){
     vips::VImage *in;
@@ -368,8 +361,9 @@ int main(int argc, char *argv[]){
     std::string self_addr = protocol + "://" + self_ip + ":" + self_port;
 
     registry_threads(num_threads, server_addr, self_addr);
-    calc_tile_boundary_tree(num_threads, server_addr, self_addr);
-    // test(in, server_addr);
+    // calc_tile_boundary_tree(num_threads, server_addr, self_addr);
+    test_get_tile_idx(server_addr);
+    // test_send_bound_tree(in, server_addr);
     
     // apos registrar as threads, o fluxo será o seguinte:
     // pedir tile, calcular maxtree e boundary tree responder boundary tree

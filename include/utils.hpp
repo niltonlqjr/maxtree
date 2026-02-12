@@ -90,5 +90,6 @@ uint64_t get_levroot_pair_idx(std::unordered_map<int64_t, int64_t> &lrp, uint64_
 
 int64_t int_pow(int64_t base, int64_t exp);
 
+bool inside_rectangle(std::pair<uint32_t, uint32_t> c, std::pair<uint32_t, uint32_t> r);
 
 #endif

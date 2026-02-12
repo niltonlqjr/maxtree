@@ -52,6 +52,13 @@ bool reply_to(std::string ip, worker *w){
     return false;
 }
 
+std::pair<uint32_t, uint32_t> next_tile(std::pair<uint32_t, uint32_t> p){
+    std::pair<uint32_t, uint32_t> newp;
+    newp.second = (p.second + 1) % GRID_DIMS.second;
+    newp.first = p.first + (newp.second != p.second+1);
+    return newp;
+}
+
 void manager_recv(scheduler_of_workers<worker *> *pool_of_workers, zmq::socket_t &sock){
 
     // todos os trabalhadores devem procurar um balanceamento na equação 1.
@@ -61,8 +68,10 @@ void manager_recv(scheduler_of_workers<worker *> *pool_of_workers, zmq::socket_t
     // é uma estratégia gulosa.
 
     zmq::message_t request;
-    std::pair<uint32_t, uint32_t> grid_idx;
+    std::pair<uint32_t, uint32_t> current_tile(0,0);
+    
     TWorkerIdx current_idx;
+
     while (running){
         std::cout << "------>new iteration\n";
         auto res_recv = sock.recv(request);
@@ -105,11 +114,24 @@ void manager_recv(scheduler_of_workers<worker *> *pool_of_workers, zmq::socket_t
             std::cout << "-------------------------- Boundary Tree ----------------------------\n";
             bt.print_tree();
             auto reply_return = sock.send(zmq::buffer("TREE_RECV"), zmq::send_flags::none);
-        }else if(recv_msg.type == MSG_GET_GRID){
-            // grid_idx = get_grid_for_worker()
+        }else if(recv_msg.type == MSG_GET_TILE){
+            
+            TWorkerIdx worker_idx = hps::from_string<TWorkerIdx>(recv_msg.content);
+            std::pair<uint32_t,uint32_t> reply;
 
-        }
-        else{
+            if(!inside_rectangle(current_tile, GRID_DIMS)){
+                reply = GRID_DIMS;
+            }else{
+                reply = current_tile;
+            }
+            std::cout << "tile received: ()" << current_tile.first << "," << current_tile.second << ")\n";
+            std::cout << "tile received: ()" << reply.first << "," << reply.second << ")\n";
+            std::string s_reply = hps::to_string<std::pair<uint32_t,uint32_t>>(reply);
+            zmq::message_t msg_grid(s_reply);
+            sock.send(msg_grid, zmq::send_flags::none);
+            current_tile = next_tile(reply);
+
+        }else{
             std::cout << "invalid message received from " << recv_msg.sender << "\n";
             running = false;
             sock.send(zmq::buffer("FAIL"), zmq::send_flags::none);

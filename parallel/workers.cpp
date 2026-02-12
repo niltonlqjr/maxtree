@@ -1,21 +1,12 @@
 #include "workers.hpp"
 
 
-/* check if pair of coordinates c is inside the rectangle r (starting at origin (0,0) and 
-    ending in position (r.first-1, r.second-1) */
-bool inside_rectangle(std::pair<uint32_t, uint32_t> c, std::pair<uint32_t, uint32_t> r){
-    if(c.first >= r.first || c.first < 0 || c.second >= r.second || c.second < 0){
-        return false;
-    }
-    return true;
-}
-
 std::pair<uint32_t, uint32_t> get_task_index(boundary_tree_task *t){
     return t->index;
 }
 
 
-worker::worker(TWorkerIdx id, std::unordered_map<std::string, TWorkerAttr> *attr){
+worker::worker(TWorkerIdx id, std::unordered_map<std::string, TWorkerAttr> *attr, std::string address){
     if(attr == NULL || attr == nullptr){
         this->attr = new std::unordered_map<std::string, double>();
     }else{
@@ -27,6 +18,8 @@ worker::worker(TWorkerIdx id, std::unordered_map<std::string, TWorkerAttr> *attr
 worker::worker(){
     this->attr = new std::unordered_map<std::string, TWorkerAttr>();
     this->id = 0;
+    this->manager = "";
+    this->address = "";
 }
 
 // worker::~worker(){
@@ -352,13 +345,44 @@ void worker::update_filter(bag_of_tasks<maxtree_task *> &src, bag_of_tasks<maxtr
 }
 
 
-// template <class B>
-// void worker::serialize(B &buf) const {
-//     buf << (*(this->attr)) << this->id;
-// }
+void worker::registry_at(std::string server_addr){
+    zmq::context_t context(1);
+    zmq::socket_t connect_manager(context, zmq::socket_type::req);
+    connect_manager.connect(server_addr);
+    std::string msg_content = hps::to_string(*this);
+    // std::cout << "msg content:" << msg_content << "\n";
+    message requirement(msg_content, msg_content.size(), MSG_REGISTRY, this->address);
+    std::string s_msg = hps::to_string(requirement);
+    // std::cout << "sending: " << s_msg << "\n";
+    zmq::message_t message_0mq(s_msg.size());
+    memcpy(message_0mq.data(), s_msg.data(), s_msg.size());
+    std::string global_id="";
 
-// template <class B>
-// void worker::parse(B &buf){
-//     buf >> (*(this->attr)) >> this->id;
-    
-// }
+    connect_manager.send(message_0mq, zmq::send_flags::none);
+    zmq::message_t reply_0mq;
+    auto resp_val = connect_manager.recv(reply_0mq, zmq::recv_flags::none);
+    TWorkerIdx reply; // = hps::from_string<TWorkerIdx>(reply_0mq);
+    memcpy(&reply, reply_0mq.data(), sizeof(TWorkerIdx));
+    this->update_index(reply);
+    this->manager = server_addr;
+    connect_manager.disconnect(server_addr);
+}
+
+
+std::pair<uint32_t,uint32_t> worker::request_tile(){
+    zmq::context_t context(1);
+    zmq::socket_t sock(context, zmq::socket_type::req);
+    sock.connect(this->manager);
+
+    std::string msg = hps::to_string(this->id);
+    message request(msg, msg.size(), MSG_GET_TILE, this->address);
+    std::string s_msg = hps::to_string(request);
+    zmq::message_t msg_0mq(s_msg);
+    sock.send(msg_0mq,zmq::send_flags::none);
+
+    zmq::message_t reply_0mq;
+    auto _r = sock.recv(reply_0mq, zmq::recv_flags::none);
+    std::pair<uint32_t,uint32_t> reply;
+    memcpy(&reply, reply_0mq.data(), sizeof(std::pair<uint32_t,uint32_t>));
+    return reply;
+}

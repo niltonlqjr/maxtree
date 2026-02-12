@@ -15,11 +15,10 @@
 #define Tpixel_NULL 0
 #define Tboundary_tree_lroot std::unordered_map<uint64_t, boundary_node*>
 #define Tprocess_power double
-#define TWorkerIdx uint16_t
+#define TWorkerIdx unsigned int
 #define TWorkerAttr double
 
 #define DEFAULT_PORT "7233"
-
 
 
 
@@ -61,7 +60,7 @@ static const std::vector<std::string> NamesBordersVector({
 
 enum message_type{
     MSG_NULL,       MSG_REGISTRY,   MSG_BOUNDARY_TREE,
-    MSG_GRID_IDX,   MSG_GET_GRID
+    MSG_GRID_IDX,   MSG_GET_TILE
 };
 
 #endif
