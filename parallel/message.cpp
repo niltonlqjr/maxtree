@@ -15,13 +15,3 @@ message::message(std::string &content, size_t size, enum message_type type, std:
     this->sender = sender;
 
 }
-
-// template <class B>
-// void message::serialize(B &buf) const {
-//     buf << this->type << this->size << this->content;
-// }
-
-// template <class B>
-// void message::parse(B &buf){
-//     buf >> this->type >> this->size >> this->content;
-// }

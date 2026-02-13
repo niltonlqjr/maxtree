@@ -213,7 +213,8 @@ void process_tiles(worker *w, std::string server_addr, std::string self_addr){
     m.type = MSG_GET_TILE;
     m.content = msg_content;
     m.sender = self_addr;
-    m.size = msg_content.size();
+    m.size = msg_content.size();    
+    
 
 }
 
@@ -224,7 +225,7 @@ void calc_tile_boundary_tree(uint32_t num_th, std::string server_addr, std::stri
     // connect_manager.disconnect(server_addr);
     std::vector<std::thread*> ths;
     std::unordered_map<std::thread*, worker*> assignments;
-    for(uint16_t th=0; th < num_th; th++){
+    for(uint32_t th=0; th < num_th; th++){
         worker *lw = local_workers.get_best_worker(false);
         
         std::cout << "worker: " << lw->get_index() << " doing its job\n";
@@ -280,12 +281,30 @@ void test_send_bound_tree(vips::VImage *in, std::string server_addr){
     delete message_0mq;   
 }
 
-void test_get_tile_idx(std::string server_addr){
+
+
+
+void calc_tile_boundray_tree(vips::VImage *img_in, std::string server_addr){
     auto w = local_workers.at(0);
     auto tile = w->request_tile();
+    
     std::cout << "tile received: (" << tile.first << "," << tile.second << ")\n";
+    input_tile_task t = input_tile_task(tile);
+    
+    t.prepare(img_in, glines, gcolumns);
+    t.read_tile(img_in);
 
+    maxtree_task mtt = maxtree_task(&t);
+    std::cout << "maxtree\n" << mtt.mt->to_string() << "\n--------------\n";
+
+    boundary_tree_task btt = boundary_tree_task(&mtt, std::make_pair<uint32_t, uint32_t>(0,1));
+    std::cout << "boundary tree\n"; btt.bt->print_tree();
+
+    w->send_boundary_tree(btt.bt);
+
+    local_workers.insert_worker(w);
 }
+
 
 int main(int argc, char *argv[]){
     vips::VImage *in;
@@ -345,7 +364,7 @@ int main(int argc, char *argv[]){
 
     registry_threads(num_threads, server_addr, self_addr);
     // calc_tile_boundary_tree(num_threads, server_addr, self_addr);
-    test_get_tile_idx(server_addr);
+    calc_tile_boundray_tree(in, server_addr);
     // test_send_bound_tree(in, server_addr);
     
     // apos registrar as threads, o fluxo será o seguinte:

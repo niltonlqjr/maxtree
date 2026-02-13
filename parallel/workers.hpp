@@ -78,6 +78,8 @@ class worker{
         void registry_at(std::string server_addr);
 
         std::pair<uint32_t,uint32_t> request_tile();
+        
+        void send_boundary_tree(boundary_tree *bt);
 };
 
 #endif

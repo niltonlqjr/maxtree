@@ -350,12 +350,13 @@ void worker::registry_at(std::string server_addr){
     zmq::socket_t connect_manager(context, zmq::socket_type::req);
     connect_manager.connect(server_addr);
     std::string msg_content = hps::to_string(*this);
-    // std::cout << "msg content:" << msg_content << "\n";
+
     message requirement(msg_content, msg_content.size(), MSG_REGISTRY, this->address);
     std::string s_msg = hps::to_string(requirement);
-    // std::cout << "sending: " << s_msg << "\n";
-    zmq::message_t message_0mq(s_msg.size());
-    memcpy(message_0mq.data(), s_msg.data(), s_msg.size());
+
+    // zmq::message_t message_0mq(s_msg.size());
+    // memcpy(message_0mq.data(), s_msg.data(), s_msg.size());
+    zmq::message_t message_0mq(s_msg);
     std::string global_id="";
 
     connect_manager.send(message_0mq, zmq::send_flags::none);
@@ -388,10 +389,37 @@ std::pair<uint32_t,uint32_t> worker::request_tile(){
     std::cout << reply_0mq << "\n";  
 
     reply_str = reply_0mq.to_string();
-
-    
     reply = hps::from_string<std::pair<uint32_t,uint32_t>>(reply_str);
 
+    sock.disconnect(this->manager);
 
     return reply;
+}
+
+void worker::send_boundary_tree(boundary_tree *bt){
+    zmq::context_t context(1);
+    zmq::socket_t sock(context, zmq::socket_type::req);
+
+    std::string msg_content = hps::to_string(*bt);
+    message m = message(msg_content, msg_content.size(), MSG_BOUNDARY_TREE);
+
+    sock.connect(this->manager);
+
+    std::string s_msg = hps::to_string(m);
+    // std::cout << "sending: -->" << s_msg << "<--\n";
+    // std::cout << "sending: -->";
+
+    // for(char c: s_msg){
+    //     std::cout << " " << (int) c;
+    // }
+
+    // std::cout << " <--\n";
+    // std::cout << "sending tree\n";
+    zmq::message_t *message_0mq = new zmq::message_t(s_msg.size());
+    memcpy(message_0mq->data(), s_msg.data(), s_msg.size());
+    sock.send(*message_0mq, zmq::send_flags::none);
+
+    std::cout << "tree sent\n";
+    sock.disconnect(this->manager);
+    delete message_0mq;
 }

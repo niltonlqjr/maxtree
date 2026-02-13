@@ -25,11 +25,12 @@ class input_tile_task: public comparable_task{
         maxtree *tile;
         input_tile_task(uint32_t i, uint32_t j, uint32_t nb_rt, uint32_t nb_rl);
         input_tile_task(uint32_t i, uint32_t j);
+        input_tile_task(std::pair<uint32_t, uint32_t> grid_idx);
         uint64_t size();
         // this function receive the number of lines and columns in grid
         // and the i, j position of the tile that should be read. 
         void prepare(vips::VImage *img, uint32_t glines, uint32_t gcolumns);
-        void read_tile(vips::VImage *img);    
+        void read_tile(vips::VImage *img);
 };
 
 class maxtree_task: public comparable_task{

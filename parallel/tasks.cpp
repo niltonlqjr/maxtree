@@ -55,6 +55,17 @@ input_tile_task::input_tile_task(uint32_t i, uint32_t j){
     this->noborder_rl = 0;
 }
 
+input_tile_task::input_tile_task(std::pair<uint32_t, uint32_t> grid_idx){
+    this->i = grid_idx.first;
+    this->j = grid_idx.second;
+    this->tile_columns = 0;
+    this->tile_lines = 0;
+    this->reg_left = 0;
+    this->reg_top = 0;
+    this->noborder_rt = 0;
+    this->noborder_rl = 0;
+}
+
 uint64_t input_tile_task::size(){
     return this->tile_columns * this->tile_lines;
 }
