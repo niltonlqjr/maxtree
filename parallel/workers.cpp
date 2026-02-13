@@ -374,6 +374,9 @@ std::pair<uint32_t,uint32_t> worker::request_tile(){
     zmq::socket_t sock(context, zmq::socket_type::req);
     sock.connect(this->manager);
 
+    std::pair<uint32_t,uint32_t> reply;
+    std::string reply_str;
+
     std::string msg = hps::to_string(this->id);
     message request(msg, msg.size(), MSG_GET_TILE, this->address);
     std::string s_msg = hps::to_string(request);
@@ -382,7 +385,13 @@ std::pair<uint32_t,uint32_t> worker::request_tile(){
 
     zmq::message_t reply_0mq;
     auto _r = sock.recv(reply_0mq, zmq::recv_flags::none);
-    std::pair<uint32_t,uint32_t> reply;
-    memcpy(&reply, reply_0mq.data(), sizeof(std::pair<uint32_t,uint32_t>));
+    std::cout << reply_0mq << "\n";  
+
+    reply_str = reply_0mq.to_string();
+
+    
+    reply = hps::from_string<std::pair<uint32_t,uint32_t>>(reply_str);
+
+
     return reply;
 }

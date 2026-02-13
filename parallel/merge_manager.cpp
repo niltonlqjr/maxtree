@@ -12,6 +12,9 @@
 #include "src/hps.h"
 
 using namespace vips;
+
+uint32_t glines, gcolumns;
+
 bool print_only_trees;
 bool verbose;
 
@@ -25,18 +28,8 @@ scheduler_of_workers<worker*> system_workers;
 
 void read_config(char conf_name[], std::string &port, std::string &protocol);
 
-void read_config(char conf_name[], std::string &port, std::string &protocol){
 
-    std::unordered_map<std::string, std::string> *config = parse_config(conf_name);
-    port=DEFAULT_PORT; 
-    if(config->find("port") != config->end()){
-        port = config->at("port");
-    }
-    protocol="tcp";
-    if(config->find("protocol") != config->end()){
-        protocol = config->at("protocol");
-    }
-}
+
 
 bool reply_to(std::string ip, worker *w){
     zmq::context_t context(1);
@@ -51,6 +44,25 @@ bool reply_to(std::string ip, worker *w){
     }
     return false;
 }
+
+void read_config(char conf_name[], std::string &port, std::string &protocol){
+
+    auto configs = parse_config(conf_name);
+
+    if(configs->find("glines") == configs->end() || configs->find("gcolumns") == configs->end()){
+        std::cout << "you must specify the the image division on config file:" << conf_name <<"\n";
+        std::cout << "example:\n";
+        std::cout << "glines=8 #divide image in 8 vertical tiles\n";
+        std::cout << "gcolumns=6 #divide image in 6 vertical tiles\n";
+        exit(EX_CONFIG);
+    }
+    glines = std::stoi(configs->at("glines"));
+    gcolumns = std::stoi(configs->at("gcolumns"));
+
+    port = get_field(configs, "port", DEFAULT_PORT);
+    protocol = get_field(configs, "protocol", "tcp");
+}
+
 
 std::pair<uint32_t, uint32_t> next_tile(std::pair<uint32_t, uint32_t> p){
     std::pair<uint32_t, uint32_t> newp;
@@ -124,19 +136,19 @@ void manager_recv(scheduler_of_workers<worker *> *pool_of_workers, zmq::socket_t
             }else{
                 reply = current_tile;
             }
-            std::cout << "tile received: ()" << current_tile.first << "," << current_tile.second << ")\n";
-            std::cout << "tile received: ()" << reply.first << "," << reply.second << ")\n";
-            std::string s_reply = hps::to_string<std::pair<uint32_t,uint32_t>>(reply);
+            current_tile = next_tile(reply);
+            std::cout << "Current tile: (" << current_tile.first << "," << current_tile.second << ")\n";
+            std::cout << "Reply Tile: (" << reply.first << "," << reply.second << ")\n";
+            // std::string s_reply = hps::to_string<std::pair<uint32_t,uint32_t>>(reply);
+            std::string s_reply = hps::to_string(reply);
             zmq::message_t msg_grid(s_reply);
             sock.send(msg_grid, zmq::send_flags::none);
-            current_tile = next_tile(reply);
 
         }else{
             std::cout << "invalid message received from " << recv_msg.sender << "\n";
             running = false;
             sock.send(zmq::buffer("FAIL"), zmq::send_flags::none);
         }
-
         std::cout << "end iteration<--------\n";
     }
 }
@@ -147,7 +159,7 @@ int main(int argc, char *argv[]){
     std::string port, protocol;
 
     read_config(argv[1], port, protocol);
-
+    GRID_DIMS = std::make_pair(glines,gcolumns);
     //  Prepare contexts and sockets
     
     zmq::context_t context_rec(nth);

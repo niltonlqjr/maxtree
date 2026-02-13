@@ -50,8 +50,7 @@ std::string input_name;
 std::string out_name;
 std::string out_ext;
 Tattribute lambda;
-uint32_t glines;
-uint32_t gcolumns;
+uint32_t glines, gcolumns;
 uint32_t num_threads;
 
 scheduler_of_workers<worker *> local_workers;
@@ -62,7 +61,7 @@ scheduler_of_workers<worker *> local_workers;
 /* ======================= signatures ================================= */
 template<typename T>
 void wait_empty(bag_of_tasks<T> &b, uint64_t num_th);  
-std::string get_field(std::unordered_map<std::string, std::string> *conf, std::string field, std::string dft);
+
 void verify_args(int argc, char *argv[]);
 void read_config(char conf_name[]);
 
@@ -97,16 +96,6 @@ void wait_empty(bag_of_tasks<T> &b, uint64_t num_th){
         }
     }
 }
-
-
-std::string get_field(std::unordered_map<std::string, std::string> *conf, std::string field, std::string dft){
-    //dft is the default value (reserved keyword for cpp)
-    if(conf->find(field) != conf->end()){
-        return conf->at(field);
-    }
-    return dft;
-}
-
 
 /* Read configuration file to global variables */    
 void read_config(char conf_name[]){
@@ -225,12 +214,7 @@ void process_tiles(worker *w, std::string server_addr, std::string self_addr){
     m.content = msg_content;
     m.sender = self_addr;
     m.size = msg_content.size();
-    
 
-
-
-    
-    
 }
 
 void calc_tile_boundary_tree(uint32_t num_th, std::string server_addr, std::string self_addr){
@@ -299,10 +283,9 @@ void test_send_bound_tree(vips::VImage *in, std::string server_addr){
 void test_get_tile_idx(std::string server_addr){
     auto w = local_workers.at(0);
     auto tile = w->request_tile();
-    std::cout << "tile received: ()" << tile.first << "," << tile.second << ")\n";
+    std::cout << "tile received: (" << tile.first << "," << tile.second << ")\n";
 
 }
-
 
 int main(int argc, char *argv[]){
     vips::VImage *in;

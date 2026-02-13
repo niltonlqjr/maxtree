@@ -92,4 +92,6 @@ int64_t int_pow(int64_t base, int64_t exp);
 
 bool inside_rectangle(std::pair<uint32_t, uint32_t> c, std::pair<uint32_t, uint32_t> r);
 
+std::string get_field(std::unordered_map<std::string, std::string> *conf, std::string field, std::string dft);
+
 #endif

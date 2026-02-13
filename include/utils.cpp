@@ -233,3 +233,11 @@ bool inside_rectangle(std::pair<uint32_t, uint32_t> c, std::pair<uint32_t, uint3
     }
     return true;
 }
+
+std::string get_field(std::unordered_map<std::string, std::string> *conf, std::string field, std::string dft){
+    //dft is the default value (reserved keyword for cpp)
+    if(conf->find(field) != conf->end()){
+        return conf->at(field);
+    }
+    return dft;
+}

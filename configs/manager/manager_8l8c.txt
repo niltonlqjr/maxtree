@@ -3,8 +3,14 @@
 # blank lines also be ignored
 # the args names (lvalue) and values (rvalue) are preprocessed by a right trim and left trim
 
+# grid lines
+glines=8
+# grid columns
+gcolumns=8
+
 # server port (to send messages)
 port = 7233
 
 # comunication protocol
 protocol = tcp
+
