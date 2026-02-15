@@ -30,7 +30,9 @@ using namespace vips;
 
 bool print_only_trees;
 bool verbose;
-bool running;
+
+bool has_tiles;
+bool has_merges;
 
 extern std::pair<uint32_t, uint32_t> GRID_DIMS;
 
@@ -218,30 +220,6 @@ void process_tiles(worker *w, std::string server_addr, std::string self_addr){
 
 }
 
-void calc_tile_boundary_tree(uint32_t num_th, std::string server_addr, std::string self_addr){
-    // zmq::context_t context(1);
-    // zmq::socket_t connect_manager(context, zmq::socket_type::req);
-    // connect_manager.connect(server_addr);
-    // connect_manager.disconnect(server_addr);
-    std::vector<std::thread*> ths;
-    std::unordered_map<std::thread*, worker*> assignments;
-    for(uint32_t th=0; th < num_th; th++){
-        worker *lw = local_workers.get_best_worker(false);
-        
-        std::cout << "worker: " << lw->get_index() << " doing its job\n";
-        std::thread *t = new std::thread(process_tiles, lw, server_addr, self_addr);
-        ths.push_back(t);
-        
-    }
-
-    for(auto t: ths){
-        t->join();
-        delete t;
-    }
-}
-
-
-
 void test_send_bound_tree(vips::VImage *in, std::string server_addr){
     input_tile_task *task = new input_tile_task(1,1);
     task->prepare(in,3,3);
@@ -284,10 +262,11 @@ void test_send_bound_tree(vips::VImage *in, std::string server_addr){
 
 
 
-void calc_tile_boundray_tree(vips::VImage *img_in, std::string server_addr){
-    auto w = local_workers.at(0);
+bool calc_tile_boundary_tree(vips::VImage *img_in, worker *w, std::string server_addr){
     auto tile = w->request_tile();
-    
+    if(tile.first == glines && tile.second == gcolumns){
+        return false;
+    }
     std::cout << "tile received: (" << tile.first << "," << tile.second << ")\n";
     input_tile_task t = input_tile_task(tile);
     
@@ -301,8 +280,13 @@ void calc_tile_boundray_tree(vips::VImage *img_in, std::string server_addr){
     std::cout << "boundary tree\n"; btt.bt->print_tree();
 
     w->send_boundary_tree(btt.bt);
+    return true;
+}
 
-    local_workers.insert_worker(w);
+void loop_calc(vips::VImage *img, std::string server_addr){
+    local_workers.wait_free_worker();
+    worker *w=local_workers.get_best_worker();
+    while(calc_tile_boundary_tree(img,  w, server_addr));
 }
 
 
@@ -364,8 +348,9 @@ int main(int argc, char *argv[]){
 
     registry_threads(num_threads, server_addr, self_addr);
     // calc_tile_boundary_tree(num_threads, server_addr, self_addr);
-    calc_tile_boundray_tree(in, server_addr);
+    // calc_tile_boundary_tree(in, server_addr);
     // test_send_bound_tree(in, server_addr);
+    loop_calc(in, server_addr);
     
     // apos registrar as threads, o fluxo será o seguinte:
     // pedir tile, calcular maxtree e boundary tree responder boundary tree

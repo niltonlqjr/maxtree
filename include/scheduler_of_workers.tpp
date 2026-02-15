@@ -52,7 +52,7 @@ void scheduler_of_workers<Worker>::finish_worker(Worker w){
     for(int64_t i=0; i < this->workers->size(); i++){
         Worker worker;
         try{
-            worker = this->at(i);
+            worker = this->workers->at(i);
         }catch(...){
             throw std::out_of_range("worker not found");
         }

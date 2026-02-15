@@ -24,7 +24,11 @@ static const int nth = 2;
 
 TWorkerIdx idx_at_manager=0;
 
-scheduler_of_workers<worker*> system_workers;
+scheduler_of_workers<worker*> pool_of_workers;
+
+bag_of_tasks<boundary_tree_task *> bound_trees;
+bag_of_tasks<merge_btrees_task *> merge_tasks;
+
 
 void read_config(char conf_name[], std::string &port, std::string &protocol);
 
@@ -71,7 +75,7 @@ std::pair<uint32_t, uint32_t> next_tile(std::pair<uint32_t, uint32_t> p){
     return newp;
 }
 
-void manager_recv(scheduler_of_workers<worker *> *pool_of_workers, zmq::socket_t &sock){
+void manager_recv(zmq::socket_t &sock){
 
     // todos os trabalhadores devem procurar um balanceamento na equação 1.
     //      trabalho_realizado = poder_de_processamento * 1/peso_das_tarefas_realizadas (1)
@@ -81,7 +85,7 @@ void manager_recv(scheduler_of_workers<worker *> *pool_of_workers, zmq::socket_t
 
     zmq::message_t request;
     std::pair<uint32_t, uint32_t> current_tile(0,0);
-    
+    std::unordered_map<TWorkerIdx, worker *> busy_workers;
     TWorkerIdx current_idx;
 
     while (running){
@@ -106,10 +110,10 @@ void manager_recv(scheduler_of_workers<worker *> *pool_of_workers, zmq::socket_t
             current_idx=idx_at_manager++;
             w_rec.update_index(current_idx);
             worker *w_at_manager = new worker(w_rec);
-            system_workers.insert_worker(w_at_manager);
+            pool_of_workers.insert_worker(w_at_manager);
             std::cout << "========================== registered workers: ==========================\n";
-            for(size_t i=0; i < system_workers.size(); i++){
-                worker *w = system_workers.at(i);
+            for(size_t i=0; i < pool_of_workers.size(); i++){
+                worker *w = pool_of_workers.at(i);
                 w->print();
             }
             std::cout << "==========================  ==========================\n";
@@ -125,6 +129,9 @@ void manager_recv(scheduler_of_workers<worker *> *pool_of_workers, zmq::socket_t
             std::cout << "tree ok\n";
             std::cout << "-------------------------- Boundary Tree ----------------------------\n";
             bt.print_tree();
+            boundary_tree *ptr_tree = new boundary_tree(bt);
+            auto dist_ini = std::make_pair<uint32_t,uint32_t>(0,1);
+            bound_trees.insert_task(new boundary_tree_task(ptr_tree,dist_ini));
             auto reply_return = sock.send(zmq::buffer("TREE_RECV"), zmq::send_flags::none);
         }else if(recv_msg.type == MSG_GET_TILE){
             
@@ -155,7 +162,7 @@ void manager_recv(scheduler_of_workers<worker *> *pool_of_workers, zmq::socket_t
 
 
 int main(int argc, char *argv[]){
-    scheduler_of_workers<worker *> *pool_of_workers;
+    
     std::string port, protocol;
 
     read_config(argv[1], port, protocol);
@@ -165,16 +172,14 @@ int main(int argc, char *argv[]){
     zmq::context_t context_rec(nth);
     zmq::context_t context_reg(nth);
     zmq::socket_t  receiver_sock(context_rec, zmq::socket_type::pull);
-    zmq::socket_t  registry_sock(context_reg, zmq::socket_type::rep);
-
-    
-    
+    zmq::socket_t  sock(context_reg, zmq::socket_type::rep);
+   
 
     std::string address = protocol+"://*:"+port;
-    registry_sock.bind(address);
+    sock.bind(address);
     
     running=true;
-    std::thread *r = new std::thread(manager_recv, std::ref(pool_of_workers), std::ref(registry_sock));
+    std::thread *r = new std::thread(manager_recv, std::ref(sock));
 
     r->join();
     
