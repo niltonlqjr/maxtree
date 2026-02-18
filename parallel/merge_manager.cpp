@@ -27,13 +27,9 @@ TWorkerIdx idx_at_manager=0;
 scheduler_of_workers<worker*> pool_of_workers;
 
 bag_of_tasks<boundary_tree_task *> bound_trees;
-bag_of_tasks<merge_btrees_task *> merge_tasks;
-
+bag_of_tasks<merge_btrees_task *> merge_bag;
 
 void read_config(char conf_name[], std::string &port, std::string &protocol);
-
-
-
 
 bool reply_to(std::string ip, worker *w){
     zmq::context_t context(1);
@@ -67,6 +63,129 @@ void read_config(char conf_name[], std::string &port, std::string &protocol){
     protocol = get_field(configs, "protocol", "tcp");
 }
 
+void search_pair(){
+    boundary_tree_task *btt, *n, *aux;
+    std::pair<uint32_t, uint32_t> idx_nb;
+    enum neighbor_direction nb_direction;
+    enum merge_directions merge_dir;
+    uint32_t new_distance;
+    bool change_dir;
+    std::string s;
+    while(bound_trees.is_running() || !bound_trees.get_num_task() > 1){
+
+        bool got = bound_trees.get_task(btt);
+        if(got){
+            if(btt->nb_distance.first == 0){
+                merge_dir = MERGE_VERTICAL_BORDER;
+            }else if(btt->nb_distance.second == 0){
+                merge_dir = MERGE_HORIZONTAL_BORDER;
+            }else{
+                std::cerr << "merge distance invalid: " << int_pair_to_string(btt->nb_distance) << "\n";
+                exit(EXIT_FAILURE);
+            }
+            // s = "got tree: " + std::to_string(btt->bt->grid_i) + "," + std::to_string(btt->bt->grid_j) + 
+            //     " with distance: "+ int_pair_to_string(btt->nb_distance) +"\n";
+            // std::cout << s;
+            if(merge_dir == MERGE_VERTICAL_BORDER){
+                if(btt->bt->grid_j % int_pow(2,btt->nb_distance.second) == 0){
+                    nb_direction = NB_AT_RIGHT;
+                }else{
+                    nb_direction = NB_AT_LEFT;
+                }
+            }else if(merge_dir == MERGE_HORIZONTAL_BORDER){
+                if(btt->bt->grid_i % int_pow(2,btt->nb_distance.first) == 0){
+                    nb_direction = NB_AT_BOTTOM;
+                }else{
+                    nb_direction = NB_AT_TOP;
+                }
+            }
+            idx_nb = btt->neighbor_idx(nb_direction);
+            if(inside_rectangle(idx_nb, GRID_DIMS) && inside_rectangle(btt->index, GRID_DIMS)){
+                try{
+                    auto got_n = bound_trees.get_task_by_field<std::pair<uint32_t,uint32_t>>(n, idx_nb, get_task_index);
+                    
+                    if(!got_n){
+                        bound_trees.insert_task(btt);
+                        // std::string s = "no neighbor" + std::to_string(btt->index.first) + "," + std::to_string(btt->index.second) + "\n";
+                        // std::cout << s;
+                    }else if (n->nb_distance.first == btt->nb_distance.first && n->nb_distance.second == btt->nb_distance.second){
+
+                        if((merge_dir == MERGE_VERTICAL_BORDER) && (btt->bt->grid_j > n->bt->grid_j) ||
+                           (merge_dir == MERGE_HORIZONTAL_BORDER) && (btt->bt->grid_i > n->bt->grid_i)){
+                            if(verbose){
+                                std::string s = "swap: " + int_pair_to_string(btt->index) + " and " + int_pair_to_string(n->index) + "\n";
+                                std::cout << s;
+                            }
+                            aux = btt;
+                            btt = n;
+                            n = aux;
+                        }
+                        if(merge_dir == MERGE_HORIZONTAL_BORDER&& btt->bt->border_elements->at(BOTTOM_BORDER)->size() != n->bt->border_elements->at(TOP_BORDER)->size()){
+                            std::string s = int_pair_to_string(btt->index) + " and " + int_pair_to_string(n->index) + " borders differs in size\n";
+                            s += "distances:" + int_pair_to_string(btt->nb_distance) + " and " + int_pair_to_string(n->nb_distance) + "\n";
+                            std::cout << s;
+                        }
+
+                        // s = "creating task with btt " + std::to_string(btt->bt->grid_i) + "," + std::to_string(btt->bt->grid_j) + "   ";
+                        // s += "n: "  + std::to_string(n->bt->grid_i) + "," + std::to_string(n->bt->grid_j) + "distance ";
+                        // s += int_pair_to_string(btt->nb_distance) +"\n";
+                        // // std::cout << s;
+                        auto new_merge_task = new merge_btrees_task(btt->bt, n->bt, merge_dir, btt->nb_distance);
+                        merge_bag.insert_task(new_merge_task);
+                    }else{
+                        if(verbose){
+                            std::string s = "invalid distance:" + int_pair_to_string(btt->index) + " ->" + int_pair_to_string(btt->nb_distance) + "\n";
+                            s+="invalid distance:" + int_pair_to_string(n->index) + " ->" + int_pair_to_string(n->nb_distance) + "\n=======\n";
+                            std::cout << s;
+                        }
+                        bound_trees.insert_task(n);
+                        bound_trees.insert_task(btt);
+                    }
+                }
+                catch(std::runtime_error &e){
+                    std::cerr << e.what();
+                    // s = "pair of " + std::to_string(btt->bt->grid_i) + "," + std::to_string(btt->bt->grid_j) + " not found ";
+                    // s += std::to_string(idx_nb.first) + "," + std::to_string(idx_nb.second) + "\n";
+                    // std::cout << s;
+                    bound_trees.insert_task(btt);
+                }catch(std::out_of_range &r){
+                    std::cerr << "try to access an out of range element\n";
+                }
+            }else if (inside_rectangle(btt->index, GRID_DIMS)){ // the neighbor of btt is not inside the grid (it does not exist, so go to next merge)
+                if(btt->nb_distance.first == 0){
+                    if(btt->nb_distance.second < GRID_DIMS.second){ //this tile doesn't need to merge, just try to found a neighbor further than the actual
+                        if(verbose){
+                            std::string s = int_pair_to_string(btt->index) + " line distance * 2 = "+ int_pair_to_string(btt->nb_distance) + "\n";
+                            std::cout << s;
+                        }
+                        btt->nb_distance.second *= 2;
+                    }else{ // there is no more neighbor on this line to merge, so this line must be merged with the other lines
+                        
+                        btt->nb_distance.first = 1; 
+                        btt->nb_distance.second = 0;
+                    }
+                }else if(btt->nb_distance.second == 0){
+                    if(btt->nb_distance.first < GRID_DIMS.first){
+                        if(verbose){
+                            std::string s = int_pair_to_string(btt->index) + " column distance * 2 = "+ int_pair_to_string(btt->nb_distance) + "\n";
+                            std::cout << s;
+                        }
+                        btt->nb_distance.first *= 2;
+                    }
+                }
+                bound_trees.insert_task(btt);   
+            }
+        }
+    }
+    if(verbose) std::cout << "end worker search pair\n";
+}
+
+merge_btrees_task find_task(worker *w){
+    while(running){
+        merge_bag.get_task();
+    }
+
+}
 
 std::pair<uint32_t, uint32_t> next_tile(std::pair<uint32_t, uint32_t> p){
     std::pair<uint32_t, uint32_t> newp;
@@ -179,8 +298,10 @@ int main(int argc, char *argv[]){
     sock.bind(address);
     
     running=true;
-    std::thread *r = new std::thread(manager_recv, std::ref(sock));
+    std::thread receiver(manager_recv, std::ref(sock));
+    std::thread pair_maker(search_pair);
 
-    r->join();
+    receiver.join();
+    pair_maker.join();
     
 }
