@@ -23,11 +23,15 @@ class worker{
     private:
         TWorkerIdx id;
         std::unordered_map<std::string, TWorkerAttr> *attr;
-        bool busy;
+        bool busy, connected;
         std::string manager;
         std::string address;
+        zmq::context_t context;
+        zmq::socket_t sock;
     public:
-        worker(TWorkerIdx id, std::unordered_map<std::string, TWorkerAttr> *attr, std::string address="");
+        
+        worker(TWorkerIdx id, std::string manager = "", std::string address = "", std::unordered_map<std::string, TWorkerAttr> *attr = nullptr);
+        worker(worker &w);
         worker();
         // ~worker();
         void set_attr(std::string s, TWorkerAttr val);
@@ -75,9 +79,18 @@ class worker{
                            boundary_tree *global_bt,
                            Tattribute lambda);
         
+        /* sign up for server address stored on this->manager*/
+        void registry();
+
+        /* sign up for server address server_addr*/
         void registry_at(std::string server_addr);
 
-        std::pair<uint32_t,uint32_t> request_tile();
+        /* request one task to server. if sock is nullptr, then
+        this->sock is used, otherwise, use sock passed as arg */
+        message request_work(zmq::socket_t *sock=nullptr);
+
+        void connect();
+        void disconnect();
         
         void send_boundary_tree(boundary_tree *bt);
 };

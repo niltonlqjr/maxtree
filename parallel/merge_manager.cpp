@@ -13,7 +13,11 @@
 
 using namespace vips;
 
+std::string self_address;
+
 uint32_t glines, gcolumns;
+
+
 
 bool print_only_trees;
 bool verbose;
@@ -28,6 +32,7 @@ scheduler_of_workers<worker*> pool_of_workers;
 
 bag_of_tasks<boundary_tree_task *> bound_trees;
 bag_of_tasks<merge_btrees_task *> merge_bag;
+bag_of_tasks<input_tile_task* > input_tiles;
 
 void read_config(char conf_name[], std::string &port, std::string &protocol);
 
@@ -180,12 +185,11 @@ void search_pair(){
     if(verbose) std::cout << "end worker search pair\n";
 }
 
-merge_btrees_task find_task(worker *w){
-    while(running){
-        merge_bag.get_task();
-    }
-
-}
+// merge_btrees_task find_task(worker *w){
+//     while(running){
+//         merge_bag.get_task();
+//     }
+// }
 
 std::pair<uint32_t, uint32_t> next_tile(std::pair<uint32_t, uint32_t> p){
     std::pair<uint32_t, uint32_t> newp;
@@ -212,8 +216,9 @@ void manager_recv(zmq::socket_t &sock){
         auto res_recv = sock.recv(request);
         
         std::string rec_msg;
-        rec_msg.resize(request.size());
-        memcpy(rec_msg.data(), request.data(), request.size());
+        rec_msg = request.to_string();
+        // rec_msg.resize(request.size());
+        // memcpy(rec_msg.data(), request.data(), request.size());
         // std::cout << "receieved:" << rec << "\n";
         std::cout << "receieved: --> ";
         for(char c: rec_msg){
@@ -250,24 +255,48 @@ void manager_recv(zmq::socket_t &sock){
             bt.print_tree();
             boundary_tree *ptr_tree = new boundary_tree(bt);
             auto dist_ini = std::make_pair<uint32_t,uint32_t>(0,1);
+            ptr_tree->print_tree();
             bound_trees.insert_task(new boundary_tree_task(ptr_tree,dist_ini));
             auto reply_return = sock.send(zmq::buffer("TREE_RECV"), zmq::send_flags::none);
-        }else if(recv_msg.type == MSG_GET_TILE){
+        }else if(recv_msg.type == MSG_GET_TASK){
             
             TWorkerIdx worker_idx = hps::from_string<TWorkerIdx>(recv_msg.content);
-            std::pair<uint32_t,uint32_t> reply;
-
-            if(!inside_rectangle(current_tile, GRID_DIMS)){
-                reply = GRID_DIMS;
+            message reply;
+            input_tile_task *task;
+            std::pair<uint32_t,uint32_t> idx_reply;
+            reply.sender = self_address;
+            if(!input_tiles.empty()){
+                if(input_tiles.get_task(task)){
+                    idx_reply = std::make_pair(task->i, task->j);
+                    delete task;
+                }else{
+                    idx_reply = GRID_DIMS;
+                }
+                reply.type = MSG_TILE_IDX;
+                reply.content = hps::to_string<std::pair<uint32_t,uint32_t>>(idx_reply);
+                reply.size = reply.content.size();
+                
+            }else if(!merge_bag.empty()){
+                reply.type = MSG_MERGE_BOUNDARY_TREE;
+                reply.content = "";
+                reply.size = 0;
             }else{
-                reply = current_tile;
+
             }
-            current_tile = next_tile(reply);
-            std::cout << "Current tile: (" << current_tile.first << "," << current_tile.second << ")\n";
-            std::cout << "Reply Tile: (" << reply.first << "," << reply.second << ")\n";
-            // std::string s_reply = hps::to_string<std::pair<uint32_t,uint32_t>>(reply);
-            std::string s_reply = hps::to_string(reply);
-            zmq::message_t msg_grid(s_reply);
+            // std::pair<uint32_t,uint32_t> reply;
+
+            // if(!inside_rectangle(current_tile, GRID_DIMS)){
+            //     reply = GRID_DIMS;
+            // }else{
+            //     reply = current_tile;
+            // }
+            // current_tile = next_tile(reply);
+            // std::cout << "Current tile: (" << current_tile.first << "," << current_tile.second << ")\n";
+            // std::cout << "Reply Tile: (" << reply.first << "," << reply.second << ")\n";
+            // // std::string s_reply = hps::to_string<std::pair<uint32_t,uint32_t>>(reply);
+            // std::string s_reply = hps::to_string(reply);
+            std::string reply_s = hps::to_string<message>(reply);
+            zmq::message_t msg_grid(reply_s);
             sock.send(msg_grid, zmq::send_flags::none);
 
         }else{
@@ -276,6 +305,16 @@ void manager_recv(zmq::socket_t &sock){
             sock.send(zmq::buffer("FAIL"), zmq::send_flags::none);
         }
         std::cout << "end iteration<--------\n";
+    }
+}
+
+void fill_input_bag(){
+    std::pair<uint32_t, uint32_t> current_tile(0,0);
+    std::pair<uint32_t,uint32_t> grid_idx = current_tile;
+
+    while(inside_rectangle(grid_idx,GRID_DIMS)){
+        input_tiles.insert_task(new input_tile_task(grid_idx));
+        grid_idx = next_tile(current_tile);               
     }
 }
 
@@ -293,15 +332,17 @@ int main(int argc, char *argv[]){
     zmq::socket_t  receiver_sock(context_rec, zmq::socket_type::pull);
     zmq::socket_t  sock(context_reg, zmq::socket_type::rep);
    
-
-    std::string address = protocol+"://*:"+port;
+    self_address = protocol+"://*:"+port;
+    std::string address = self_address;
     sock.bind(address);
     
     running=true;
     std::thread receiver(manager_recv, std::ref(sock));
     std::thread pair_maker(search_pair);
 
-    receiver.join();
+
+
     pair_maker.join();
+    receiver.join();
     
 }

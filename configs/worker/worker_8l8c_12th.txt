@@ -17,11 +17,12 @@ colored = false
 
 # main server (IP address)
 server_ip = 127.0.0.1
+# server_ip = 10.253.56.239
 # main server port (to send messages)
 server_port = 7233
 
 # self port (to receive messages)
-self_port = 7233
+self_port = 7234
 
 #atribute value to filter
 lambda=100000

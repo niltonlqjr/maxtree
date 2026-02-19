@@ -60,7 +60,8 @@ static const std::vector<std::string> NamesBordersVector({
 
 enum message_type{
     MSG_NULL,       MSG_REGISTRY,   MSG_BOUNDARY_TREE,
-    MSG_GRID_IDX,   MSG_GET_TILE
+    MSG_GET_TASK,   MSG_TILE_IDX,   MSG_MERGE_BOUNDARY_TREE,
+    MSG_SEND_ANSWER 
 };
 
 #endif

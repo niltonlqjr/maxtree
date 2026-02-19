@@ -28,11 +28,10 @@
 
 using namespace vips;
 
-bool print_only_trees;
-bool verbose;
+bool print_only_trees, verbose;
 
-bool has_tiles;
-bool has_merges;
+// bool has_tiles, has_merges;
+bool has_tasks;
 
 extern std::pair<uint32_t, uint32_t> GRID_DIMS;
 
@@ -68,6 +67,55 @@ void verify_args(int argc, char *argv[]);
 void read_config(char conf_name[]);
 
 /* ======================= implementations ================================= */
+
+/****************************some test functions****************************/
+
+void test_send_bound_tree(vips::VImage *in, std::string server_addr){
+    input_tile_task *task = new input_tile_task(1,1);
+    task->prepare(in,3,3);
+    task->read_tile(in);
+
+    maxtree_task *mttask = new maxtree_task(task);
+
+    maxtree *t = mttask->mt;
+    
+    std::cout << "maxtree to string: \n" << t->to_string() << "\n";
+    boundary_tree *bt = t->get_boundary_tree();
+    // std::cout << "lroot string:" << bt->lroot_to_string(BOUNDARY_GVAL, " - ") << "\n=======================\n";
+    // bt->print_tree();
+    
+    std::string msg_content = hps::to_string(*bt);
+    message m = message(msg_content, msg_content.size(), MSG_BOUNDARY_TREE);
+
+    zmq::context_t context(1);
+    
+    zmq::socket_t sender(context, zmq::socket_type::req);
+
+    sender.connect(server_addr);
+    std::string s_msg = hps::to_string(m);
+
+    std::cout << "sending: -->" << s_msg << "<--\n";
+    std::cout << "sending: -->";
+    for(char c: s_msg){
+        std::cout << " " << (int) c;
+    }
+    std::cout << " <--\n";
+    std::cout << "sending tree\n";
+    // zmq::message_t *message_0mq = new zmq::message_t(s_msg.size());
+    // memcpy(message_0mq->data(), s_msg.data(), s_msg.size());
+    zmq::message_t message_0mq(s_msg);
+    
+    sender.send(message_0mq, zmq::send_flags::none);
+
+    std::cout << "tree sent\n";
+    
+}
+
+
+
+/***************************************************************************/
+
+
 
 
 
@@ -178,29 +226,33 @@ void registry_threads(uint32_t num_th, std::string server_addr, std::string self
     std::cout << "start registration\n";
     std::vector<std::thread *> workers_threads;
     //workers register phase
-    for(uint16_t local_id=0; local_id < num_th; local_id++){
-        worker *w = new worker(local_id, nullptr);
+    for(uint32_t local_id=0; local_id < num_th; local_id++){
+        worker *w = new worker(local_id, server_addr);
         w->set_attr("MHZ", 4000.041);
         w->set_attr("L3", 16.0+local_id);
-            
+        w->connect();
         std::cout << "registring id: " << local_id << " of total " << num_th << " threads\n";
         // workers_threads.push_back(new std::thread(w->registry_at, server_addr));
-        workers_threads.push_back(new std::thread(&worker::registry_at, w, server_addr));
+        workers_threads.push_back(new std::thread(&worker::registry, w));
         local_workers.insert_worker(w);
         // sleep(1);
     }
     for(size_t i=0; i<workers_threads.size(); i++){
         workers_threads[i]->join();
     }
+    for(size_t i=0; i<local_workers.size(); i++){
+        local_workers.at(i)->disconnect();
+    }
     for(size_t i=0; i<workers_threads.size(); i++){
         delete workers_threads[i];
     }
+    
     // read_sequential_file(bag_tiles, in, glines, gcolumns);
     std::cout << "bag_tiles.get_num_task:" << bag_tiles.get_num_task() << "\n";
 
 }
 
-void process_tiles(worker *w, std::string server_addr, std::string self_addr){
+void process_tile(worker *w, std::string server_addr, std::string self_addr){
     uint64_t num_tiles = glines * gcolumns;
     std::vector<std::thread *> input_threads;
     uint64_t tile_id;
@@ -212,7 +264,7 @@ void process_tiles(worker *w, std::string server_addr, std::string self_addr){
     connect_manager.connect(server_addr);
 
     std::string msg_content = hps::to_string(w->get_index());
-    m.type = MSG_GET_TILE;
+    m.type = MSG_GET_TASK;
     m.content = msg_content;
     m.sender = self_addr;
     m.size = msg_content.size();    
@@ -220,73 +272,58 @@ void process_tiles(worker *w, std::string server_addr, std::string self_addr){
 
 }
 
-void test_send_bound_tree(vips::VImage *in, std::string server_addr){
-    input_tile_task *task = new input_tile_task(1,1);
-    task->prepare(in,3,3);
-    task->read_tile(in);
-
-    maxtree_task *mttask = new maxtree_task(task);
-
-    maxtree *t = mttask->mt;
+    // if(tile.first == glines && tile.second == gcolumns){
+    //     return false;
+    // }
+    // std::cout << "tile received: (" << tile.first << "," << tile.second << ")\n";
+    // input_tile_task t = input_tile_task(tile);
     
-    std::cout << "maxtree to string: \n" << t->to_string() << "\n";
-    boundary_tree *bt = t->get_boundary_tree();
-    // std::cout << "lroot string:" << bt->lroot_to_string(BOUNDARY_GVAL, " - ") << "\n=======================\n";
-    // bt->print_tree();
-    
-    std::string msg_content = hps::to_string(*bt);
-    message m = message(msg_content, msg_content.size(), MSG_BOUNDARY_TREE);
+    // t.prepare(img_in, glines, gcolumns);
+    // t.read_tile(img_in);
 
-    zmq::context_t context(1);
-    
-    zmq::socket_t sender(context, zmq::socket_type::req);
+    // maxtree_task mtt = maxtree_task(&t);
+    // std::cout << "maxtree\n" << mtt.mt->to_string() << "\n--------------\n";
 
-    sender.connect(server_addr);
-    std::string s_msg = hps::to_string(m);
+    // boundary_tree_task btt = boundary_tree_task(&mtt, std::make_pair<uint32_t, uint32_t>(0,1));
+    // std::cout << "boundary tree\n"; btt.bt->print_tree();
 
-    std::cout << "sending: -->" << s_msg << "<--\n";
-    std::cout << "sending: -->";
-    for(char c: s_msg){
-        std::cout << " " << (int) c;
+    // w->send_boundary_tree(btt.bt);
+    // return true;
+
+
+bool do_work(vips::VImage *img_in, worker *w){
+    while(has_tasks){
+        message msg_work = w->request_work();
+        if(msg_work.type == MSG_TILE_IDX){
+            std::string s_tile = msg_work.content;
+            auto tile = hps::from_string<std::pair<uint32_t,uint32_t>>(s_tile);
+            if(tile.first == glines && tile.second == gcolumns){
+                has_tasks = false;
+            }
+            std::cout << "tile received: (" << tile.first << "," << tile.second << ")\n";
+            input_tile_task t = input_tile_task(tile);
+
+            t.prepare(img_in, glines, gcolumns);
+            t.read_tile(img_in);
+
+            maxtree_task mtt = maxtree_task(&t);
+            std::cout << "maxtree\n" << mtt.mt->to_string() << "\n--------------\n";
+
+            boundary_tree_task btt = boundary_tree_task(&mtt, std::make_pair<uint32_t, uint32_t>(0,1));
+            std::cout << "boundary tree\n"; btt.bt->print_tree();
+
+            w->send_boundary_tree(btt.bt);
+        }
     }
-    std::cout << " <--\n";
-    std::cout << "sending tree\n";
-    zmq::message_t *message_0mq = new zmq::message_t(s_msg.size());
-    memcpy(message_0mq->data(), s_msg.data(), s_msg.size());
-    sender.send(*message_0mq, zmq::send_flags::none);
-
-    std::cout << "tree sent\n";
-    delete message_0mq;   
-}
-
-
-
-
-bool calc_tile_boundary_tree(vips::VImage *img_in, worker *w, std::string server_addr){
-    auto tile = w->request_tile();
-    if(tile.first == glines && tile.second == gcolumns){
-        return false;
-    }
-    std::cout << "tile received: (" << tile.first << "," << tile.second << ")\n";
-    input_tile_task t = input_tile_task(tile);
-    
-    t.prepare(img_in, glines, gcolumns);
-    t.read_tile(img_in);
-
-    maxtree_task mtt = maxtree_task(&t);
-    std::cout << "maxtree\n" << mtt.mt->to_string() << "\n--------------\n";
-
-    boundary_tree_task btt = boundary_tree_task(&mtt, std::make_pair<uint32_t, uint32_t>(0,1));
-    std::cout << "boundary tree\n"; btt.bt->print_tree();
-
-    w->send_boundary_tree(btt.bt);
     return true;
 }
 
-void loop_calc(vips::VImage *img, std::string server_addr){
+void loop_worker(vips::VImage *img, std::string server_addr){
     local_workers.wait_free_worker();
     worker *w=local_workers.get_best_worker();
-    while(calc_tile_boundary_tree(img,  w, server_addr));
+    w->connect();
+    while(do_work(img,  w));
+    w->disconnect();
 }
 
 
@@ -350,7 +387,8 @@ int main(int argc, char *argv[]){
     // calc_tile_boundary_tree(num_threads, server_addr, self_addr);
     // calc_tile_boundary_tree(in, server_addr);
     // test_send_bound_tree(in, server_addr);
-    loop_calc(in, server_addr);
+    has_tasks=true;
+    loop_worker(in, server_addr);
     
     // apos registrar as threads, o fluxo será o seguinte:
     // pedir tile, calcular maxtree e boundary tree responder boundary tree

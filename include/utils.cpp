@@ -225,10 +225,10 @@ void print_pq(std::priority_queue<maxtree_node*> pq){
     std::cout <<"============================\n";
 }
 
-/* check if pair of coordinates c is inside the rectangle r (starting at origin (0,0) and 
-    ending in position (r.first-1, r.second-1) */
-bool inside_rectangle(std::pair<uint32_t, uint32_t> c, std::pair<uint32_t, uint32_t> r){
-    if(c.first >= r.first || c.first < 0 || c.second >= r.second || c.second < 0){
+/* check if pair of coordinates coord is inside the rectangle rect (starting at origin (0,0) and 
+    ending in position (rect.first-1, rect.second-1) */
+bool inside_rectangle(std::pair<uint32_t, uint32_t> coord, std::pair<uint32_t, uint32_t> rect){
+    if(coord.first >= rect.first || coord.first < 0 || coord.second >= rect.second || coord.second < 0){
         return false;
     }
     return true;
