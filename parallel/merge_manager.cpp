@@ -212,8 +212,8 @@ void manager_recv(zmq::socket_t &sock){
     TWorkerIdx current_idx;
 
     while (running){
-        std::cout << "------>new iteration\n";
-        auto res_recv = sock.recv(request);
+        std::cout << "------>new iteration\nwaiting message...";
+        auto res_recv = sock.recv(request,zmq::recv_flags::none);
         
         std::string rec_msg;
         rec_msg = request.to_string();
@@ -257,9 +257,12 @@ void manager_recv(zmq::socket_t &sock){
             auto dist_ini = std::make_pair<uint32_t,uint32_t>(0,1);
             ptr_tree->print_tree();
             bound_trees.insert_task(new boundary_tree_task(ptr_tree,dist_ini));
-            auto reply_return = sock.send(zmq::buffer("TREE_RECV"), zmq::send_flags::none);
+            auto reply_return = sock.send(zmq::str_buffer("") ,zmq::send_flags::none);
+
+
         }else if(recv_msg.type == MSG_GET_TASK){
             
+            std::cout << "get task\n";
             TWorkerIdx worker_idx = hps::from_string<TWorkerIdx>(recv_msg.content);
             message reply;
             input_tile_task *task;
@@ -281,28 +284,14 @@ void manager_recv(zmq::socket_t &sock){
                 reply.content = "";
                 reply.size = 0;
             }else{
-
+                reply.type = MSG_NULL;
+                reply.content = "";
+                reply.size = 0;
             }
-            // std::pair<uint32_t,uint32_t> reply;
+            std::string reply_s = hps::to_string(reply);
+            zmq::message_t msg_reply(reply_s);
+            sock.send(msg_reply, zmq::send_flags::none);
 
-            // if(!inside_rectangle(current_tile, GRID_DIMS)){
-            //     reply = GRID_DIMS;
-            // }else{
-            //     reply = current_tile;
-            // }
-            // current_tile = next_tile(reply);
-            // std::cout << "Current tile: (" << current_tile.first << "," << current_tile.second << ")\n";
-            // std::cout << "Reply Tile: (" << reply.first << "," << reply.second << ")\n";
-            // // std::string s_reply = hps::to_string<std::pair<uint32_t,uint32_t>>(reply);
-            // std::string s_reply = hps::to_string(reply);
-            std::string reply_s = hps::to_string<message>(reply);
-            zmq::message_t msg_grid(reply_s);
-            sock.send(msg_grid, zmq::send_flags::none);
-
-        }else{
-            std::cout << "invalid message received from " << recv_msg.sender << "\n";
-            running = false;
-            sock.send(zmq::buffer("FAIL"), zmq::send_flags::none);
         }
         std::cout << "end iteration<--------\n";
     }
@@ -315,6 +304,7 @@ void fill_input_bag(){
     while(inside_rectangle(grid_idx,GRID_DIMS)){
         input_tiles.insert_task(new input_tile_task(grid_idx));
         grid_idx = next_tile(current_tile);               
+        current_tile = grid_idx;
     }
 }
 
@@ -337,11 +327,12 @@ int main(int argc, char *argv[]){
     sock.bind(address);
     
     running=true;
+    std::thread fill(fill_input_bag);
     std::thread receiver(manager_recv, std::ref(sock));
     std::thread pair_maker(search_pair);
 
 
-
+    fill.join();
     pair_maker.join();
     receiver.join();
     

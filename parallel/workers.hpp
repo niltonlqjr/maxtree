@@ -24,8 +24,8 @@ class worker{
         TWorkerIdx id;
         std::unordered_map<std::string, TWorkerAttr> *attr;
         bool busy, connected;
-        std::string manager;
-        std::string address;
+        std::string manager; // address of manager
+        std::string self_address; // self address
         zmq::context_t context;
         zmq::socket_t sock;
     public:
@@ -87,7 +87,7 @@ class worker{
 
         /* request one task to server. if sock is nullptr, then
         this->sock is used, otherwise, use sock passed as arg */
-        message request_work(zmq::socket_t *sock=nullptr);
+        message request_work();
 
         void connect();
         void disconnect();

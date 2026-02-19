@@ -22,7 +22,7 @@ class scheduler_of_workers{
     public:
         scheduler_of_workers();
         void insert_worker(Worker w);
-        Worker get_best_worker(bool wait_at_least_one=true);
+        Worker get_best_worker(bool wait_at_least_one=false);
         void wait_free_worker();
         void finish_worker(Worker w);
         Worker at(size_t i);

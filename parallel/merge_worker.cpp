@@ -233,15 +233,12 @@ void registry_threads(uint32_t num_th, std::string server_addr, std::string self
         w->connect();
         std::cout << "registring id: " << local_id << " of total " << num_th << " threads\n";
         // workers_threads.push_back(new std::thread(w->registry_at, server_addr));
-        workers_threads.push_back(new std::thread(&worker::registry, w));
+        workers_threads.push_back(new std::thread(&worker::registry,w));
         local_workers.insert_worker(w);
         // sleep(1);
     }
     for(size_t i=0; i<workers_threads.size(); i++){
         workers_threads[i]->join();
-    }
-    for(size_t i=0; i<local_workers.size(); i++){
-        local_workers.at(i)->disconnect();
     }
     for(size_t i=0; i<workers_threads.size(); i++){
         delete workers_threads[i];
@@ -292,35 +289,40 @@ void process_tile(worker *w, std::string server_addr, std::string self_addr){
 
 
 bool do_work(vips::VImage *img_in, worker *w){
-    while(has_tasks){
-        message msg_work = w->request_work();
-        if(msg_work.type == MSG_TILE_IDX){
-            std::string s_tile = msg_work.content;
-            auto tile = hps::from_string<std::pair<uint32_t,uint32_t>>(s_tile);
-            if(tile.first == glines && tile.second == gcolumns){
-                has_tasks = false;
-            }
-            std::cout << "tile received: (" << tile.first << "," << tile.second << ")\n";
-            input_tile_task t = input_tile_task(tile);
+    
 
-            t.prepare(img_in, glines, gcolumns);
-            t.read_tile(img_in);
-
-            maxtree_task mtt = maxtree_task(&t);
-            std::cout << "maxtree\n" << mtt.mt->to_string() << "\n--------------\n";
-
-            boundary_tree_task btt = boundary_tree_task(&mtt, std::make_pair<uint32_t, uint32_t>(0,1));
-            std::cout << "boundary tree\n"; btt.bt->print_tree();
-
-            w->send_boundary_tree(btt.bt);
+    message msg_work = w->request_work();
+    std::cout << "type:"<< msg_work.type << "\n";
+    if(msg_work.type == MSG_TILE_IDX){
+        std::string s_tile = msg_work.content;
+        auto tile = hps::from_string<std::pair<uint32_t,uint32_t>>(s_tile);
+        if(tile == GRID_DIMS){
+            std::cout << "tile has GRID_DIMS value\n";
+            return false;
         }
+        std::cout << "tile received: (" << tile.first << "," << tile.second << ")\n";
+        input_tile_task t = input_tile_task(tile);
+
+        t.prepare(img_in, glines, gcolumns);
+        t.read_tile(img_in);
+
+        maxtree_task mtt = maxtree_task(&t);
+        std::cout << "maxtree\n" << mtt.mt->to_string() << "\n--------------\n";
+
+        boundary_tree_task btt = boundary_tree_task(&mtt, std::make_pair<uint32_t, uint32_t>(0,1));
+        std::cout << "boundary tree\n"; 
+        btt.bt->print_tree();
+
+        w->send_boundary_tree(btt.bt);
+
+    }else{
+        return false;
     }
-    return true;
+    return true;    
 }
 
 void loop_worker(vips::VImage *img, std::string server_addr){
-    local_workers.wait_free_worker();
-    worker *w=local_workers.get_best_worker();
+    worker *w=local_workers.get_best_worker(true);
     w->connect();
     while(do_work(img,  w));
     w->disconnect();
@@ -387,6 +389,7 @@ int main(int argc, char *argv[]){
     // calc_tile_boundary_tree(num_threads, server_addr, self_addr);
     // calc_tile_boundary_tree(in, server_addr);
     // test_send_bound_tree(in, server_addr);
+    std::cout << "threads registered\n";
     has_tasks=true;
     loop_worker(in, server_addr);
     
