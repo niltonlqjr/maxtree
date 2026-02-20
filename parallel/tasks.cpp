@@ -205,7 +205,14 @@ merge_btrees_task::merge_btrees_task(boundary_tree *t1, boundary_tree *t2, enum 
     }
     this->bt1 = t1;
     this->bt2 = t2;
+    this->distance = distance;
     this->direction = direction;
+}
+merge_btrees_task::merge_btrees_task(){
+    this->bt1 = nullptr;
+    this->bt2 = nullptr;
+    this->distance = std::make_pair<uint32_t,uint32_t>(0,0);
+    this->direction = MERGE_VERTICAL_BORDER;
 }
 
 uint64_t merge_btrees_task::size(){
@@ -219,8 +226,11 @@ boundary_tree *merge_btrees_task::execute(){
     //         return NULL;        
     //     }
     // }
+    std::cout << "merging...\n";
     new_btree = this->bt1->merge(this->bt2, this->direction);
+    std::cout << "executed\n";
     new_btree->update_tree(new_btree);
+    
     new_btree->compress_path();
     // delete this->bt1;
     // delete this->bt2;
@@ -228,6 +238,6 @@ boundary_tree *merge_btrees_task::execute(){
 }
 
 merge_btrees_task::~merge_btrees_task(){
-    delete this->bt1;
-    delete this->bt2;
+    // delete this->bt1;
+    // delete this->bt2;
 }

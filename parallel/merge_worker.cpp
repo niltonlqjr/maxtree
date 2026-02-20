@@ -307,15 +307,23 @@ bool do_work(vips::VImage *img_in, worker *w){
         t.read_tile(img_in);
 
         maxtree_task mtt = maxtree_task(&t);
-        std::cout << "maxtree\n" << mtt.mt->to_string() << "\n--------------\n";
+        // std::cout << "maxtree\n" << mtt.mt->to_string() << "\n--------------\n";
 
         boundary_tree_task btt = boundary_tree_task(&mtt, std::make_pair<uint32_t, uint32_t>(0,1));
         std::cout << "boundary tree\n"; 
-        btt.bt->print_tree();
+        // btt.bt->print_tree();
 
         w->send_boundary_tree(btt.bt);
-
-    }else{
+    }else if(msg_work.type == MSG_MERGE_BOUNDARY_TREE){
+        std::string s_merge_task = msg_work.content;
+        merge_btrees_task mbtt = hps::from_string<merge_btrees_task>(s_merge_task);
+        std::cout << "merging\n";
+        // mbtt.bt1->print_tree();
+        // mbtt.bt2->print_tree();
+        boundary_tree *merged_tree = mbtt.execute();
+        std::cout << "MERGE DONE\n";
+        w->send_boundary_tree(merged_tree);
+    }else if(!msg_work.type){
         return false;
     }
     return true;    
@@ -402,7 +410,8 @@ int main(int argc, char *argv[]){
 
     for(size_t i=0; i < local_workers.size(); i++){
         worker *w = local_workers.at(i);
-        std::cout << "worker local: " <<  i << " registered as " << w->get_index() << " at manager\n";
+        std::cout << "delete worker local: " <<  i << " registered as " << w->get_index() << " at manager\n";
+        delete w;
     }
 
     

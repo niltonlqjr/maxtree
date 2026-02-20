@@ -271,6 +271,7 @@ void manager_recv(zmq::socket_t &sock){
             if(!input_tiles.empty()){
                 if(input_tiles.get_task(task)){
                     idx_reply = std::make_pair(task->i, task->j);
+                    std::cout << "got tile task\n";
                     delete task;
                 }else{
                     idx_reply = GRID_DIMS;
@@ -281,8 +282,12 @@ void manager_recv(zmq::socket_t &sock){
                 
             }else if(!merge_bag.empty()){
                 reply.type = MSG_MERGE_BOUNDARY_TREE;
-                reply.content = "";
-                reply.size = 0;
+                merge_btrees_task *btt;
+                if(merge_bag.get_task(btt)){
+                    reply.content = hps::to_string(*btt);
+                    reply.size = reply.content.size();
+                    std::cout << "got merge task\n";
+                }
             }else{
                 reply.type = MSG_NULL;
                 reply.content = "";
@@ -291,7 +296,6 @@ void manager_recv(zmq::socket_t &sock){
             std::string reply_s = hps::to_string(reply);
             zmq::message_t msg_reply(reply_s);
             sock.send(msg_reply, zmq::send_flags::none);
-
         }
         std::cout << "end iteration<--------\n";
     }
@@ -328,8 +332,11 @@ int main(int argc, char *argv[]){
     
     running=true;
     std::thread fill(fill_input_bag);
+    input_tiles.start();
     std::thread receiver(manager_recv, std::ref(sock));
+    bound_trees.start();
     std::thread pair_maker(search_pair);
+    merge_bag.start();
 
 
     fill.join();

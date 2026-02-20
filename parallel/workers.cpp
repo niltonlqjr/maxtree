@@ -412,9 +412,10 @@ message worker::request_work(){
     // std::cout << "request_work end\n";
     return hps::from_string<message>(reply_str);
 }
-// bool worker::send_answer(zmq::socket_t *sock, message &m){
-//     return false
-// }
+
+bool worker::send_answer(message &m){
+    return false;
+}
 
 void worker::connect(){
     if(!this->connected){

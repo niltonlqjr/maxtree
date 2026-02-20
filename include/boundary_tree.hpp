@@ -99,7 +99,7 @@ class boundary_tree{
             }
             for(auto border: TBordersVector){
                 send_bord_elem.at(border) = *(this->border_elements->at(border));
-                std::cout << "sending border: " << NamesBordersVector[border] << "\n";
+                // std::cout << "sending border: " << NamesBordersVector[border] << "\n";
             }
             buf << send_bord_elem;
         };
@@ -112,30 +112,31 @@ class boundary_tree{
             std::size_t size_btree, num_borders;
 
             this->tile_borders = new std::vector<bool>();
+            this->boundary_tree_lroot = new std::unordered_map<uint64_t, boundary_node*>();
             buf >> this->h >> this->w >> this->grid_i >> this->grid_j;
             buf >> *(this->tile_borders);
             buf >> size_btree;
-            std::cout << "size of tree" << size_btree << "\n";
+            // std::cout << "size of tree" << size_btree << "\n";
             for(auto x: *(this->tile_borders)){
                 std::cout << x << " ";
             }
             buf >> map_tree >> mt_nodes;
             for(size_t i=0; i<size_btree; i++){
                 std::pair<uint64_t, boundary_node> p = map_tree[i];
-                std::cout << "inserting ";
-                std::cout << p.first << "\n";
+                // std::cout << "inserting ";
+                // std::cout << p.first << "\n";
                 maxtree_node aux_node = mt_nodes[i];
                 p.second.ptr_node = new maxtree_node(aux_node); 
-                std::cout << "new node created\n";
+                // std::cout << "new node created\n";
                 this->insert_bnode_lroot_tree(&p.second,true);
             }
-            std::cout <<" lroot tree: " << this->lroot_to_string() << "\n";
+            // std::cout <<" lroot tree: " << this->lroot_to_string() << "\n";
             
             buf >> recv_bord_elem;
             for(auto border: TBordersVector){
-                *(this->border_elements->at(border)) = recv_bord_elem.at(border);
+                this->border_elements->at(border) = new std::vector<uint64_t>(recv_bord_elem.at(border));
             }
-            std::cout << "fim\n\n";
+            // std::cout << "fim\n\n";
         };
 
         boundary_tree();
