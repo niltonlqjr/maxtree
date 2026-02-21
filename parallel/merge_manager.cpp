@@ -220,27 +220,27 @@ void manager_recv(zmq::socket_t &sock){
         // rec_msg.resize(request.size());
         // memcpy(rec_msg.data(), request.data(), request.size());
         // std::cout << "receieved:" << rec << "\n";
-        std::cout << "receieved: --> ";
-        for(char c: rec_msg){
-            std::cout << " " << (int) c;
-        }
-        std::cout << " <--\n";
+        // std::cout << "receieved: --> ";
+        // for(char c: rec_msg){
+        //     std::cout << " " << (int) c;
+        // }
+        // std::cout << " <--\n";
         message recv_msg = hps::from_string<message>(rec_msg);
         std::cout << "message type" << recv_msg.type << "\n";
         if(recv_msg.type == MSG_REGISTRY){
             worker w_rec = hps::from_string<worker>(recv_msg.content);
             std::cout << "Registry" << "\n";
-            w_rec.print();
+            // w_rec.print();
             current_idx=idx_at_manager++;
             w_rec.update_index(current_idx);
             worker *w_at_manager = new worker(w_rec);
             pool_of_workers.insert_worker(w_at_manager);
-            std::cout << "========================== registered workers: ==========================\n";
-            for(size_t i=0; i < pool_of_workers.size(); i++){
-                worker *w = pool_of_workers.at(i);
-                w->print();
-            }
-            std::cout << "==========================  ==========================\n";
+            // std::cout << "========================== registered workers: ==========================\n";
+            // for(size_t i=0; i < pool_of_workers.size(); i++){
+            //     worker *w = pool_of_workers.at(i);
+            //     // w->print();
+            // }
+            // std::cout << "==========================  ==========================\n";
             
             zmq::message_t msg_new_id(sizeof(TWorkerIdx));
             memcpy(msg_new_id.data(), &current_idx, sizeof(TWorkerIdx));
@@ -251,7 +251,7 @@ void manager_recv(zmq::socket_t &sock){
             std::cout << "tree" << "\n";
             boundary_tree bt = hps::from_string<boundary_tree>(recv_msg.content);
             std::cout << "tree ok\n";
-            std::cout << "-------------------------- Boundary Tree ----------------------------\n";
+            // std::cout << "-------------------------- Boundary Tree ----------------------------\n";
             
             boundary_tree *ptr_tree = new boundary_tree(bt);
             auto dist_ini = std::make_pair<uint32_t,uint32_t>(0,1);

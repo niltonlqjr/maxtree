@@ -297,10 +297,10 @@ bool do_work(vips::VImage *img_in, worker *w){
         std::string s_tile = msg_work.content;
         auto tile = hps::from_string<std::pair<uint32_t,uint32_t>>(s_tile);
         if(tile == GRID_DIMS){
-            std::cout << "tile has GRID_DIMS value\n";
+            // std::cout << "tile has GRID_DIMS value\n";
             return false;
         }
-        std::cout << "tile received: (" << tile.first << "," << tile.second << ")\n";
+        // std::cout << "tile received: (" << tile.first << "," << tile.second << ")\n";
         input_tile_task t = input_tile_task(tile);
 
         t.prepare(img_in, glines, gcolumns);

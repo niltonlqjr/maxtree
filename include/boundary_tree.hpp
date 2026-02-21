@@ -117,9 +117,9 @@ class boundary_tree{
             buf >> *(this->tile_borders);
             buf >> size_btree;
             // std::cout << "size of tree" << size_btree << "\n";
-            for(auto x: *(this->tile_borders)){
-                std::cout << x << " ";
-            }
+            // for(auto x: *(this->tile_borders)){
+            //     std::cout << x << " ";
+            // }
             buf >> map_tree >> mt_nodes;
             for(size_t i=0; i<size_btree; i++){
                 std::pair<uint64_t, boundary_node> p = map_tree[i];

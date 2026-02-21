@@ -226,13 +226,9 @@ boundary_tree *merge_btrees_task::execute(){
     //         return NULL;        
     //     }
     // }
-    std::cout << "tree 1" << this->bt1->grid_i << " " << this->bt1->grid_j << "\n";
-    this->bt1->print_tree();
-    std::cout << "tree 2" << this->bt2->grid_i << " " << this->bt2->grid_j << "\n";
-    this->bt2->print_tree();
-    std::cout << "merging...\n";
+   
     new_btree = this->bt1->merge(this->bt2, this->direction);
-    std::cout << "executed\n";
+
     new_btree->update_tree(new_btree);
     
     new_btree->compress_path();
