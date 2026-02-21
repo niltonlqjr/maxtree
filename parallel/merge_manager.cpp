@@ -252,10 +252,10 @@ void manager_recv(zmq::socket_t &sock){
             boundary_tree bt = hps::from_string<boundary_tree>(recv_msg.content);
             std::cout << "tree ok\n";
             std::cout << "-------------------------- Boundary Tree ----------------------------\n";
-            bt.print_tree();
+            
             boundary_tree *ptr_tree = new boundary_tree(bt);
             auto dist_ini = std::make_pair<uint32_t,uint32_t>(0,1);
-            ptr_tree->print_tree();
+            // ptr_tree->print_tree();
             bound_trees.insert_task(new boundary_tree_task(ptr_tree,dist_ini));
             auto reply_return = sock.send(zmq::str_buffer("") ,zmq::send_flags::none);
 
@@ -270,6 +270,7 @@ void manager_recv(zmq::socket_t &sock){
             reply.sender = self_address;
             if(!input_tiles.empty()){
                 if(input_tiles.get_task(task)){
+                    std::cout << "tile task bag... ";
                     idx_reply = std::make_pair(task->i, task->j);
                     std::cout << "got tile task\n";
                     delete task;
@@ -284,8 +285,11 @@ void manager_recv(zmq::socket_t &sock){
                 reply.type = MSG_MERGE_BOUNDARY_TREE;
                 merge_btrees_task *btt;
                 if(merge_bag.get_task(btt)){
+                    std::cout << "merge task bag... ";
                     reply.content = hps::to_string(*btt);
                     reply.size = reply.content.size();
+                    // auto x = btt->execute();
+                    // x->print_tree();
                     std::cout << "got merge task\n";
                 }
             }else{

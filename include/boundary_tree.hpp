@@ -133,6 +133,10 @@ class boundary_tree{
             // std::cout <<" lroot tree: " << this->lroot_to_string() << "\n";
             
             buf >> recv_bord_elem;
+            this->border_elements = new std::vector<std::vector<uint64_t> *>();
+            for(auto border: TBordersVector){
+                this->border_elements->push_back(nullptr);
+            }
             for(auto border: TBordersVector){
                 this->border_elements->at(border) = new std::vector<uint64_t>(recv_bord_elem.at(border));
             }

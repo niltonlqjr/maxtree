@@ -71,20 +71,26 @@ class merge_btrees_task: public comparable_task{
             enum merge_directions d = this->direction;
             std::string sdir  = hps::to_string(static_cast<int>(d));
             std::string sdist = hps::to_string(this->distance);
-            buf << sbt1 << sbt2 << sdir << sdist;
+
+            buf <<  sbt1 << sbt2 << sdir << sdist;
+
         }
 
         template<class B>
         void parse(B &buf){
             std::string sbt1,sbt2,sdir,sdist;
-            buf >> sbt1>> sbt2 >> sdir >> sdist;
+            
+            buf >> sbt1 >> sbt2 >> sdir >> sdist;
+
+            
             boundary_tree static_bt1, static_bt2;
-            static_bt1 = hps::from_string<boundary_tree>(sbt1);
-            static_bt2 = hps::from_string<boundary_tree>(sbt2);
-            this->bt1 = new boundary_tree(static_bt1);
-            this->bt2 = new boundary_tree(static_bt2);
+            // static_bt1 = hps::from_string<boundary_tree>(sbt1);
+            // static_bt2 = hps::from_string<boundary_tree>(sbt2);
+            this->bt1 = new boundary_tree(hps::from_string<boundary_tree>(sbt1));
+            this->bt2 = new boundary_tree(hps::from_string<boundary_tree>(sbt2));
             this->direction = static_cast<enum merge_directions>(hps::from_string<int>(sdir));
             this->distance = hps::from_string<std::pair<uint32_t, uint32_t>>(sdist);
+
         }
 
 };

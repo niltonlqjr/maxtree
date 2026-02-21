@@ -1554,6 +1554,7 @@ std::string boundary_tree::border_to_string(enum boundary_tree_field f, std::str
 
 void boundary_tree::print_tree(enum boundary_tree_field lrootf, enum boundary_tree_field borderf){
     std::cout << "\n____________________________________________________\n";
+    std::cout << "Tile: ("<< this->grid_i <<"," << this->grid_j << ")\n";
     std::cout << ">>>>>>>>> All borders: <<<<<<<<<<<\n" << this->border_to_string(borderf);
     std::cout << ">>>>>>>>> Tree: <<<<<<<<<\n" << this->lroot_to_string(lrootf);
     std::cout << "\n_____________________________________________________\n";
