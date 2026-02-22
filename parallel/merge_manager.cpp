@@ -86,6 +86,8 @@ void search_pair(){
                 merge_dir = MERGE_HORIZONTAL_BORDER;
             }else{
                 std::cerr << "merge distance invalid: " << int_pair_to_string(btt->nb_distance) << "\n";
+                std::cerr << "index: ";
+                btt->bt->print_idx();
                 exit(EXIT_FAILURE);
             }
             // s = "got tree: " + std::to_string(btt->bt->grid_i) + "," + std::to_string(btt->bt->grid_j) + 
@@ -249,14 +251,12 @@ void manager_recv(zmq::socket_t &sock){
 
         }else if(recv_msg.type == MSG_BOUNDARY_TREE){
             std::cout << "tree" << "\n";
-            boundary_tree bt = hps::from_string<boundary_tree>(recv_msg.content);
+            boundary_tree_task btt = hps::from_string<boundary_tree_task>(recv_msg.content);
             std::cout << "tree ok\n";
             // std::cout << "-------------------------- Boundary Tree ----------------------------\n";
-            
-            boundary_tree *ptr_tree = new boundary_tree(bt);
-            auto dist_ini = std::make_pair<uint32_t,uint32_t>(0,1);
+            boundary_tree_task *new_bttask = new boundary_tree_task(btt);
             // ptr_tree->print_tree();
-            bound_trees.insert_task(new boundary_tree_task(ptr_tree,dist_ini));
+            bound_trees.insert_task(new_bttask);
             auto reply_return = sock.send(zmq::str_buffer("") ,zmq::send_flags::none);
 
 
@@ -286,6 +286,8 @@ void manager_recv(zmq::socket_t &sock){
                 merge_btrees_task *btt;
                 if(merge_bag.get_task(btt)){
                     std::cout << "merge task bag... ";
+                    btt->bt1->print_idx();
+                    btt->bt2->print_idx();
                     reply.content = hps::to_string(*btt);
                     reply.size = reply.content.size();
                     // auto x = btt->execute();

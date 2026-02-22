@@ -257,7 +257,8 @@ class boundary_tree{
 
         /* search for a node with attribute greater or equal than lambda */
         maxtree_node *up_tree_filter(uint64_t gidx, Tattribute lambda);
-
+        
+        void print_idx(std::string end_line="\n");
 
 
 
