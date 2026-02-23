@@ -68,57 +68,6 @@ void read_config(char conf_name[]);
 
 /* ======================= implementations ================================= */
 
-/****************************some test functions****************************/
-
-void test_send_bound_tree(vips::VImage *in, std::string server_addr){
-    input_tile_task *task = new input_tile_task(1,1);
-    task->prepare(in,3,3);
-    task->read_tile(in);
-
-    maxtree_task *mttask = new maxtree_task(task);
-
-    maxtree *t = mttask->mt;
-    
-    std::cout << "maxtree to string: \n" << t->to_string() << "\n";
-    boundary_tree *bt = t->get_boundary_tree();
-    // std::cout << "lroot string:" << bt->lroot_to_string(BOUNDARY_GVAL, " - ") << "\n=======================\n";
-    // bt->print_tree();
-    
-    std::string msg_content = hps::to_string(*bt);
-    message m = message(msg_content, msg_content.size(), MSG_BOUNDARY_TREE);
-
-    zmq::context_t context(1);
-    
-    zmq::socket_t sender(context, zmq::socket_type::req);
-
-    sender.connect(server_addr);
-    std::string s_msg = hps::to_string(m);
-
-    std::cout << "sending: -->" << s_msg << "<--\n";
-    std::cout << "sending: -->";
-    for(char c: s_msg){
-        std::cout << " " << (int) c;
-    }
-    std::cout << " <--\n";
-    std::cout << "sending tree\n";
-    // zmq::message_t *message_0mq = new zmq::message_t(s_msg.size());
-    // memcpy(message_0mq->data(), s_msg.data(), s_msg.size());
-    zmq::message_t message_0mq(s_msg);
-    
-    sender.send(message_0mq, zmq::send_flags::none);
-
-    std::cout << "tree sent\n";
-    
-}
-
-
-
-/***************************************************************************/
-
-
-
-
-
 void verify_args(int argc, char *argv[]){
     std::cout << "argc: " << argc << " argv:" ;
     for(int i=0;i<argc;i++){
@@ -152,7 +101,6 @@ void read_config(char conf_name[]){
     verbose=false;
     print_only_trees=false;
     
-
     auto configs = parse_config(conf_name);
 
     if(configs->find("glines") == configs->end() || configs->find("gcolumns") == configs->end()){
@@ -207,65 +155,33 @@ void read_config(char conf_name[]){
     
 }
 
-void read_sequential_file(bag_of_tasks<input_tile_task*> &bag, vips::VImage *in, uint32_t glines, uint32_t gcolumns){
-    input_tile_task *nt;
-    for(uint32_t i=0; i<glines; i++){
-        for(uint32_t j=0; j<gcolumns; j++){
-            nt = new input_tile_task(i,j);
-            nt->prepare(in,glines,gcolumns);
-            nt->read_tile(in);
-            bag.insert_task(nt);
-        }
-    }
 
+void registry_new_worker(uint32_t local_id, std::string server_addr){
+    worker *w = new worker(local_id, server_addr);
+    w->set_attr("MHZ", 4000.041);
+    w->set_attr("L3", 16.0+local_id);
+    w->connect();
+    // std::cout << "registring id: " << local_id << " of total " << num_th << " threads\n";
+    // workers_threads.push_back(new std::thread(w->registry_at, server_addr));
+    // workers_threads.push_back(std::thread(&worker::registry,w));
+    w->registry();
+    local_workers.insert_worker(w);
+    // sleep(1);
 }
-
 
 void registry_threads(uint32_t num_th, std::string server_addr, std::string self_addr){
     std::cout << "number of threads "<< num_th << "\n";  
     std::cout << "start registration\n";
-    std::vector<std::thread *> workers_threads;
+    std::vector<std::thread> workers_threads;
     //workers register phase
     for(uint32_t local_id=0; local_id < num_th; local_id++){
-        worker *w = new worker(local_id, server_addr);
-        w->set_attr("MHZ", 4000.041);
-        w->set_attr("L3", 16.0+local_id);
-        w->connect();
-        std::cout << "registring id: " << local_id << " of total " << num_th << " threads\n";
-        // workers_threads.push_back(new std::thread(w->registry_at, server_addr));
-        workers_threads.push_back(new std::thread(&worker::registry,w));
-        local_workers.insert_worker(w);
-        // sleep(1);
+        workers_threads.push_back(std::thread(registry_new_worker, local_id, server_addr));
     }
     for(size_t i=0; i<workers_threads.size(); i++){
-        workers_threads[i]->join();
+        workers_threads[i].join();
     }
-    for(size_t i=0; i<workers_threads.size(); i++){
-        delete workers_threads[i];
-    }
-    
     // read_sequential_file(bag_tiles, in, glines, gcolumns);
     std::cout << "bag_tiles.get_num_task:" << bag_tiles.get_num_task() << "\n";
-
-}
-
-void process_tile(worker *w, std::string server_addr, std::string self_addr){
-    uint64_t num_tiles = glines * gcolumns;
-    std::vector<std::thread *> input_threads;
-    uint64_t tile_id;
-    std::pair <uint32_t, uint32_t> grid_idx;
-    message m;
-
-    zmq::context_t context(1);
-    zmq::socket_t connect_manager(context, zmq::socket_type::req);
-    connect_manager.connect(server_addr);
-
-    std::string msg_content = hps::to_string(w->get_index());
-    m.type = MSG_GET_TASK;
-    m.content = msg_content;
-    m.sender = self_addr;
-    m.size = msg_content.size();    
-    
 
 }
 
@@ -289,10 +205,8 @@ void process_tile(worker *w, std::string server_addr, std::string self_addr){
 
 
 bool do_work(vips::VImage *img_in, worker *w){
-    
-
     message msg_work = w->request_work();
-    std::cout << "type:"<< msg_work.type << "\n";
+    // std::cout << "type:"<< msg_work.type << "\n";
     if(msg_work.type == MSG_TILE_IDX){
         std::string s_tile = msg_work.content;
         auto tile = hps::from_string<std::pair<uint32_t,uint32_t>>(s_tile);
@@ -310,18 +224,18 @@ bool do_work(vips::VImage *img_in, worker *w){
         // std::cout << "maxtree\n" << mtt.mt->to_string() << "\n--------------\n";
 
         boundary_tree_task btt = boundary_tree_task(&mtt, std::make_pair<uint32_t, uint32_t>(0,1));
-        std::cout << "boundary tree\n"; 
+        // std::cout << "boundary tree\n"; 
         // btt.bt->print_tree();
 
         w->send_boundary_tree(btt.bt);
     }else if(msg_work.type == MSG_MERGE_BOUNDARY_TREE){
         std::string s_merge_task = msg_work.content;
         merge_btrees_task mbtt = hps::from_string<merge_btrees_task>(s_merge_task);
-        std::cout << "merging\n";
+        // std::cout << "merging\n";
         // mbtt.bt1->print_tree();
         // mbtt.bt2->print_tree();
         boundary_tree *merged_tree = mbtt.execute();
-        std::cout << "MERGE DONE\n";
+        // std::cout << "MERGE DONE\n";
         w->send_boundary_tree(merged_tree);
     }else if(!msg_work.type){
         return false;
@@ -336,6 +250,17 @@ void loop_worker(vips::VImage *img, std::string server_addr){
     w->disconnect();
 }
 
+
+
+void make_worker_threads(uint32_t numth, VImage *in, std::string server){
+    std::vector<std::thread> workers_threads;
+    for(uint32_t i=0; i<numth; i++){
+        workers_threads.push_back(std::thread(loop_worker, in, server));
+    }
+    for(size_t i=0; i<workers_threads.size(); i++){
+        workers_threads[i].join();
+    }
+}
 
 int main(int argc, char *argv[]){
     vips::VImage *in;
@@ -397,9 +322,12 @@ int main(int argc, char *argv[]){
     // calc_tile_boundary_tree(num_threads, server_addr, self_addr);
     // calc_tile_boundary_tree(in, server_addr);
     // test_send_bound_tree(in, server_addr);
-    std::cout << "threads registered\n";
+    // std::cout << "threads registered\n";
     has_tasks=true;
-    loop_worker(in, server_addr);
+    
+    make_worker_threads(num_threads, in, server_addr);
+
+    
     
     // apos registrar as threads, o fluxo será o seguinte:
     // pedir tile, calcular maxtree e boundary tree responder boundary tree
