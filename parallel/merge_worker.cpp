@@ -185,25 +185,6 @@ void registry_threads(uint32_t num_th, std::string server_addr, std::string self
 
 }
 
-    // if(tile.first == glines && tile.second == gcolumns){
-    //     return false;
-    // }
-    // std::cout << "tile received: (" << tile.first << "," << tile.second << ")\n";
-    // input_tile_task t = input_tile_task(tile);
-    
-    // t.prepare(img_in, glines, gcolumns);
-    // t.read_tile(img_in);
-
-    // maxtree_task mtt = maxtree_task(&t);
-    // std::cout << "maxtree\n" << mtt.mt->to_string() << "\n--------------\n";
-
-    // boundary_tree_task btt = boundary_tree_task(&mtt, std::make_pair<uint32_t, uint32_t>(0,1));
-    // std::cout << "boundary tree\n"; btt.bt->print_tree();
-
-    // w->send_boundary_tree(btt.bt);
-    // return true;
-
-
 bool do_work(vips::VImage *img_in, worker *w){
     message msg_work = w->request_work();
     // std::cout << "type:"<< msg_work.type << "\n";
@@ -227,16 +208,35 @@ bool do_work(vips::VImage *img_in, worker *w){
         // std::cout << "boundary tree\n"; 
         // btt.bt->print_tree();
 
-        w->send_boundary_tree(btt.bt);
+        w->send_btree_task(&btt);
     }else if(msg_work.type == MSG_MERGE_BOUNDARY_TREE){
+        enum merge_directions merge_dir;
+        enum neighbor_direction nb_direction;
+
+        std::pair<uint32_t, uint32_t> nb_dist;
+
         std::string s_merge_task = msg_work.content;
+        
+        
         merge_btrees_task mbtt = hps::from_string<merge_btrees_task>(s_merge_task);
+        
         // std::cout << "merging\n";
-        // mbtt.bt1->print_tree();
-        // mbtt.bt2->print_tree();
+        // mbtt.bt1->print_idx();
+        // mbtt.bt2->print_idx();
         boundary_tree *merged_tree = mbtt.execute();
         // std::cout << "MERGE DONE\n";
-        w->send_boundary_tree(merged_tree);
+        
+        nb_dist = std::make_pair<uint32_t, uint32_t>(mbtt.distance.first * 2, mbtt.distance.second * 2);
+
+        if(nb_dist.second >= GRID_DIMS.second){
+            nb_dist.second = 0;
+            nb_dist.first = 1;
+        }
+
+        boundary_tree_task btt = boundary_tree_task(merged_tree, nb_dist);
+
+        w->send_btree_task(&btt);
+        
     }else if(!msg_work.type){
         return false;
     }
@@ -327,8 +327,6 @@ int main(int argc, char *argv[]){
     
     make_worker_threads(num_threads, in, server_addr);
 
-    
-    
     // apos registrar as threads, o fluxo será o seguinte:
     // pedir tile, calcular maxtree e boundary tree responder boundary tree
 

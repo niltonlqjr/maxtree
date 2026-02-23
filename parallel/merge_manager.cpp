@@ -86,6 +86,8 @@ void search_pair(){
                 merge_dir = MERGE_HORIZONTAL_BORDER;
             }else{
                 std::cerr << "merge distance invalid: " << int_pair_to_string(btt->nb_distance) << "\n";
+                std::cerr << "index: ";
+                // btt->bt->print_idx();
                 exit(EXIT_FAILURE);
             }
             // s = "got tree: " + std::to_string(btt->bt->grid_i) + "," + std::to_string(btt->bt->grid_j) + 
@@ -125,11 +127,11 @@ void search_pair(){
                             btt = n;
                             n = aux;
                         }
-                        if(merge_dir == MERGE_HORIZONTAL_BORDER&& btt->bt->border_elements->at(BOTTOM_BORDER)->size() != n->bt->border_elements->at(TOP_BORDER)->size()){
-                            std::string s = int_pair_to_string(btt->index) + " and " + int_pair_to_string(n->index) + " borders differs in size\n";
-                            s += "distances:" + int_pair_to_string(btt->nb_distance) + " and " + int_pair_to_string(n->nb_distance) + "\n";
-                            std::cout << s;
-                        }
+                        // if(merge_dir == MERGE_HORIZONTAL_BORDER&& btt->bt->border_elements->at(BOTTOM_BORDER)->size() != n->bt->border_elements->at(TOP_BORDER)->size()){
+                        //     std::string s = int_pair_to_string(btt->index) + " and " + int_pair_to_string(n->index) + " borders differs in size\n";
+                        //     s += "distances:" + int_pair_to_string(btt->nb_distance) + " and " + int_pair_to_string(n->nb_distance) + "\n";
+                        //     std::cout << s;
+                        // }
 
                         // s = "creating task with btt " + std::to_string(btt->bt->grid_i) + "," + std::to_string(btt->bt->grid_j) + "   ";
                         // s += "n: "  + std::to_string(n->bt->grid_i) + "," + std::to_string(n->bt->grid_j) + "distance ";
@@ -161,7 +163,7 @@ void search_pair(){
                     if(btt->nb_distance.second < GRID_DIMS.second){ //this tile doesn't need to merge, just try to found a neighbor further than the actual
                         if(verbose){
                             std::string s = int_pair_to_string(btt->index) + " line distance * 2 = "+ int_pair_to_string(btt->nb_distance) + "\n";
-                            std::cout << s;
+                            // std::cout << s;
                         }
                         btt->nb_distance.second *= 2;
                     }else{ // there is no more neighbor on this line to merge, so this line must be merged with the other lines
@@ -182,7 +184,7 @@ void search_pair(){
             }
         }
     }
-    if(verbose) std::cout << "end worker search pair\n";
+    // if(verbose) std::cout << "end worker search pair\n";
 }
 
 // merge_btrees_task find_task(worker *w){
@@ -212,7 +214,7 @@ void manager_recv(zmq::socket_t &sock){
     TWorkerIdx current_idx;
 
     while (running){
-        std::cout << "------>new iteration\nwaiting message...";
+        // std::cout << "------>new iteration\nwaiting message...";
         auto res_recv = sock.recv(request,zmq::recv_flags::none);
         
         std::string rec_msg;
@@ -226,10 +228,10 @@ void manager_recv(zmq::socket_t &sock){
         // }
         // std::cout << " <--\n";
         message recv_msg = hps::from_string<message>(rec_msg);
-        std::cout << "message type" << recv_msg.type << "\n";
+        // std::cout << "message type" << recv_msg.type << "\n";
         if(recv_msg.type == MSG_REGISTRY){
             worker w_rec = hps::from_string<worker>(recv_msg.content);
-            std::cout << "Registry" << "\n";
+            // std::cout << "Registry" << "\n";
             // w_rec.print();
             current_idx=idx_at_manager++;
             w_rec.update_index(current_idx);
@@ -248,21 +250,19 @@ void manager_recv(zmq::socket_t &sock){
             auto reply_return = sock.send(msg_new_id, zmq::send_flags::none);
 
         }else if(recv_msg.type == MSG_BOUNDARY_TREE){
-            std::cout << "tree" << "\n";
-            boundary_tree bt = hps::from_string<boundary_tree>(recv_msg.content);
-            std::cout << "tree ok\n";
+            // std::cout << "tree" << "\n";
+            boundary_tree_task btt = hps::from_string<boundary_tree_task>(recv_msg.content);
+            // std::cout << "tree ok\n";
             // std::cout << "-------------------------- Boundary Tree ----------------------------\n";
-            
-            boundary_tree *ptr_tree = new boundary_tree(bt);
-            auto dist_ini = std::make_pair<uint32_t,uint32_t>(0,1);
+            boundary_tree_task *new_bttask = new boundary_tree_task(btt);
             // ptr_tree->print_tree();
-            bound_trees.insert_task(new boundary_tree_task(ptr_tree,dist_ini));
+            bound_trees.insert_task(new_bttask);
             auto reply_return = sock.send(zmq::str_buffer("") ,zmq::send_flags::none);
 
 
         }else if(recv_msg.type == MSG_GET_TASK){
             
-            std::cout << "get task\n";
+            // std::cout << "get task\n";
             TWorkerIdx worker_idx = hps::from_string<TWorkerIdx>(recv_msg.content);
             message reply;
             input_tile_task *task;
@@ -270,9 +270,9 @@ void manager_recv(zmq::socket_t &sock){
             reply.sender = self_address;
             if(!input_tiles.empty()){
                 if(input_tiles.get_task(task)){
-                    std::cout << "tile task bag... ";
+                    // std::cout << "tile task bag... ";
                     idx_reply = std::make_pair(task->i, task->j);
-                    std::cout << "got tile task\n";
+                    // std::cout << "got tile task\n";
                     delete task;
                 }else{
                     idx_reply = GRID_DIMS;
@@ -285,12 +285,14 @@ void manager_recv(zmq::socket_t &sock){
                 reply.type = MSG_MERGE_BOUNDARY_TREE;
                 merge_btrees_task *btt;
                 if(merge_bag.get_task(btt)){
-                    std::cout << "merge task bag... ";
+                    // std::cout << "merge task bag... ";
+                    btt->bt1->print_idx();
+                    btt->bt2->print_idx();
                     reply.content = hps::to_string(*btt);
                     reply.size = reply.content.size();
                     // auto x = btt->execute();
                     // x->print_tree();
-                    std::cout << "got merge task\n";
+                    // std::cout << "got merge task\n";
                 }
             }else{
                 reply.type = MSG_NULL;
@@ -301,7 +303,7 @@ void manager_recv(zmq::socket_t &sock){
             zmq::message_t msg_reply(reply_s);
             sock.send(msg_reply, zmq::send_flags::none);
         }
-        std::cout << "end iteration<--------\n";
+        // std::cout << "end iteration<--------\n";
     }
 }
 

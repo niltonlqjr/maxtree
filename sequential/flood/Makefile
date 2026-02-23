@@ -8,6 +8,7 @@ rec_name=recursive
 
 ifeq (${TYPE},R)
 	OBJ_CPP_FLAGS=-c 
+	OPT=-O2
 else 
 	OBJ_CPP_FLAGS=-g -c
 endif

@@ -185,6 +185,12 @@ boundary_tree_task::boundary_tree_task(boundary_tree *t, std::pair<uint32_t, uin
     this->nb_distance = nb_distance;
 }
 
+boundary_tree_task::boundary_tree_task(){
+    this->bt = nullptr;
+    this->index = std::make_pair<uint32_t, uint32_t>(0, 0);
+    this->nb_distance = std::make_pair<uint32_t, uint32_t>(0, 0);
+}
+
 uint64_t boundary_tree_task::size(){
     return this->bt->boundary_tree_lroot->size();
     // return this->index;
@@ -195,6 +201,7 @@ std::pair<uint32_t, uint32_t> boundary_tree_task::neighbor_idx(enum neighbor_dir
     int32_t j_desloc = NEIGHBOR_DIRECTION[direction].second * this->nb_distance.second;
     return std::make_pair(this->bt->grid_i + i_desloc, this->bt->grid_j + j_desloc); 
 }
+
 
 merge_btrees_task::merge_btrees_task(boundary_tree *t1, boundary_tree *t2, enum merge_directions direction, std::pair<uint32_t, uint32_t> distance){
     if(t1->grid_j+distance.second != t2->grid_j){

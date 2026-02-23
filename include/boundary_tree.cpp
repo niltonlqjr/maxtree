@@ -1559,3 +1559,7 @@ void boundary_tree::print_tree(enum boundary_tree_field lrootf, enum boundary_tr
     std::cout << ">>>>>>>>> Tree: <<<<<<<<<\n" << this->lroot_to_string(lrootf);
     std::cout << "\n_____________________________________________________\n";
 }
+
+void boundary_tree::print_idx(std::string end_line){
+    std::cout << "("<< this->grid_i <<"," << this->grid_j << ")" << end_line;
+}

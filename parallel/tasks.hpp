@@ -42,13 +42,36 @@ class maxtree_task: public comparable_task{
 
 class boundary_tree_task: public comparable_task{
     public:
-        boundary_tree_task(maxtree_task *t, std::pair<uint32_t, uint32_t> nb_distance);
-        boundary_tree_task(boundary_tree *t, std::pair<uint32_t, uint32_t> nb_distance);
         std::pair<uint32_t, uint32_t> index;
         boundary_tree *bt;
         std::pair<uint32_t, uint32_t> nb_distance;
+        boundary_tree_task(maxtree_task *t, std::pair<uint32_t, uint32_t> nb_distance);
+        boundary_tree_task(boundary_tree *t, std::pair<uint32_t, uint32_t> nb_distance);
+        boundary_tree_task();
         uint64_t size();
         std::pair<uint32_t, uint32_t> neighbor_idx(enum neighbor_direction direction);
+        std::pair<uint32_t, uint32_t> next_distance(std::pair<uint32_t, uint32_t> grid_dim);
+        
+        template <class B>
+        void serialize(B &buf) const{
+            std::string sbt  = hps::to_string(*this->bt);
+            std::string sdist = hps::to_string(this->nb_distance);
+            std::string sindex = hps::to_string(this->index);
+            
+            buf << sbt << sindex << sdist;
+        }
+
+        template<class B>
+        void parse(B &buf){
+            std::string sbt,sindex,sdist;
+            
+            buf >> sbt >> sindex >> sdist;
+
+            this->nb_distance = hps::from_string<std::pair<uint32_t, uint32_t>>(sdist);
+            this->bt = new boundary_tree(hps::from_string<boundary_tree>(sbt));
+            this->index = hps::from_string<std::pair<uint32_t, uint32_t>>(sindex);
+
+        }
     
 };
 
@@ -73,7 +96,6 @@ class merge_btrees_task: public comparable_task{
             std::string sdist = hps::to_string(this->distance);
 
             buf <<  sbt1 << sbt2 << sdir << sdist;
-
         }
 
         template<class B>
@@ -82,10 +104,6 @@ class merge_btrees_task: public comparable_task{
             
             buf >> sbt1 >> sbt2 >> sdir >> sdist;
 
-            
-            boundary_tree static_bt1, static_bt2;
-            // static_bt1 = hps::from_string<boundary_tree>(sbt1);
-            // static_bt2 = hps::from_string<boundary_tree>(sbt2);
             this->bt1 = new boundary_tree(hps::from_string<boundary_tree>(sbt1));
             this->bt2 = new boundary_tree(hps::from_string<boundary_tree>(sbt2));
             this->direction = static_cast<enum merge_directions>(hps::from_string<int>(sdir));

@@ -460,6 +460,36 @@ void worker::disconnect(){
 //     return reply;
 // }
 
+
+void worker::send_btree_task(boundary_tree_task *btt){
+    if(!this->connected){
+        this->connect();
+    }
+    std::string msg_content = hps::to_string(*btt);
+    message m = message(msg_content, msg_content.size(), MSG_BOUNDARY_TREE, this->self_address);
+
+    std::string s_msg = hps::to_string(m);
+    // std::cout << "sending: -->" << s_msg << "<--\n";
+    // std::cout << "sending: -->";
+
+    // for(char c: s_msg){
+    //     std::cout << " " << (int) c;
+    // }
+
+    // std::cout << " <--\n";
+    // std::cout << "sending tree\n";
+    zmq::message_t message_0mq(s_msg);
+
+    this->sock.send(message_0mq, zmq::send_flags::none);
+
+    // std::cout << "tree sent\n";
+    zmq::message_t reply;
+    auto _r = this->sock.recv(reply,zmq::recv_flags::none);
+
+    
+}
+
+
 void worker::send_boundary_tree(boundary_tree *bt){
     if(!this->connected){
         this->connect();
