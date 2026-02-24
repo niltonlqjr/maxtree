@@ -357,7 +357,7 @@ void worker::update_filter(bag_of_tasks<maxtree_task *> &src, bag_of_tasks<maxtr
 
 void worker::registry(){
     std::string msg_content = hps::to_string(*this);
-    message requirement(msg_content, msg_content.size(), MSG_REGISTRY, this->self_address);
+    message requirement(msg_content, msg_content.size(), MSG_REGISTRY, this->id);
     std::string s_msg = hps::to_string(requirement);
 
     zmq::message_t message_0mq(s_msg);
@@ -377,7 +377,7 @@ void worker::registry_at(std::string server_addr){
     connect_manager.connect(server_addr);
 
     std::string msg_content = hps::to_string(*this);
-    message requirement(msg_content, msg_content.size(), MSG_REGISTRY, this->self_address);
+    message requirement(msg_content, msg_content.size(), MSG_REGISTRY, this->id);
     std::string s_msg = hps::to_string(requirement);
 
     // zmq::message_t message_0mq(s_msg.size());
@@ -398,7 +398,7 @@ void worker::registry_at(std::string server_addr){
 message worker::request_work(){
     // std::cout << "request_work\n";
     std::string id_hps = hps::to_string(this->id);
-    message request(id_hps, id_hps.size(), MSG_GET_TASK, this->self_address);
+    message request(id_hps, id_hps.size(), MSG_GET_TASK, this->id);
     std::string s_msg = hps::to_string(request);
     zmq::message_t msg_0mq(s_msg);
     // std::cout << "sending:" << s_msg << "\n to " << this->manager<< "\n";
@@ -466,7 +466,7 @@ void worker::send_btree_task(boundary_tree_task *btt){
         this->connect();
     }
     std::string msg_content = hps::to_string(*btt);
-    message m = message(msg_content, msg_content.size(), MSG_BOUNDARY_TREE, this->self_address);
+    message m = message(msg_content, msg_content.size(), MSG_BOUNDARY_TREE, this->id);
 
     std::string s_msg = hps::to_string(m);
     // std::cout << "sending: -->" << s_msg << "<--\n";
@@ -495,7 +495,7 @@ void worker::send_boundary_tree(boundary_tree *bt){
         this->connect();
     }
     std::string msg_content = hps::to_string(*bt);
-    message m = message(msg_content, msg_content.size(), MSG_BOUNDARY_TREE, this->self_address);
+    message m = message(msg_content, msg_content.size(), MSG_BOUNDARY_TREE, this->id);
 
     std::string s_msg = hps::to_string(m);
     // std::cout << "sending: -->" << s_msg << "<--\n";

@@ -12,10 +12,10 @@ class message{
         std::string content;
         size_t size;
         enum message_type type;
-        std::string sender;
+        TWorkerIdx sender;
         
         message();
-        message(std::string &content, size_t size=0, enum message_type type=MSG_NULL, std::string sender="");
+        message(std::string &content, size_t size, enum message_type type, TWorkerIdx sender);
 
         template <class B>
         void serialize(B &buf) const{

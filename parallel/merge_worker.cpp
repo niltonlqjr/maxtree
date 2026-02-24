@@ -35,24 +35,26 @@ bool has_tasks;
 
 extern std::pair<uint32_t, uint32_t> GRID_DIMS;
 
-bag_of_tasks<input_tile_task *> bag_tiles;
-bag_of_tasks<maxtree_task *> maxtrees;
-bag_of_tasks<boundary_tree_task *> boundary_trees;
-bag_of_tasks<maxtree_task *> maxtree_dest;
+bag_of_tasks<input_tile_task *> G_bag_tiles;
+
+// bag_of_tasks<maxtree_task *> maxtrees;
+// bag_of_tasks<boundary_tree_task *> boundary_trees;
+// bag_of_tasks<maxtree_task *> maxtree_dest;
 
 
-std::string server_ip, self_ip;
-std::string server_port, self_port;
-std::string protocol;
-enum save_type out_save_type;
-uint8_t pixel_connection;
-bool colored;
-std::string input_name;
-std::string out_name;
-std::string out_ext;
-Tattribute lambda;
-uint32_t glines, gcolumns;
-uint32_t num_threads;
+std::string G_server_ip, G_self_ip;
+std::string G_server_port, G_self_port;
+std::string G_protocol;
+enum save_type G_out_save_type;
+uint8_t G_pixel_connection;
+bool G_colored;
+std::string G_input_name;
+std::string G_out_name;
+std::string G_out_ext;
+Tattribute G_lambda;
+uint32_t G_glines, G_gcolumns;
+uint32_t G_num_threads;
+
 
 scheduler_of_workers<worker *> local_workers;
 // std::vector<std::thread *> workers_threads;
@@ -60,12 +62,14 @@ scheduler_of_workers<worker *> local_workers;
 
 
 /* ======================= signatures ================================= */
-template<typename T>
-void wait_empty(bag_of_tasks<T> &b, uint64_t num_th);  
-
 void verify_args(int argc, char *argv[]);
 void read_config(char conf_name[]);
-
+std::unordered_map<std::string, float> read_CPU_SPECS(std::string cpu_sepcs = "CPU_INFO.data");
+void registry_new_worker(uint32_t local_id, std::string server_addr);
+void registry_threads(uint32_t num_th, std::string server_addr, std::string self_addr);
+bool do_work(vips::VImage *img_in, worker *w);
+void loop_worker(vips::VImage *img, std::string server_addr);
+void make_worker_threads(uint32_t numth, VImage *in, std::string server);
 /* ======================= implementations ================================= */
 
 void verify_args(int argc, char *argv[]){
@@ -74,25 +78,9 @@ void verify_args(int argc, char *argv[]){
         std::cout << argv[i] << " ";
     }
     std::cout << "\n";
-
     if(argc <= 2){
         std::cout << "usage: " << argv[0] << " input_image config_file\n";
         exit(EX_USAGE);
-    }
-}
-
-template<typename T>
-void wait_empty(bag_of_tasks<T> &b, uint64_t num_th){
-    if(verbose) std::cout << "wait end\n";
-    uint64_t x=0;
-    while(true){
-        // if(verbose) std::cout << "wait empty " << x++ << "\n";
-        b.wait_empty();
-        if(b.is_running() && b.empty() && b.num_waiting() == num_th){
-            b.notify_end();
-            // if(verbose) std::cout << "end notified\n";
-            break;
-        }
     }
 }
 
@@ -110,43 +98,43 @@ void read_config(char conf_name[]){
         std::cout << "gcolumns=6 #divide image in 6 vertical tiles\n";
         exit(EX_CONFIG);
     }
-    glines = std::stoi(configs->at("glines"));
-    gcolumns = std::stoi(configs->at("gcolumns"));
+    G_glines = std::stoi(configs->at("glines"));
+    G_gcolumns = std::stoi(configs->at("gcolumns"));
 
-    input_name = get_field(configs, "input", "");
+    G_input_name = get_field(configs, "input", "");
     
-    auto str_lambda = get_field(configs, "lambda", "1");
-    lambda = std::stod(str_lambda);
+    auto str_G_lambda = get_field(configs, "lambda", "1");
+    G_lambda = std::stod(str_G_lambda);
     
-    server_ip = get_field(configs, "server_ip", "127.0.0.1");
+    G_server_ip = get_field(configs, "server_ip", "127.0.0.1");
     
-    server_port = get_field(configs, "server_port", DEFAULT_PORT);
+    G_server_port = get_field(configs, "server_port", DEFAULT_PORT);
 
-    self_port = get_field(configs, "self_port", DEFAULT_PORT);
+    G_self_port = get_field(configs, "self_port", DEFAULT_PORT);
 
-    protocol = get_field(configs, "protocol", "tcp");
+    G_protocol = get_field(configs, "protocol", "tcp");
 
-    out_name = get_field(configs, "output", "output");
+    G_out_name = get_field(configs, "output", "output");
     
-    out_ext = get_field(configs, "output_ext", "png");
+    G_out_ext = get_field(configs, "output_ext", "png");
     
-    auto str_num_threads = get_field(configs, "threads", "");
-    num_threads = std::stoi(str_num_threads);
+    auto str_G_num_threads = get_field(configs, "threads", "");
+    G_num_threads = std::stoi(str_G_num_threads);
     
-    pixel_connection = 4;
+    G_pixel_connection = 4;
 
     auto str_verbose = get_field(configs, "verbose", "false");
     verbose = str_verbose == "true";
     
-    auto str_colored = get_field(configs, "colored", "false");
-    colored = str_colored == "true";
+    auto str_G_colored = get_field(configs, "colored", "false");
+    G_colored = str_G_colored == "true";
 
     auto str_save = get_field(configs, "join_image", "full_image");
-    out_save_type = FULL_IMAGE;
+    G_out_save_type = FULL_IMAGE;
     if(str_save == "save_split"){
-        out_save_type = SPLIT_IMAGE;
+        G_out_save_type = SPLIT_IMAGE;
     }else if(str_save == "no_save"){
-        out_save_type = NO_SAVE;
+        G_out_save_type = NO_SAVE;
     }
 
     std::cout << "configurations:\n";
@@ -155,8 +143,13 @@ void read_config(char conf_name[]){
     
 }
 
+std::unordered_map<std::string, float> read_CPU_SPECS(std::string cpu_sepcs){
+    std::unordered_map<std::string, float> ret;
+    return ret;
+}
 
 void registry_new_worker(uint32_t local_id, std::string server_addr){
+
     worker *w = new worker(local_id, server_addr);
     w->set_attr("MHZ", 4000.041);
     w->set_attr("L3", 16.0+local_id);
@@ -180,8 +173,8 @@ void registry_threads(uint32_t num_th, std::string server_addr, std::string self
     for(size_t i=0; i<workers_threads.size(); i++){
         workers_threads[i].join();
     }
-    // read_sequential_file(bag_tiles, in, glines, gcolumns);
-    std::cout << "bag_tiles.get_num_task:" << bag_tiles.get_num_task() << "\n";
+    // read_sequential_file(G_bag_tiles, in, glines, gcolumns);
+    std::cout << "G_bag_tiles.get_num_task:" << G_bag_tiles.get_num_task() << "\n";
 
 }
 
@@ -198,7 +191,7 @@ bool do_work(vips::VImage *img_in, worker *w){
         // std::cout << "tile received: (" << tile.first << "," << tile.second << ")\n";
         input_tile_task t = input_tile_task(tile);
 
-        t.prepare(img_in, glines, gcolumns);
+        t.prepare(img_in, G_glines, G_gcolumns);
         t.read_tile(img_in);
 
         maxtree_task mtt = maxtree_task(&t);
@@ -251,7 +244,6 @@ void loop_worker(vips::VImage *img, std::string server_addr){
 }
 
 
-
 void make_worker_threads(uint32_t numth, VImage *in, std::string server){
     std::vector<std::thread> workers_threads;
     for(uint32_t i=0; i<numth; i++){
@@ -264,21 +256,15 @@ void make_worker_threads(uint32_t numth, VImage *in, std::string server){
 
 int main(int argc, char *argv[]){
     vips::VImage *in;
-    std::string out_name, out_ext;// server_ip, self_ip, server_port, self_port, protocol;
-    
-    uint8_t pixel_connection;
-
-    
     enum save_type out_save_type;
-    Tattribute lambda=2;
     maxtree *t;
     input_tile_task *tile;
 
-    bag_of_tasks<input_tile_task*> bag_tiles;
-    bag_of_tasks<maxtree_task*> maxtree_tiles_pre_btree, maxtree_tiles, updated_trees;
-    bag_of_tasks<boundary_tree_task *> boundary_bag, boundary_bag_aux;
-    bag_of_tasks<merge_btrees_task *> merge_bag;
-    std::vector<std::thread*> threads_g1, threads_g2, threads_g3, threads_g4;
+    // bag_of_tasks<input_tile_task*> G_bag_tiles;
+    // bag_of_tasks<maxtree_task*> maxtree_tiles_pre_btree, maxtree_tiles, updated_trees;
+    // bag_of_tasks<boundary_tree_task *> boundary_bag, boundary_bag_aux;
+    // bag_of_tasks<merge_btrees_task *> merge_bag;
+    // std::vector<std::thread*> threads_g1, threads_g2, threads_g3, threads_g4;
 
     if(argc < 2){
         std::cout << "usage:" << argv[0] << "<configuration file> [input image] [output prefix name]\n"
@@ -291,18 +277,18 @@ int main(int argc, char *argv[]){
     read_config(argv[1]);
 
     if(argc >= 3){
-        input_name = argv[2];
-    }else if(input_name == ""){
+        G_input_name = argv[2];
+    }else if(G_input_name == ""){
         std::cout << "input file not defined, please, define it in config file or in command line.\n";
         exit(EX_NOINPUT);
     }
 
     if(argc >= 4){
-        out_name = argv[3];
+        G_out_name = argv[3];
     }
 
-    self_ip = "localhost";
-    GRID_DIMS = std::make_pair(glines,gcolumns);
+    G_self_ip = "localhost";
+    GRID_DIMS = std::make_pair(G_glines,G_gcolumns);
 
     if (VIPS_INIT(argv[0])) { 
         vips_error_exit (NULL);
@@ -310,22 +296,22 @@ int main(int argc, char *argv[]){
     // SEE VIPS_CONCURRENCY
     // check https://github.com/libvips/libvips/discussions/4063 for improvements on read
     in = new vips::VImage(
-            vips::VImage::new_from_file(input_name.c_str(),
+            vips::VImage::new_from_file(G_input_name.c_str(),
             VImage::option()->set("access",  VIPS_ACCESS_SEQUENTIAL)
         )
     );
 
-    std::string server_addr = protocol + "://" + server_ip + ":" + server_port;
-    std::string self_addr = protocol + "://" + self_ip + ":" + self_port;
+    std::string server_addr = G_protocol + "://" + G_server_ip + ":" + G_server_port;
+    std::string self_addr = G_protocol + "://" + G_self_ip + ":" + G_self_port;
 
-    registry_threads(num_threads, server_addr, self_addr);
-    // calc_tile_boundary_tree(num_threads, server_addr, self_addr);
+    registry_threads(G_num_threads, server_addr, self_addr);
+    // calc_tile_boundary_tree(G_num_threads, server_addr, self_addr);
     // calc_tile_boundary_tree(in, server_addr);
     // test_send_bound_tree(in, server_addr);
     // std::cout << "threads registered\n";
     has_tasks=true;
     
-    make_worker_threads(num_threads, in, server_addr);
+    make_worker_threads(G_num_threads, in, server_addr);
 
     // apos registrar as threads, o fluxo será o seguinte:
     // pedir tile, calcular maxtree e boundary tree responder boundary tree
