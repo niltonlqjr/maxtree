@@ -212,11 +212,14 @@ void registry_worker(message &recv_msg, zmq::socket_t &sock){
     auto reply_return = sock.send(msg_new_id, zmq::send_flags::none);
 }
 
-void recv_boundary_tree(message &recv_msg, zmq::socket_t &sock){
+void recv_boundary_tree(message &recv_msg, zmq::socket_t &sock, uint64_t calculated_tiles){
     boundary_tree_task btt = hps::from_string<boundary_tree_task>(recv_msg.content);
     boundary_tree_task *new_bttask = new boundary_tree_task(btt);
     G_bound_trees.insert_task(new_bttask);
-    auto reply_return = sock.send(zmq::str_buffer("") ,zmq::send_flags::none);
+    message reply = message(0);
+    std::string s_reply = hps::to_string<message>(reply);
+    calculated_tiles++;
+    auto reply_return = sock.send(zmq::message_t(s_reply), zmq::send_flags::none);
 }
 
 void process_task_request(message &recv_msg, zmq::socket_t &sock, uint64_t &num_merges){
@@ -234,7 +237,7 @@ void process_task_request(message &recv_msg, zmq::socket_t &sock, uint64_t &num_
         }
         reply.type = MSG_TILE_IDX;
         reply.content = hps::to_string<std::pair<uint32_t,uint32_t>>(idx_reply);
-        reply.size = reply.content.size();
+        // reply.size = reply.content.size();
         
     }else if(!G_merge_bag.empty()){
         reply.type = MSG_MERGE_BOUNDARY_TREE;
@@ -244,13 +247,17 @@ void process_task_request(message &recv_msg, zmq::socket_t &sock, uint64_t &num_
             btt->bt1->print_idx(" ---- ");
             btt->bt2->print_idx();
             reply.content = hps::to_string(*btt);
-            reply.size = reply.content.size();
+            // reply.size = reply.content.size();
         }
+    }else if(!G_merge_bag.is_running()){
+        reply.type = MSG_UPDATE_BOUNDARY_TREE;
+        reply.content = "";
     }else{
         reply.type = MSG_NULL;
         reply.content = "";
-        reply.size = 0;
+        // reply.size = 0;
     }
+    reply.size = reply.content.size();
     std::string reply_s = hps::to_string(reply);
     zmq::message_t msg_reply(reply_s);
     sock.send(msg_reply, zmq::send_flags::none);
@@ -267,12 +274,14 @@ void manager_recv(zmq::socket_t &sock){
 
     zmq::message_t request;
     std::pair<uint32_t, uint32_t> current_tile(0,0);
-    std::unordered_map<TWorkerIdx, worker *> busy_workers;
+    std::unordered_map<TWorkerIdx, bool > busy_workers;
 
     uint64_t num_merges = 0;
+    uint64_t calculated_tiles = 0;
     // TWorkerIdx current_idx;
     while(1){
-    // while(num_merges < G_total_merges){
+    // while(num_merges < G_total_merges || !busy_workers.empty()){
+        std::cout << "iter\n";
         auto res_recv = sock.recv(request,zmq::recv_flags::none);
         std::string rec_msg;
         rec_msg = request.to_string();
@@ -281,14 +290,24 @@ void manager_recv(zmq::socket_t &sock){
         if(recv_msg.type == MSG_REGISTRY){
             registry_worker(recv_msg, sock);
         }else if(recv_msg.type == MSG_BOUNDARY_TREE){
-            recv_boundary_tree(recv_msg, sock);
+            recv_boundary_tree(recv_msg, sock, calculated_tiles);
+            if(calculated_tiles >= G_glines * G_gcolumns){
+                G_input_tiles.notify_end();
+            }
+            busy_workers.erase(recv_msg.sender);
         }else if(recv_msg.type == MSG_GET_TASK){
             process_task_request(recv_msg, sock, num_merges);
+            busy_workers[recv_msg.sender] = true;
             std::cout << "merge "<< num_merges << " of " << G_total_merges <<"\n";
+            if(num_merges >= G_total_merges){
+                G_merge_bag.notify_end();
+            }
         }
         // std::cout << "end iteration<--------\n";
     }
-    std::cout << "end manager_recv";
+    std::cout << "\n==============\nend manager_recv\n";
+    
+    
 }
 
 void fill_input_bag(){

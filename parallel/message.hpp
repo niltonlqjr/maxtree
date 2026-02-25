@@ -15,6 +15,7 @@ class message{
         TWorkerIdx sender;
         
         message();
+        message(TWorkerIdx sender);
         message(std::string &content, size_t size, enum message_type type, TWorkerIdx sender);
 
         template <class B>

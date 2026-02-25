@@ -73,7 +73,7 @@ figures_flags ?=
 
 all: ${dest_merge} 
 
-${dest_merge}: ${dest_merge_work} ${merge_name_manager} 
+${dest_merge}: ${merge_name_manager} ${dest_merge_work} 
 
 ${dest_merge_work}:base tasks.o message.o workers.o
 	@mkdir -p exec

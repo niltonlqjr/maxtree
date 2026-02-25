@@ -1,6 +1,7 @@
 template <class Worker>
 scheduler_of_workers<Worker>::scheduler_of_workers(){
-    this->workers = new max_heap<Worker>();
+    // this->workers = new max_heap<Worker>();
+    this->workers = new std::vector<Worker>();
     this->free_workers = 0;
     this->total_workers = 0;
 }
@@ -8,7 +9,8 @@ scheduler_of_workers<Worker>::scheduler_of_workers(){
 template <class Worker>
 void scheduler_of_workers<Worker>::insert_worker(Worker w){
     std::unique_lock<std::mutex> l(this->lock);
-    this->workers->insert(w);
+    // this->workers->insert(w);
+    this->workers->push_back(w);
     this->total_workers++;
     this->cv.notify_all();
     // this->free_workers++;
@@ -30,8 +32,9 @@ Worker scheduler_of_workers<Worker>::get_best_worker(bool wait_at_least_one){
         throw std::length_error("total workers equals 0");
     }
     
-    Worker r = this->workers->at(0);
-    this->workers->remove_at(0);
+    // Worker r = this->workers->at(0);
+    Worker r = this->workers->back();
+    this->workers->pop_back();
     // this->free_workers--;
     this->total_workers--;
     return r;

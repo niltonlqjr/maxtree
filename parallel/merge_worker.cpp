@@ -37,7 +37,7 @@ extern std::pair<uint32_t, uint32_t> GRID_DIMS;
 
 bag_of_tasks<input_tile_task *> G_bag_tiles;
 
-// bag_of_tasks<maxtree_task *> maxtrees;
+bag_of_tasks<maxtree_task *> G_maxtrees;
 // bag_of_tasks<boundary_tree_task *> boundary_trees;
 // bag_of_tasks<maxtree_task *> maxtree_dest;
 
@@ -57,6 +57,7 @@ uint32_t G_num_threads;
 
 
 scheduler_of_workers<worker *> local_workers;
+
 // std::vector<std::thread *> workers_threads;
 
 
@@ -178,59 +179,68 @@ void registry_threads(uint32_t num_th, std::string server_addr, std::string self
 
 }
 
+void request_process_tile(vips::VImage *img_in, message &msg_work, worker *w){
+    std::string s_tile = msg_work.content;
+    auto tile = hps::from_string<std::pair<uint32_t,uint32_t>>(s_tile);
+    // if(tile == GRID_DIMS){
+    //     // std::cout << "tile has GRID_DIMS value\n";
+    //     return false;
+    // }
+    // std::cout << "tile received: (" << tile.first << "," << tile.second << ")\n";
+    input_tile_task t = input_tile_task(tile);
+
+    t.prepare(img_in, G_glines, G_gcolumns);
+    t.read_tile(img_in);
+
+    maxtree_task *mtt = new maxtree_task(&t);
+    G_maxtrees.insert_task(mtt);
+    // std::cout << "maxtree\n" << mtt.mt->to_string() << "\n--------------\n";
+
+    boundary_tree_task btt = boundary_tree_task(mtt, std::make_pair<uint32_t, uint32_t>(0,1));
+    // std::cout << "boundary tree\n"; 
+    // btt.bt->print_tree();
+
+    w->send_btree_task(&btt);
+}
+
+void merge_tiles(message &msg_work, worker *w){
+    // enum merge_directions merge_dir;
+    // enum neighbor_direction nb_direction;
+    std::pair<uint32_t, uint32_t> nb_dist;
+    std::string s_merge_task = msg_work.content;
+    merge_btrees_task mbtt = hps::from_string<merge_btrees_task>(s_merge_task);
+    // std::cout << "merging\n";
+    // mbtt.bt1->print_idx();
+    // mbtt.bt2->print_idx();
+    boundary_tree *merged_tree = mbtt.execute();
+    // std::cout << "MERGE DONE\n";
+    
+    nb_dist = std::make_pair<uint32_t, uint32_t>(mbtt.distance.first * 2, mbtt.distance.second * 2);
+    if(nb_dist.second >= GRID_DIMS.second){
+        nb_dist.second = 0;
+        nb_dist.first = 1;
+    }
+    boundary_tree_task btt = boundary_tree_task(merged_tree, nb_dist);
+    w->send_btree_task(&btt);
+}
+
 bool do_work(vips::VImage *img_in, worker *w){
     message msg_work = w->request_work();
-    // std::cout << "type:"<< msg_work.type << "\n";
+    std::cout << "type:"<< msg_work.type << " -> " << NamesMessageType[msg_work.type] << "\n";
     if(msg_work.type == MSG_TILE_IDX){
-        std::string s_tile = msg_work.content;
-        auto tile = hps::from_string<std::pair<uint32_t,uint32_t>>(s_tile);
-        if(tile == GRID_DIMS){
-            // std::cout << "tile has GRID_DIMS value\n";
+        request_process_tile(img_in, msg_work, w);
+    }else if(msg_work.type == MSG_MERGE_BOUNDARY_TREE){
+        merge_tiles(msg_work, w);
+    }else if(msg_work.type == MSG_UPDATE_BOUNDARY_TREE){
+        maxtree_task *update_task;
+        G_maxtrees.get_task_by_position(update_task,0);
+        std::cout << "update boundary tree of image tiles not implemented yet\n";
+        if(G_maxtrees.empty()){
             return false;
         }
-        // std::cout << "tile received: (" << tile.first << "," << tile.second << ")\n";
-        input_tile_task t = input_tile_task(tile);
-
-        t.prepare(img_in, G_glines, G_gcolumns);
-        t.read_tile(img_in);
-
-        maxtree_task mtt = maxtree_task(&t);
-        // std::cout << "maxtree\n" << mtt.mt->to_string() << "\n--------------\n";
-
-        boundary_tree_task btt = boundary_tree_task(&mtt, std::make_pair<uint32_t, uint32_t>(0,1));
-        // std::cout << "boundary tree\n"; 
-        // btt.bt->print_tree();
-
-        w->send_btree_task(&btt);
-    }else if(msg_work.type == MSG_MERGE_BOUNDARY_TREE){
-        enum merge_directions merge_dir;
-        enum neighbor_direction nb_direction;
-
-        std::pair<uint32_t, uint32_t> nb_dist;
-
-        std::string s_merge_task = msg_work.content;
-        
-        
-        merge_btrees_task mbtt = hps::from_string<merge_btrees_task>(s_merge_task);
-        
-        // std::cout << "merging\n";
-        // mbtt.bt1->print_idx();
-        // mbtt.bt2->print_idx();
-        boundary_tree *merged_tree = mbtt.execute();
-        // std::cout << "MERGE DONE\n";
-        
-        nb_dist = std::make_pair<uint32_t, uint32_t>(mbtt.distance.first * 2, mbtt.distance.second * 2);
-
-        if(nb_dist.second >= GRID_DIMS.second){
-            nb_dist.second = 0;
-            nb_dist.first = 1;
-        }
-
-        boundary_tree_task btt = boundary_tree_task(merged_tree, nb_dist);
-
-        w->send_btree_task(&btt);
-        
-    }else if(!msg_work.type){
+        return true;
+    }
+    else if(msg_work.type == MSG_NULL){
         return false;
     }
     return true;    

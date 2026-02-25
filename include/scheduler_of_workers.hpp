@@ -15,7 +15,8 @@ class scheduler_of_workers{
     private:
         std::mutex lock;
         std::condition_variable cv;
-        max_heap<Worker> *workers;
+        // max_heap<Worker> *workers;
+        std::vector<Worker> *workers;
         uint64_t total_workers;
         uint64_t free_workers;
         std::vector<Worker *> workers_ptr;
