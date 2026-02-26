@@ -17,7 +17,7 @@ using namespace vips;
 std::string self_address;
 
 uint32_t G_glines, G_gcolumns;
-
+uint64_t G_total_tiles, G_updates_sent;
 
 
 bool print_only_trees;
@@ -39,6 +39,8 @@ uint64_t G_total_merges;
 
 // given that unordered_map needs a hash function for pair and there are few grids, a map is enought
 std::map <std::pair<uint32_t,uint32_t>, worker *> G_grid_id_worker;  
+
+std::unordered_map<std::string, bool> G_got_full_btree;
 
 void read_config(char conf_name[], std::string &port, std::string &protocol);
 
@@ -82,7 +84,7 @@ void search_pair(){
     uint32_t new_distance;
     bool change_dir;
     std::string s;
-    while(G_bound_trees.is_running() || !G_bound_trees.get_num_task() > 1){
+    while(G_merge_bag.is_running() || G_bound_trees.get_num_task() > 1){
 
         bool got = G_bound_trees.get_task(btt);
         if(got){
@@ -191,6 +193,7 @@ void search_pair(){
         }
     }
     // if(verbose) std::cout << "end worker search pair\n";
+    std::cout << "end worker search pair\n";
 }
 
 
@@ -206,23 +209,23 @@ void registry_worker(message &recv_msg, zmq::socket_t &sock){
     TWorkerIdx current_idx=G_idx_at_manager++;
     w_rec.update_index(current_idx);
     worker *w_at_manager = new worker(w_rec);
-    G_pool_of_workers.insert_worker(w_at_manager);            
+    G_pool_of_workers.insert_worker(w_at_manager);
+    G_got_full_btree[w_at_manager->get_self_address()] = false;
     zmq::message_t msg_new_id(sizeof(TWorkerIdx));
     memcpy(msg_new_id.data(), &current_idx, sizeof(TWorkerIdx));
     auto reply_return = sock.send(msg_new_id, zmq::send_flags::none);
 }
 
-void recv_boundary_tree(message &recv_msg, zmq::socket_t &sock, uint64_t calculated_tiles){
+void recv_boundary_tree(message &recv_msg, zmq::socket_t &sock){
     boundary_tree_task btt = hps::from_string<boundary_tree_task>(recv_msg.content);
     boundary_tree_task *new_bttask = new boundary_tree_task(btt);
     G_bound_trees.insert_task(new_bttask);
     message reply = message(0);
     std::string s_reply = hps::to_string<message>(reply);
-    calculated_tiles++;
     auto reply_return = sock.send(zmq::message_t(s_reply), zmq::send_flags::none);
 }
 
-void process_task_request(message &recv_msg, zmq::socket_t &sock, uint64_t &num_merges){
+void process_task_request(message &recv_msg, zmq::socket_t &sock){
     TWorkerIdx worker_idx = hps::from_string<TWorkerIdx>(recv_msg.content);
     message reply;
     input_tile_task *task;
@@ -243,7 +246,6 @@ void process_task_request(message &recv_msg, zmq::socket_t &sock, uint64_t &num_
         reply.type = MSG_MERGE_BOUNDARY_TREE;
         merge_btrees_task *btt;
         if(G_merge_bag.get_task(btt)){
-            num_merges++;
             btt->bt1->print_idx(" ---- ");
             btt->bt2->print_idx();
             reply.content = hps::to_string(*btt);
@@ -251,7 +253,19 @@ void process_task_request(message &recv_msg, zmq::socket_t &sock, uint64_t &num_
         }
     }else if(!G_merge_bag.is_running()){
         reply.type = MSG_UPDATE_BOUNDARY_TREE;
-        reply.content = "";
+        // if(G_got_full_btree.find(recv_msg.content) == G_got_full_btree.end() || G_got_full_btree[recv_msg.content] == false){
+        if(!G_got_full_btree[recv_msg.content]){
+            boundary_tree *reply_bt = G_bound_trees.at(0)->bt;
+            // boundary_tree *reply_bt;
+            
+            reply.content = hps::to_string<boundary_tree>(*reply_bt);
+            G_got_full_btree[recv_msg.content]=true;
+            
+        }else{
+            reply.content="";
+            
+        }
+        G_updates_sent++;
     }else{
         reply.type = MSG_NULL;
         reply.content = "";
@@ -262,6 +276,7 @@ void process_task_request(message &recv_msg, zmq::socket_t &sock, uint64_t &num_
     zmq::message_t msg_reply(reply_s);
     sock.send(msg_reply, zmq::send_flags::none);
 }
+
 
 
 void manager_recv(zmq::socket_t &sock){
@@ -275,36 +290,39 @@ void manager_recv(zmq::socket_t &sock){
     zmq::message_t request;
     std::pair<uint32_t, uint32_t> current_tile(0,0);
     std::unordered_map<TWorkerIdx, bool > busy_workers;
-
+    
     uint64_t num_merges = 0;
     uint64_t calculated_tiles = 0;
     // TWorkerIdx current_idx;
-    while(1){
+    while(G_updates_sent < G_total_tiles){
     // while(num_merges < G_total_merges || !busy_workers.empty()){
-        std::cout << "iter\n";
+        std::cout << "updates: " << G_updates_sent << "\n";
+
         auto res_recv = sock.recv(request,zmq::recv_flags::none);
         std::string rec_msg;
         rec_msg = request.to_string();
-
         message recv_msg = hps::from_string<message>(rec_msg);
+        std::cout << "type:"<< recv_msg.type << " -> " << NamesMessageType[recv_msg.type] << "\n";
         if(recv_msg.type == MSG_REGISTRY){
             registry_worker(recv_msg, sock);
         }else if(recv_msg.type == MSG_BOUNDARY_TREE){
-            recv_boundary_tree(recv_msg, sock, calculated_tiles);
-            if(calculated_tiles >= G_glines * G_gcolumns){
-                G_input_tiles.notify_end();
-            }
+            recv_boundary_tree(recv_msg, sock);
+        }else if(recv_msg.type == MSG_SEND_MERGED_TREE){
+            recv_boundary_tree(recv_msg, sock);
+            num_merges++;
+            std::cout << "merge "<< num_merges << " of " << G_total_merges <<" ends\n";
             busy_workers.erase(recv_msg.sender);
-        }else if(recv_msg.type == MSG_GET_TASK){
-            process_task_request(recv_msg, sock, num_merges);
-            busy_workers[recv_msg.sender] = true;
-            std::cout << "merge "<< num_merges << " of " << G_total_merges <<"\n";
             if(num_merges >= G_total_merges){
                 G_merge_bag.notify_end();
             }
+        }else if(recv_msg.type == MSG_GET_TASK){
+            process_task_request(recv_msg, sock);
+            busy_workers[recv_msg.sender] = true;
+
         }
         // std::cout << "end iteration<--------\n";
     }
+    G_bound_trees.notify_end();
     std::cout << "\n==============\nend manager_recv\n";
     
     
@@ -332,6 +350,8 @@ int main(int argc, char *argv[]){
     
     
     G_total_merges = G_glines * (G_gcolumns - 1) + G_glines - 1;
+    G_total_tiles = G_glines * G_gcolumns;
+    G_updates_sent = 0;
     zmq::context_t context_rec(nth);
     zmq::context_t context_reg(nth);
     zmq::socket_t  receiver_sock(context_rec, zmq::socket_type::pull);
@@ -342,13 +362,13 @@ int main(int argc, char *argv[]){
     sock.bind(address);
     
     running=true;
-    std::thread fill(fill_input_bag);
     G_input_tiles.start();
-    std::thread receiver(manager_recv, std::ref(sock));
     G_bound_trees.start();
-    std::thread pair_maker(search_pair);
     G_merge_bag.start();
-
+ 
+    std::thread fill(fill_input_bag);
+    std::thread receiver(manager_recv, std::ref(sock));
+    std::thread pair_maker(search_pair);
 
     fill.join();
     pair_maker.join();

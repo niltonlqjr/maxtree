@@ -495,8 +495,10 @@ void maxtree::update_from_boundary_tree(boundary_tree *bt){
     for(auto n: *(this->data)){
         auto llr = this->get_levelroot(n); // local levelroot
         if(!llr->attr_final){
+            // std::cout << "llr\n";
             this->update_node_attr(llr, bt);
         }
+        // std::cout << "compute\n";
         n->compute_attribute(llr->attribute);
     }
 

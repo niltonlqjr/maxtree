@@ -56,6 +56,10 @@ Tprocess_power worker::get_process_power(){
     return this->attr->at("MHZ") * this->attr->at("NUMPROC");
 }
 
+std::string worker::get_self_address(){
+    return this->self_address;
+}
+
 bool worker::operator<(worker &r) {
     return this->get_process_power() < r.get_process_power();
 }
@@ -397,8 +401,7 @@ void worker::registry_at(std::string server_addr){
 
 message worker::request_work(){
     // std::cout << "request_work\n";
-    std::string id_hps = hps::to_string(this->id);
-    message request(id_hps, id_hps.size(), MSG_GET_TASK, this->id);
+    message request(this->self_address, this->self_address.size(), MSG_GET_TASK, this->id);
     std::string s_msg = hps::to_string(request);
     zmq::message_t msg_0mq(s_msg);
     // std::cout << "sending:" << s_msg << "\n to " << this->manager<< "\n";
@@ -461,12 +464,12 @@ void worker::disconnect(){
 // }
 
 
-void worker::send_btree_task(boundary_tree_task *btt){
+void worker::send_btree_task(boundary_tree_task *btt, enum message_type tp){
     if(!this->connected){
         this->connect();
     }
     std::string msg_content = hps::to_string(*btt);
-    message m = message(msg_content, msg_content.size(), MSG_BOUNDARY_TREE, this->id);
+    message m = message(msg_content, msg_content.size(), tp, this->id);
 
     std::string s_msg = hps::to_string(m);
     // std::cout << "sending: -->" << s_msg << "<--\n";

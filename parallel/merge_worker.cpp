@@ -36,7 +36,6 @@ bool has_tasks;
 extern std::pair<uint32_t, uint32_t> GRID_DIMS;
 
 bag_of_tasks<input_tile_task *> G_bag_tiles;
-
 bag_of_tasks<maxtree_task *> G_maxtrees;
 // bag_of_tasks<boundary_tree_task *> boundary_trees;
 // bag_of_tasks<maxtree_task *> maxtree_dest;
@@ -55,6 +54,10 @@ Tattribute G_lambda;
 uint32_t G_glines, G_gcolumns;
 uint32_t G_num_threads;
 
+boundary_tree *G_full_bound_tree;
+bool G_full_bound_tree_received = false;
+std::mutex G_full_bound_tree_lock;
+std::condition_variable G_cv;
 
 scheduler_of_workers<worker *> local_workers;
 
@@ -163,6 +166,23 @@ void registry_new_worker(uint32_t local_id, std::string server_addr){
     // sleep(1);
 }
 
+void receive_global_boundary_tree(message &m){
+    if(!G_full_bound_tree_received){
+        std::unique_lock<std::mutex> lock(G_full_bound_tree_lock);
+        if(m.content == ""){
+            G_cv.wait(lock);
+        }
+        std::cout << "receiving global boundary tree...\n";
+        if(!G_full_bound_tree_received){
+            // std::cout << "content:\n" << m.content << "\n========\n";
+            G_full_bound_tree = new boundary_tree(hps::from_string<boundary_tree>(m.content));
+            G_full_bound_tree_received = true;
+        }
+        G_cv.notify_all();
+        std::cout << "received\n";
+    }
+}
+
 void registry_threads(uint32_t num_th, std::string server_addr, std::string self_addr){
     std::cout << "number of threads "<< num_th << "\n";  
     std::cout << "start registration\n";
@@ -200,7 +220,7 @@ void request_process_tile(vips::VImage *img_in, message &msg_work, worker *w){
     // std::cout << "boundary tree\n"; 
     // btt.bt->print_tree();
 
-    w->send_btree_task(&btt);
+    w->send_btree_task(&btt,MSG_BOUNDARY_TREE);
 }
 
 void merge_tiles(message &msg_work, worker *w){
@@ -221,7 +241,7 @@ void merge_tiles(message &msg_work, worker *w){
         nb_dist.first = 1;
     }
     boundary_tree_task btt = boundary_tree_task(merged_tree, nb_dist);
-    w->send_btree_task(&btt);
+    w->send_btree_task(&btt,MSG_SEND_MERGED_TREE);
 }
 
 bool do_work(vips::VImage *img_in, worker *w){
@@ -233,8 +253,16 @@ bool do_work(vips::VImage *img_in, worker *w){
         merge_tiles(msg_work, w);
     }else if(msg_work.type == MSG_UPDATE_BOUNDARY_TREE){
         maxtree_task *update_task;
+        maxtree *m;
         G_maxtrees.get_task_by_position(update_task,0);
-        std::cout << "update boundary tree of image tiles not implemented yet\n";
+        std::cout << "updateing tile: " << update_task->mt->grid_i << "," << update_task->mt->grid_j << "\n";
+        receive_global_boundary_tree(msg_work);
+        m=update_task->mt;
+        m->update_from_boundary_tree(G_full_bound_tree);
+        m->filter(G_lambda);
+        std::string output_name = G_out_name + std::to_string(m->grid_i)+"-"+std::to_string(m->grid_j)+"."+G_out_ext;
+        m->save(output_name);
+        // std::cout << "update boundary tree of image tiles not implemented yet\n";
         if(G_maxtrees.empty()){
             return false;
         }
@@ -243,7 +271,7 @@ bool do_work(vips::VImage *img_in, worker *w){
     else if(msg_work.type == MSG_NULL){
         return false;
     }
-    return true;    
+    return true;
 }
 
 void loop_worker(vips::VImage *img, std::string server_addr){
@@ -269,12 +297,6 @@ int main(int argc, char *argv[]){
     enum save_type out_save_type;
     maxtree *t;
     input_tile_task *tile;
-
-    // bag_of_tasks<input_tile_task*> G_bag_tiles;
-    // bag_of_tasks<maxtree_task*> maxtree_tiles_pre_btree, maxtree_tiles, updated_trees;
-    // bag_of_tasks<boundary_tree_task *> boundary_bag, boundary_bag_aux;
-    // bag_of_tasks<merge_btrees_task *> merge_bag;
-    // std::vector<std::thread*> threads_g1, threads_g2, threads_g3, threads_g4;
 
     if(argc < 2){
         std::cout << "usage:" << argv[0] << "<configuration file> [input image] [output prefix name]\n"

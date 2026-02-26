@@ -25,7 +25,7 @@ class worker{
         std::unordered_map<std::string, TWorkerAttr> *attr;
         bool busy, connected;
         std::string manager; // address of manager
-        std::string self_address; // self address
+        std::string self_address; // self ip address
         zmq::context_t context;
         zmq::socket_t sock;
     public:
@@ -40,7 +40,8 @@ class worker{
         TWorkerIdx get_index();
 
         Tprocess_power get_process_power();
-        
+        std::string get_self_address();
+
         bool operator<(worker &r);
         bool operator>(worker &r);
         bool operator==(worker &r);
@@ -94,7 +95,7 @@ class worker{
         void disconnect();
         
         void send_boundary_tree(boundary_tree *bt);
-        void send_btree_task(boundary_tree_task *btt);
+        void send_btree_task(boundary_tree_task *btt, enum message_type tp);
 };
 
 #endif
