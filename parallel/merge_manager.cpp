@@ -361,6 +361,9 @@ int main(int argc, char *argv[]){
     std::string address = self_address;
     sock.bind(address);
     
+    std::cout << "running at port " << port << "\n";
+
+    
     running=true;
     G_input_tiles.start();
     G_bound_trees.start();

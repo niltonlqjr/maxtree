@@ -94,4 +94,6 @@ bool inside_rectangle(std::pair<uint32_t, uint32_t> c, std::pair<uint32_t, uint3
 
 std::string get_field(std::unordered_map<std::string, std::string> *conf, std::string field, std::string dft);
 
+std::vector<std::unordered_map<std::string, TWorkerAttr> *> *parse_hw_config(std::string file_name);
+
 #endif

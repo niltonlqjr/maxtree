@@ -241,3 +241,13 @@ std::string get_field(std::unordered_map<std::string, std::string> *conf, std::s
     }
     return dft;
 }
+
+
+std::vector<std::unordered_map<std::string, TWorkerAttr> *> *parse_hw_config(std::string file_name){
+    auto ret = new std::vector<std::unordered_map<std::string, TWorkerAttr> *>();
+    return ret;
+}
+
+void free_hw_config(std::vector<std::unordered_map<std::string, TWorkerAttr> *> *conf){
+    delete conf;
+}

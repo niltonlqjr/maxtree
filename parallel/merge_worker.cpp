@@ -44,6 +44,9 @@ bag_of_tasks<maxtree_task *> G_maxtrees;
 std::string G_server_ip, G_self_ip;
 std::string G_server_port, G_self_port;
 std::string G_protocol;
+
+std::string G_hardware_specs_filename;
+
 enum save_type G_out_save_type;
 uint8_t G_pixel_connection;
 bool G_colored;
@@ -121,7 +124,9 @@ void read_config(char conf_name[]){
     G_out_name = get_field(configs, "output", "output");
     
     G_out_ext = get_field(configs, "output_ext", "png");
-    
+
+    G_hardware_specs_filename = get_field(configs, "hw_specs", "hardware.config");
+
     auto str_G_num_threads = get_field(configs, "threads", "");
     G_num_threads = std::stoi(str_G_num_threads);
     
@@ -145,11 +150,12 @@ void read_config(char conf_name[]){
     print_unordered_map(configs);
     // std::cout << "====================\n";
     
+    delete configs;
+    
 }
 
-std::unordered_map<std::string, float> read_CPU_SPECS(std::string cpu_sepcs){
-    std::unordered_map<std::string, float> ret;
-    return ret;
+void worker_read_attributes(worker *w, std::string conf_workers_file){
+    auto configs = parse_hw_config(conf_workers_file);
 }
 
 void registry_new_worker(uint32_t local_id, std::string server_addr){
