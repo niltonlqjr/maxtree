@@ -141,9 +141,9 @@ void read_config(char conf_name[]){
         G_out_save_type = NO_SAVE;
     }
 
-    std::cout << "configurations:\n";
+    // std::cout << "configurations:\n";
     print_unordered_map(configs);
-    std::cout << "====================\n";
+    // std::cout << "====================\n";
     
 }
 
@@ -172,20 +172,20 @@ void receive_global_boundary_tree(message &m){
         if(m.content == ""){
             G_cv.wait(lock);
         }
-        std::cout << "receiving global boundary tree...\n";
+        // std::cout << "receiving global boundary tree...\n";
         if(!G_full_bound_tree_received){
             // std::cout << "content:\n" << m.content << "\n========\n";
             G_full_bound_tree = new boundary_tree(hps::from_string<boundary_tree>(m.content));
             G_full_bound_tree_received = true;
         }
         G_cv.notify_all();
-        std::cout << "received\n";
+        // std::cout << "received\n";
     }
 }
 
 void registry_threads(uint32_t num_th, std::string server_addr, std::string self_addr){
-    std::cout << "number of threads "<< num_th << "\n";  
-    std::cout << "start registration\n";
+    // std::cout << "number of threads "<< num_th << "\n";  
+    // std::cout << "start registration\n";
     std::vector<std::thread> workers_threads;
     //workers register phase
     for(uint32_t local_id=0; local_id < num_th; local_id++){
@@ -195,7 +195,7 @@ void registry_threads(uint32_t num_th, std::string server_addr, std::string self
         workers_threads[i].join();
     }
     // read_sequential_file(G_bag_tiles, in, glines, gcolumns);
-    std::cout << "G_bag_tiles.get_num_task:" << G_bag_tiles.get_num_task() << "\n";
+    // std::cout << "G_bag_tiles.get_num_task:" << G_bag_tiles.get_num_task() << "\n";
 
 }
 
@@ -246,7 +246,7 @@ void merge_tiles(message &msg_work, worker *w){
 
 bool do_work(vips::VImage *img_in, worker *w){
     message msg_work = w->request_work();
-    std::cout << "type:"<< msg_work.type << " -> " << NamesMessageType[msg_work.type] << "\n";
+    // std::cout << "type:"<< msg_work.type << " -> " << NamesMessageType[msg_work.type] << "\n";
     if(msg_work.type == MSG_TILE_IDX){
         request_process_tile(img_in, msg_work, w);
     }else if(msg_work.type == MSG_MERGE_BOUNDARY_TREE){
@@ -255,7 +255,7 @@ bool do_work(vips::VImage *img_in, worker *w){
         maxtree_task *update_task;
         maxtree *m;
         G_maxtrees.get_task_by_position(update_task,0);
-        std::cout << "updateing tile: " << update_task->mt->grid_i << "," << update_task->mt->grid_j << "\n";
+        // std::cout << "updateing tile: " << update_task->mt->grid_i << "," << update_task->mt->grid_j << "\n";
         receive_global_boundary_tree(msg_work);
         m=update_task->mt;
         m->update_from_boundary_tree(G_full_bound_tree);
@@ -354,7 +354,7 @@ int main(int argc, char *argv[]){
 
     for(size_t i=0; i < local_workers.size(); i++){
         worker *w = local_workers.at(i);
-        std::cout << "delete worker local: " <<  i << " registered as " << w->get_index() << " at manager\n";
+        // std::cout << "delete worker local: " <<  i << " registered as " << w->get_index() << " at manager\n";
         delete w;
     }
 

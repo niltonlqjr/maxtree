@@ -28,8 +28,8 @@ self_port = 7234
 lambda=100000
 
 #input filename
-#input=../testes/dos_wp_bw.png 
-input = ../testes/example_gotz.png
+input=../testes/dos_wp_bw.png 
+#input = ../testes/example_gotz.png
 
 #output filename
 output=../output/parallel/8l8c/lambda_100000
