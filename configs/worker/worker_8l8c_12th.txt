@@ -40,3 +40,7 @@ output_ext=png
 #generate the full image joining the tiles
 #join_image=true
 join_image=false
+
+
+#hardware specification filename
+hw_specs = ../hardware.yaml

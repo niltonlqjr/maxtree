@@ -242,12 +242,51 @@ std::string get_field(std::unordered_map<std::string, std::string> *conf, std::s
     return dft;
 }
 
+std::vector<std::unordered_map<std::string, TWorkerAttr>> *parse_hw_config(std::string yaml_filename){
+    std::string yml_buf, l;    
+    auto ret = new std::vector<std::unordered_map<std::string, TWorkerAttr>>();
+    
+    std::ifstream f(yaml_filename.c_str());
+    while(!f.eof()){
+        std::getline(f, l);
+        
+        if(!is_blank(l)){
+            yml_buf += l + "\n";
+        }
+    }
+    f.close();
 
-std::vector<std::unordered_map<std::string, TWorkerAttr> *> *parse_hw_config(std::string file_name){
-    auto ret = new std::vector<std::unordered_map<std::string, TWorkerAttr> *>();
+    ryml::Tree tree = ryml::parse_in_place(yml_buf.data());
+    ryml::ConstNodeRef root = tree.rootref();
+    for(auto core: root){
+        
+        std::unordered_map<std::string, TWorkerAttr> c;
+        TWorkerAttr freq;
+        TWorkerAttr l1 ;
+        TWorkerAttr l2 ;
+        TWorkerAttr l3 ;
+        TWorkerAttr ram_size;
+        TWorkerAttr ram_freq;
+        
+        c4::atod(core["CPU_ClockMaximumFrequency"].val(), &freq);
+        c4::atod(core["CPU_L1Cache"].val(),&l1);
+        c4::atod(core["CPU_L2Cache"].val(),&l2);
+        c4::atod(core["CPU_L3Cache"].val(),&l3);
+        c4::atod(core["RAM_Size"].val(),&ram_size);
+        c4::atod(core["RAM_Frequency"].val(),&ram_freq);
+
+        c["CPUMHZ"] = freq;
+        c["L1"] = l1;
+        c["L2"] = l2;
+        c["L3"] = l3;
+        c["CACHE"] = l1+l2+l3;
+        c["RAMSIZE"] = ram_size;
+        c["RAMFREQ"] = ram_freq;
+        ret->push_back(c);
+    }
     return ret;
 }
 
-void free_hw_config(std::vector<std::unordered_map<std::string, TWorkerAttr> *> *conf){
+void free_hw_config(std::vector<std::unordered_map<std::string, TWorkerAttr> > *conf){
     delete conf;
 }

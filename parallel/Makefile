@@ -18,15 +18,15 @@ workers_dir=.
 
 vips_args = `pkg-config vips-cpp --cflags --libs`
 zmq_args = `pkg-config libzmq --cflags --libs`
-
+CPP_libs = -pthread -lryml
 
 ifeq (${TYPE},R)
 	OBJ_CPP_FLAGS=-c 
-	EXE_CPP_FLAGS=-pthread
+	EXE_CPP_FLAGS=
 	OPT ?= -O2
 else 
 	OBJ_CPP_FLAGS=-g -c
-	EXE_CPP_FLAGS=-g -pthread
+	EXE_CPP_FLAGS=-g
 endif
 
 divide_name=divide
@@ -87,7 +87,8 @@ ${dest_merge_work}:base tasks.o message.o workers.o
 		${workers_dir}/workers.o \
 		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} \
 		-I${heap_dir} -I${hps_dir} \
-		${vips_args} ${zmq_args} -o ${dest_merge_work}
+		${vips_args} ${zmq_args} -o ${dest_merge_work} \
+		${CPP_libs}
 
 ${merge_name_manager}:base tasks.o message.o workers.o
 	@mkdir -p exec
@@ -101,7 +102,8 @@ ${merge_name_manager}:base tasks.o message.o workers.o
 		${workers_dir}/workers.o \
 		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} \
 		-I${heap_dir} -I${hps_dir} \
-		${vips_args} ${zmq_args} -o ${dest_merge_manager}
+		${vips_args} ${zmq_args} -o ${dest_merge_manager} \
+		${CPP_libs}
 
 
 
@@ -116,7 +118,8 @@ ${dest_merge_s}: base
 		${boundary_tree_dir}/boundary_tree.o \
 		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} \
 		-I${heap_dir} -I${hps_dir} \
-		${vips_args} -o ${dest_merge_s}
+		${vips_args} -o ${dest_merge_s} \
+		${CPP_libs}
 
 ${dest_divide}: base
 	@mkdir -p exec
@@ -127,7 +130,8 @@ ${dest_divide}: base
 		${boundary_tree_dir}/boundary_tree.o \
 		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} \
 		-I${heap_dir} -I${hps_dir} \
-		${vips_args} -o ${dest_divide}
+		${vips_args} -o ${dest_divide} \
+		${CPP_libs}
 
 vips_region: base
 	@mkdir -p exec
@@ -138,7 +142,8 @@ vips_region: base
 		${boundary_tree_dir}/boundary_tree.o \
 		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} \
 		-I${heap_dir} -I${hps_dir} \
-		${vips_args} -o teste_region
+		${vips_args} -o teste_region \
+		${CPP_libs}
 
 ${dest_grow}: base
 	@mkdir -p exec
@@ -149,7 +154,8 @@ ${dest_grow}: base
 		${boundary_tree_dir}/boundary_tree.o \
 		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} \
 		-I${heap_dir} -I${hps_dir} \
-		${vips_args} -o ${dest_grow}
+		${vips_args} -o ${dest_grow} \
+		${CPP_libs}
 
 
 tasks.o: ${tasks_dir}/tasks.cpp ${tasks_dir}/tasks.hpp

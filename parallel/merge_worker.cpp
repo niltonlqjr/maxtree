@@ -72,7 +72,7 @@ scheduler_of_workers<worker *> local_workers;
 void verify_args(int argc, char *argv[]);
 void read_config(char conf_name[]);
 std::unordered_map<std::string, float> read_CPU_SPECS(std::string cpu_sepcs = "CPU_INFO.data");
-void registry_new_worker(uint32_t local_id, std::string server_addr);
+void registry_new_worker(uint32_t local_id, std::string server_addr, std::unordered_map<std::string, TWorkerAttr> &worker_attr);
 void registry_threads(uint32_t num_th, std::string server_addr, std::string self_addr);
 bool do_work(vips::VImage *img_in, worker *w);
 void loop_worker(vips::VImage *img, std::string server_addr);
@@ -125,7 +125,7 @@ void read_config(char conf_name[]){
     
     G_out_ext = get_field(configs, "output_ext", "png");
 
-    G_hardware_specs_filename = get_field(configs, "hw_specs", "hardware.config");
+    G_hardware_specs_filename = get_field(configs, "hw_specs", "hardware.yaml");
 
     auto str_G_num_threads = get_field(configs, "threads", "");
     G_num_threads = std::stoi(str_G_num_threads);
@@ -158,11 +158,13 @@ void worker_read_attributes(worker *w, std::string conf_workers_file){
     auto configs = parse_hw_config(conf_workers_file);
 }
 
-void registry_new_worker(uint32_t local_id, std::string server_addr){
+void registry_new_worker(uint32_t local_id, std::string server_addr, std::unordered_map<std::string, TWorkerAttr> &worker_attr){
 
     worker *w = new worker(local_id, server_addr);
-    w->set_attr("MHZ", 4000.041);
-    w->set_attr("L3", 16.0+local_id);
+    
+    for(auto k_v: worker_attr){
+        w->set_attr(k_v.first, k_v.second);
+    }
     w->connect();
     // std::cout << "registring id: " << local_id << " of total " << num_th << " threads\n";
     // workers_threads.push_back(new std::thread(w->registry_at, server_addr));
@@ -191,15 +193,19 @@ void receive_global_boundary_tree(message &m){
 
 void registry_threads(uint32_t num_th, std::string server_addr, std::string self_addr){
     // std::cout << "number of threads "<< num_th << "\n";  
-    // std::cout << "start registration\n";
+    std::cout << "start registration\n";
     std::vector<std::thread> workers_threads;
+    auto workers_conf = parse_hw_config(G_hardware_specs_filename);
+    size_t wcs = workers_conf->size();
     //workers register phase
     for(uint32_t local_id=0; local_id < num_th; local_id++){
-        workers_threads.push_back(std::thread(registry_new_worker, local_id, server_addr));
+        std::cout << "registrando worker " << local_id<< "\n";
+        workers_threads.push_back(std::thread(registry_new_worker, local_id, server_addr, std::ref(workers_conf->at(local_id % wcs))));
     }
     for(size_t i=0; i<workers_threads.size(); i++){
         workers_threads[i].join();
     }
+    free_hw_config(workers_conf);
     // read_sequential_file(G_bag_tiles, in, glines, gcolumns);
     // std::cout << "G_bag_tiles.get_num_task:" << G_bag_tiles.get_num_task() << "\n";
 

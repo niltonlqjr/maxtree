@@ -15,14 +15,15 @@ tasks_dir=.
 
 vips_args = `pkg-config vips-cpp --cflags --libs`
 
+libs = -lryml -pthread
+
 ifeq (${TYPE},R)
 	OBJ_CPP_FLAGS=-c 
-	EXE_CPP_FLAGS=-pthread
+	EXE_CPP_FLAGS=
 	OPT ?= -O2
 else 
 	OBJ_CPP_FLAGS=-g -c
-	EXE_CPP_FLAGS=-g -pthread
-	OPT = 
+	EXE_CPP_FLAGS=-g
 endif
 
 l ?= 3

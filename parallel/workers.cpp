@@ -53,7 +53,7 @@ TWorkerAttr worker::get_attr(std::string s){
 }
 
 Tprocess_power worker::get_process_power(){
-    return this->attr->at("MHZ") * this->attr->at("NUMPROC");
+    return (this->attr->at("MHZ") + this->attr->at("CACHE")) * this->attr->at("RAM") ;
 }
 
 std::string worker::get_self_address(){

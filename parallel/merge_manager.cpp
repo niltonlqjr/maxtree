@@ -277,8 +277,6 @@ void process_task_request(message &recv_msg, zmq::socket_t &sock){
     sock.send(msg_reply, zmq::send_flags::none);
 }
 
-
-
 void manager_recv(zmq::socket_t &sock){
 
     // todos os trabalhadores devem procurar um balanceamento na equação 1.
