@@ -51,6 +51,10 @@ class boundary_tree_task: public comparable_task{
         uint64_t size();
         std::pair<uint32_t, uint32_t> neighbor_idx(enum neighbor_direction direction);
         std::pair<uint32_t, uint32_t> next_distance(std::pair<uint32_t, uint32_t> grid_dim);
+        bool can_merge_with(boundary_tree_task *btt2);
+        bool can_merge_with(boundary_tree_task &btt2);
+        enum merge_directions define_merge_direction();
+        enum neighbor_direction define_nb_direction(enum merge_directions merge_dir);
         
         template <class B>
         void serialize(B &buf) const{
@@ -82,6 +86,7 @@ class merge_btrees_task: public comparable_task{
         std::pair<uint32_t, uint32_t> distance;
         //int32_t distance;
         merge_btrees_task(boundary_tree *t1, boundary_tree *t2, enum merge_directions direction, std::pair<uint32_t, uint32_t> distance);
+        merge_btrees_task(boundary_tree_task *btt1, boundary_tree_task *btt2);
         merge_btrees_task();
         ~merge_btrees_task();
         uint64_t size();

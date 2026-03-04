@@ -61,7 +61,9 @@ std::unordered_map<std::string, std::string> *parse_config(char arg[]);
 
 void print_unordered_map(std::unordered_map<std::string, std::string> *m);
 
-unsigned int index_of(unsigned int l, unsigned int c, int h, int w);
+uint64_t index_of(uint32_t l, uint32_t c, uint32_t h, uint32_t w);
+
+uint64_t index_of(std::pair<uint32_t, uint32_t> position, std::pair<uint32_t, uint32_t> size);
 
 void print_VImage_band(vips::VImage *in, int band = 0);
 

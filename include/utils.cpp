@@ -42,8 +42,12 @@ void print_stack(std::stack<maxtree_node*> s){
     std::cout <<"============================\n";
 }
 
-unsigned int index_of(unsigned int l, unsigned int c, int h, int w){
+uint64_t index_of(uint32_t l, uint32_t c, uint32_t h, uint32_t w){
     return l*w+c;    
+}
+
+uint64_t index_of(std::pair<uint32_t, uint32_t> position, std::pair<uint32_t, uint32_t> size){
+    return position.first * size.second + position.second;
 }
 
 

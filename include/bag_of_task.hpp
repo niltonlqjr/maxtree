@@ -33,6 +33,7 @@ class bag_of_tasks{
         void notify_end();
         int num_waiting();
         int get_num_task();
+        void print();
         bool empty();
         template <class T> uint64_t search_by_field(T value, T getter(Task), bool lock=false);
 };

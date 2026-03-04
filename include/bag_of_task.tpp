@@ -140,6 +140,10 @@ int bag_of_tasks<Task>::get_num_task(){
     return this->num_task;
 }
 
+template <class Task>
+void bag_of_tasks<Task>::print(){
+    this->tasks->print();
+}
 
 template <class Task>
 bool bag_of_tasks<Task>::empty(){
