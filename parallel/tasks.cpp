@@ -241,12 +241,13 @@ enum neighbor_direction boundary_tree_task::define_nb_direction(enum merge_direc
     return ret;
 }
 
-
-
-
-
-
 merge_btrees_task::merge_btrees_task(boundary_tree *t1, boundary_tree *t2, enum merge_directions direction, std::pair<uint32_t, uint32_t> distance){
+    if((direction == MERGE_VERTICAL_BORDER) && (t1->grid_j > t2->grid_j) ||
+       (direction == MERGE_HORIZONTAL_BORDER) && (t1->grid_i > t2->grid_i)){
+        auto aux = t1;
+        t1 = t2;
+        t2 = aux;
+    }
     if(t1->grid_j+distance.second != t2->grid_j){
         throw std::runtime_error("non neighbours merge inside constructor merge_btrees_task\n");
     }
@@ -275,6 +276,12 @@ merge_btrees_task::merge_btrees_task(boundary_tree_task *btt1, boundary_tree_tas
     }
     this->bt1 = btt1->bt;
     this->bt2 = btt1->bt;
+    if((direction == MERGE_VERTICAL_BORDER) && (this->bt1->grid_j > this->bt2->grid_j) ||
+       (direction == MERGE_HORIZONTAL_BORDER) && (this->bt1->grid_i > this->bt2->grid_i)){
+        auto aux = this->bt1;
+        this->bt1 = this->bt2;
+        this->bt2 = aux;
+    }
     if(this->bt1->grid_j+distance.second != this->bt2->grid_j){
         throw std::runtime_error("non neighbours merge inside constructor of merge_btrees_task\n");
     }
@@ -303,6 +310,9 @@ boundary_tree *merge_btrees_task::execute(){
     //         return NULL;        
     //     }
     // }
+    std::cout << "Merging: ";
+    this->bt1->print_idx(" and ");
+    this->bt2->print_idx();
    
     new_btree = this->bt1->merge(this->bt2, this->direction);
 

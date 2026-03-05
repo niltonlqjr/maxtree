@@ -199,18 +199,6 @@ void search_pair_naive(){
     // std::cout << "end worker search pair\n";
 }
 
-enum merge_directions define_merge_direction(boundary_tree_task *btt){
-    if(btt->nb_distance.first == 0){
-        return MERGE_VERTICAL_BORDER;
-    }else if(btt->nb_distance.second == 0){
-        return MERGE_HORIZONTAL_BORDER;
-    }else{
-        std::cerr << "merge distance invalid: " << int_pair_to_string(btt->nb_distance) << "\n";
-        std::cerr << "index: ";
-        exit(EXIT_FAILURE);
-    }
-}
-
 void search_pair(){
     boundary_tree_task *btt, *n, *aux;
     std::pair<uint32_t, uint32_t> idx_nb;
@@ -228,23 +216,20 @@ void search_pair(){
             nb_direction = btt->define_nb_direction(merge_dir);
             idx_nb = btt->neighbor_idx(nb_direction);
             if(inside_rectangle(idx_nb, GRID_DIMS) && inside_rectangle(btt->index, GRID_DIMS)){
+            // first tile and its neighbor are inside retangle of image GRID
                 try{
                     auto got_n = G_bound_trees.get_task_by_field<std::pair<uint32_t,uint32_t>>(n, idx_nb, get_task_index);
-                    if(!got_n){
-                        uint64_t int_task_idx = index_of(btt->index, GRID_DIMS);
+                    if(!got_n){  
                         uint64_t int_neighbor_idx = index_of(idx_nb, GRID_DIMS);
                         G_waiting_lock.lock();
                         G_waiting_neighbor.emplace(int_neighbor_idx, btt);
                         G_waiting_lock.unlock();
+                        btt->bt->print_idx(" waiting for ");
+                        std::cout << int_pair_to_string(idx_nb) << "\n";
                     // }else if (n->nb_distance.first == btt->nb_distance.first && n->nb_distance.second == btt->nb_distance.second){
                     }else if(n->can_merge_with(btt)){
-                        if((merge_dir == MERGE_VERTICAL_BORDER) && (btt->bt->grid_j > n->bt->grid_j) ||
-                           (merge_dir == MERGE_HORIZONTAL_BORDER) && (btt->bt->grid_i > n->bt->grid_i)){
-                            aux = btt;
-                            btt = n;
-                            n = aux;
-                        }
-                        auto new_merge_task = new merge_btrees_task(btt->bt, n->bt, merge_dir, btt->nb_distance);
+                        // auto new_merge_task = new merge_btrees_task(btt->bt, n->bt, merge_dir, btt->nb_distance);
+                        auto new_merge_task = new merge_btrees_task(btt, n);
                         G_merge_bag.insert_task(new_merge_task);
                     }else{
                         G_bound_trees.insert_task(n);
@@ -256,7 +241,7 @@ void search_pair(){
                 }catch(std::out_of_range &r){
                     std::cerr << "try to access an out of range element\n";
                 }
-            }else if (inside_rectangle(btt->index, GRID_DIMS)){ // the neighbor of btt is not inside the grid (it does not exist, so go to next merge)
+            }else if (inside_rectangle(btt->index, GRID_DIMS) ){ // the neighbor of btt is not inside the grid (it does not exist, so go to next merge)
                 if(btt->nb_distance.first == 0){
                     if(btt->nb_distance.second < GRID_DIMS.second){ //this tile doesn't need to merge, just try to found a neighbor further than the actual
                         if(verbose){
@@ -278,7 +263,6 @@ void search_pair(){
         }
     }
 }
-
 
 
 std::pair<uint32_t, uint32_t> next_tile(std::pair<uint32_t, uint32_t> p){
@@ -315,15 +299,22 @@ void recv_boundary_tree(message &recv_msg, zmq::socket_t &sock){
     boundary_tree_task *new_bttask = new boundary_tree_task(btt);
     uint64_t recv_int_idx = index_of(new_bttask->index, GRID_DIMS);
     bool neighbor_waiting;
+    std::cout << "recv ";
+    new_bttask->bt->print_idx(" ");
+    std::cout << "\n";
     G_waiting_lock.lock();
     neighbor_waiting = G_waiting_neighbor.find(recv_int_idx) != G_waiting_neighbor.end();
     G_waiting_lock.unlock();
     if(neighbor_waiting){
+        G_waiting_lock.lock();
         boundary_tree_task *wait_btt = G_waiting_neighbor[recv_int_idx];
+        G_waiting_neighbor.erase(recv_int_idx);
+        G_waiting_lock.unlock();
         merge_btrees_task *mbt = new merge_btrees_task(new_bttask, wait_btt);
         G_merge_bag.insert_task(mbt);
+    }else{
+        G_bound_trees.insert_task(new_bttask);
     }
-    G_bound_trees.insert_task(new_bttask);
     message reply = message(0);
     std::string s_reply = hps::to_string<message>(reply);
     auto reply_return = sock.send(zmq::message_t(s_reply), zmq::send_flags::none);
@@ -471,7 +462,8 @@ int main(int argc, char *argv[]){
  
     std::thread fill(fill_input_bag);
     std::thread receiver(manager_recv, std::ref(sock));
-    std::thread pair_maker(search_pair_naive);
+    // std::thread pair_maker(search_pair_naive);
+    std::thread pair_maker(search_pair);
 
     fill.join();
     pair_maker.join();
