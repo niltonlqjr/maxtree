@@ -246,7 +246,7 @@ void merge_tiles(message &msg_work, worker *w){
     // mbtt.bt2->print_idx();
     boundary_tree *merged_tree = mbtt.execute();
     // std::cout << "MERGE DONE\n";
-    
+    std::cout << "merge distance: " << int_pair_to_string(mbtt.distance) << "\n";
     nb_dist = std::make_pair<uint32_t, uint32_t>(mbtt.distance.first * 2, mbtt.distance.second * 2);
     if(nb_dist.second >= GRID_DIMS.second){
         nb_dist.second = 0;

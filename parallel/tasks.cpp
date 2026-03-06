@@ -248,11 +248,21 @@ merge_btrees_task::merge_btrees_task(boundary_tree *t1, boundary_tree *t2, enum 
         t1 = t2;
         t2 = aux;
     }
+    std::cout << "distance: " << int_pair_to_string(distance) << "\n";
+
     if(t1->grid_j+distance.second != t2->grid_j){
-        throw std::runtime_error("non neighbours merge inside constructor merge_btrees_task\n");
+        std::string error_str = "non neighbours args for constructor of merge_btrees_task: " 
+                                + this->bt1->index_to_string() + " and " 
+                                + this->bt2->index_to_string() + " with ditance "
+                                + int_pair_to_string(distance);
+        throw std::runtime_error(error_str + "\n");
     }
     if(t1->grid_i+distance.first != t2->grid_i){
-        throw std::runtime_error("non neighbours merge inside constructor merge_btrees_task\n");
+        std::string error_str = "non neighbours args for constructor of merge_btrees_task: " 
+                                + this->bt1->index_to_string() + " and " 
+                                + this->bt2->index_to_string() + " with ditance "
+                                + int_pair_to_string(distance);
+        throw std::runtime_error(error_str + "\n");
     }
     this->bt1 = t1;
     this->bt2 = t2;
@@ -264,18 +274,20 @@ merge_btrees_task::merge_btrees_task(boundary_tree_task *btt1, boundary_tree_tas
     enum merge_directions md1 = btt1->define_merge_direction();
     enum merge_directions md2 = btt2->define_merge_direction();
     enum merge_directions direction;
+    std::pair<uint32_t, uint32_t> distance;
     if(md1 != md2){
-        throw std::runtime_error("Trying to create a merge_btree_task between tiles in different steps");
+        throw std::runtime_error("Trying to create a merge_btree_task between tiles in different steps\n");
     }else{
         direction = md1;
     }
+    std::cout << "distances: btt1" << int_pair_to_string(btt1->nb_distance) << " btt2 " << int_pair_to_string(btt2->nb_distance)<< "\n";
     if(btt1->nb_distance != btt2->nb_distance){
-        throw std::runtime_error("Invalid distance of tiles");
+        throw std::runtime_error("Invalid distance of tiles\n");
     }else{
-        std::pair<uint32_t, uint32_t> distance = btt1->nb_distance;
+        distance = btt1->nb_distance;
     }
     this->bt1 = btt1->bt;
-    this->bt2 = btt1->bt;
+    this->bt2 = btt2->bt;
     if((direction == MERGE_VERTICAL_BORDER) && (this->bt1->grid_j > this->bt2->grid_j) ||
        (direction == MERGE_HORIZONTAL_BORDER) && (this->bt1->grid_i > this->bt2->grid_i)){
         auto aux = this->bt1;
@@ -283,10 +295,18 @@ merge_btrees_task::merge_btrees_task(boundary_tree_task *btt1, boundary_tree_tas
         this->bt2 = aux;
     }
     if(this->bt1->grid_j+distance.second != this->bt2->grid_j){
-        throw std::runtime_error("non neighbours merge inside constructor of merge_btrees_task\n");
+        std::string error_str = "non neighbours args for constructor of merge_btrees_task: " 
+                                + this->bt1->index_to_string() + " and " 
+                                + this->bt2->index_to_string() + " with ditance "
+                                + int_pair_to_string(distance);
+        throw std::runtime_error(error_str + "\n");
     }
     if(this->bt1->grid_i+distance.first != this->bt2->grid_i){
-        throw std::runtime_error("non neighbours merge inside constructor of merge_btrees_task\n");
+        std::string error_str = "non neighbours args for constructor of merge_btrees_task: " 
+                                + this->bt1->index_to_string() + " and " 
+                                + this->bt2->index_to_string() + " with ditance "
+                                + int_pair_to_string(distance);
+        throw std::runtime_error(error_str + "\n");
     }
     this->distance = distance;
     this->direction = direction;

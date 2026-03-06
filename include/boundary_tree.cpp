@@ -1560,6 +1560,10 @@ void boundary_tree::print_tree(enum boundary_tree_field lrootf, enum boundary_tr
     std::cout << "\n_____________________________________________________\n";
 }
 
+std::string boundary_tree::index_to_string(){
+    return "(" + std::to_string(this->grid_i) + "," + std::to_string(this->grid_j) + ")";
+}
+
 void boundary_tree::print_idx(std::string end_line){
-    std::cout << "("<< this->grid_i <<"," << this->grid_j << ")" << end_line;
+    std::cout << this->index_to_string() << end_line;
 }
