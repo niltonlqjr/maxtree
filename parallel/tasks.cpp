@@ -248,7 +248,7 @@ merge_btrees_task::merge_btrees_task(boundary_tree *t1, boundary_tree *t2, enum 
         t1 = t2;
         t2 = aux;
     }
-    std::cout << "distance: " << int_pair_to_string(distance) << "\n";
+    // std::cout << "distance: " << int_pair_to_string(distance) << "\n";
 
     if(t1->grid_j+distance.second != t2->grid_j){
         std::string error_str = "non neighbours args for constructor of merge_btrees_task: " 
@@ -280,7 +280,8 @@ merge_btrees_task::merge_btrees_task(boundary_tree_task *btt1, boundary_tree_tas
     }else{
         direction = md1;
     }
-    std::cout << "distances: btt1" << int_pair_to_string(btt1->nb_distance) << " btt2 " << int_pair_to_string(btt2->nb_distance)<< "\n";
+    // std::cout << "distances: btt1 " << btt1->bt->index_to_string() << " "<< int_pair_to_string(btt1->nb_distance) << " btt2 "<< btt2->bt->index_to_string() << " " << int_pair_to_string(btt2->nb_distance)<< "\n";
+    
     if(btt1->nb_distance != btt2->nb_distance){
         throw std::runtime_error("Invalid distance of tiles\n");
     }else{

@@ -488,8 +488,6 @@ void worker::send_btree_task(boundary_tree_task *btt, enum message_type tp){
     // std::cout << "tree sent\n";
     zmq::message_t reply;
     auto _r = this->sock.recv(reply,zmq::recv_flags::none);
-
-    
 }
 
 

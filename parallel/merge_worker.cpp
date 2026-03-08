@@ -249,16 +249,19 @@ void merge_tiles(message &msg_work, worker *w){
     std::cout << "merge distance: " << int_pair_to_string(mbtt.distance) << "\n";
     nb_dist = std::make_pair<uint32_t, uint32_t>(mbtt.distance.first * 2, mbtt.distance.second * 2);
     if(nb_dist.second >= GRID_DIMS.second){
-        nb_dist.second = 0;
         nb_dist.first = 1;
+        nb_dist.second = 0;
     }
     boundary_tree_task btt = boundary_tree_task(merged_tree, nb_dist);
     w->send_btree_task(&btt,MSG_SEND_MERGED_TREE);
+    std::string s = "merge tiles end "+ mbtt.bt1->index_to_string() + " " + mbtt.bt2->index_to_string() + "\n";
+    std::cout << s;
 }
 
 bool do_work(vips::VImage *img_in, worker *w){
     message msg_work = w->request_work();
-    // std::cout << "type:"<< msg_work.type << " -> " << NamesMessageType[msg_work.type] << "\n";
+    
+    std::cout << "===============> type:"<< msg_work.type << " -> " << NamesMessageType[msg_work.type] << "<===============\n";
     if(msg_work.type == MSG_TILE_IDX){
         request_process_tile(img_in, msg_work, w);
     }else if(msg_work.type == MSG_MERGE_BOUNDARY_TREE){
@@ -267,7 +270,7 @@ bool do_work(vips::VImage *img_in, worker *w){
         maxtree_task *update_task;
         maxtree *m;
         G_maxtrees.get_task_by_position(update_task,0);
-        // std::cout << "updateing tile: " << update_task->mt->grid_i << "," << update_task->mt->grid_j << "\n";
+        std::cout << "updateing tile: " << update_task->mt->grid_i << "," << update_task->mt->grid_j << "\n";
         receive_global_boundary_tree(msg_work);
         m=update_task->mt;
         m->update_from_boundary_tree(G_full_bound_tree);
@@ -275,12 +278,11 @@ bool do_work(vips::VImage *img_in, worker *w){
         std::string output_name = G_out_name + std::to_string(m->grid_i)+"-"+std::to_string(m->grid_j)+"."+G_out_ext;
         m->save(output_name);
         // std::cout << "update boundary tree of image tiles not implemented yet\n";
-        if(G_maxtrees.empty()){
-            return false;
-        }
+        // if(G_maxtrees.empty()){
+        //     return false;
+        // }
         return true;
-    }
-    else if(msg_work.type == MSG_NULL){
+    }else if(msg_work.type == MSG_NULL){
         return false;
     }
     return true;

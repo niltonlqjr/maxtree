@@ -6,7 +6,7 @@
 # number of threads for the process 
 threads=4
 # grid lines
-glines=6
+glines=8
 # grid columns
 gcolumns=8
 
@@ -17,7 +17,6 @@ colored = false
 
 # main server (IP address)
 server_ip = 127.0.0.1
-# server_ip = 10.253.56.239
 # main server port (to send messages)
 server_port = 7233
 
