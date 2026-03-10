@@ -25,7 +25,7 @@ class bag_of_tasks{
         int position_of(int priority);
         bool is_running();
         bool get_task(Task &ret);
-        bool get_task_by_position(Task &ret, int position);
+        bool get_task_by_position(Task &ret, size_t position);
         template <class T> bool get_task_by_field(Task &ret, T value, T getter(Task));
         Task at(int pos);
         void wait_empty();
@@ -56,7 +56,7 @@ class prio_bag_of_tasks{
         int position_of(int priority);
         bool is_running();
         bool get_task(Task &ret, int priority = -1);
-        bool get_task_by_position(Task &ret, int position);
+        bool get_task_by_position(Task &ret, size_t position);
         template <class T> bool get_task_by_field(Task &ret, T value, T getter(Task));
         Task at(int pos);
         void wait_empty();

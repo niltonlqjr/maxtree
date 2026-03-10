@@ -60,7 +60,7 @@ bool bag_of_tasks<Task>::get_task(Task &ret){
 }
 
 template <class Task>
-bool bag_of_tasks<Task>::get_task_by_position(Task &ret, int position){
+bool bag_of_tasks<Task>::get_task_by_position(Task &ret, size_t position){
     std::unique_lock<std::mutex> l(this->lock);
     if(this->num_task > 0 && position < this->tasks->size()){
         ret = this->at(position);
@@ -238,7 +238,7 @@ bool prio_bag_of_tasks<Task>::get_task(Task &ret, int priority){
 }
 
 template <class Task>
-bool prio_bag_of_tasks<Task>::get_task_by_position(Task &ret, int position){
+bool prio_bag_of_tasks<Task>::get_task_by_position(Task &ret, size_t position){
     std::unique_lock<std::mutex> l(this->lock);
     if(this->num_task > 0 && position < this->tasks->size()){
         ret = this->at(position);

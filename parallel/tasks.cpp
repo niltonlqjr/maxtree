@@ -203,7 +203,10 @@ std::pair<uint32_t, uint32_t> boundary_tree_task::neighbor_idx(enum neighbor_dir
 }
 
 bool boundary_tree_task::can_merge_with(boundary_tree_task *btt2){
-    return this->nb_distance == btt2->nb_distance;
+    auto d = this->nb_distance;
+    return this->nb_distance == btt2->nb_distance && 
+           (this->index.first+d.first == btt2->index.first || btt2->index.first + d.first == this->index.first) && 
+           (this->index.second+d.second == btt2->index.second || btt2->index.second + d.second == this->index.second);
 }
 
 bool boundary_tree_task::can_merge_with(boundary_tree_task &btt2){
