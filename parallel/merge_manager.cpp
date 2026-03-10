@@ -278,6 +278,10 @@ void search_pair(){
             }else if (inside_rectangle(btt->index, GRID_DIMS) ){ // the neighbor of btt is not inside the grid (it does not exist, so go to next merge)
                 btt->nb_distance.first *= 2;
                 btt->nb_distance.second *= 2;
+                if(btt->nb_distance.first >= GRID_DIMS.first){
+                    btt->nb_distance.first = 0;
+                    btt->nb_distance.second = 1;
+                }
                 btt->bt->print_idx(" ");
                 std::cout << " gointo to next step" << int_pair_to_string(btt->nb_distance) << "\n";
                 
@@ -318,6 +322,7 @@ void registry_worker(message &recv_msg, zmq::socket_t &sock){
     zmq::message_t msg_new_id(sizeof(TWorkerIdx));
     memcpy(msg_new_id.data(), &current_idx, sizeof(TWorkerIdx));
     auto reply_return = sock.send(msg_new_id, zmq::send_flags::none);
+    G_total_workers++;
 }
 
 void recv_boundary_tree_naive(message &recv_msg, zmq::socket_t &sock){
@@ -445,7 +450,7 @@ void manager_recv(zmq::socket_t &sock){
     
     uint64_t calculated_tiles = 0;
     // TWorkerIdx current_idx;
-    while(true){ // send message to finish all workers
+    while(G_num_merges < G_total_merges || G_updates_sent < G_total_workers || G_finish_workers < G_total_workers){ // send message to finish all workers
     // while(num_merges < G_total_merges || !busy_workers.empty()){
         std::cout << "updates: " << G_updates_sent << "\n";
         std::cout << "merges: " << G_num_merges << "\n";

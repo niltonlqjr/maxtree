@@ -334,10 +334,9 @@ boundary_tree *merge_btrees_task::execute(){
     //         return NULL;        
     //     }
     // }
-    std::cout << "Merging: ";
-    this->bt1->print_idx(" and ");
-    this->bt2->print_idx();
-   
+    std::string s;
+    s = "Merging: " + this->bt1->index_to_string() + " and " + this->bt2->index_to_string() + "\n";
+    std::cout << s;
     new_btree = this->bt1->merge(this->bt2, this->direction);
 
     new_btree->update_tree(new_btree);
@@ -345,6 +344,8 @@ boundary_tree *merge_btrees_task::execute(){
     new_btree->compress_path();
     // delete this->bt1;
     // delete this->bt2;
+    s = "End Merge:: " + this->bt1->index_to_string() + " and " + this->bt2->index_to_string() + "\n";
+    std::cout << s;
     return new_btree;
 }
 
