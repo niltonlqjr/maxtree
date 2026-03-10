@@ -6,7 +6,7 @@
 # number of threads for the process 
 threads=4
 # grid lines
-glines=8
+glines=6
 # grid columns
 gcolumns=8
 

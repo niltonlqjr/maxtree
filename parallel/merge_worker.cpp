@@ -252,16 +252,19 @@ void merge_tiles(message &msg_work, worker *w){
         nb_dist.first = 1;
         nb_dist.second = 0;
     }
+    s += " merge tiles end "+ mbtt.bt1->index_to_string() + " " + mbtt.bt2->index_to_string() + "\n";
+    std::cout << s;
     boundary_tree_task btt = boundary_tree_task(merged_tree, nb_dist);
     w->send_btree_task(&btt,MSG_SEND_MERGED_TREE);
-    s += " merge tiles end "+ mbtt.bt1->index_to_string() + " " + mbtt.bt2->index_to_string() + "\n";
+    s = "sent: "  + btt.bt->index_to_string() ;
+    s += " (" + mbtt.bt1->index_to_string() + " " + mbtt.bt2->index_to_string() + ")\n";
     std::cout << s;
 }
 
 bool do_work(vips::VImage *img_in, worker *w){
     message msg_work = w->request_work();
     
-    std::cout << "===============> type:"<< msg_work.type << " -> " << NamesMessageType[msg_work.type] << "<===============\n";
+    // std::cout << "===============> type:"<< msg_work.type << " -> " << NamesMessageType[msg_work.type] << "<===============\n";
     if(msg_work.type == MSG_TILE_IDX){
         request_process_tile(img_in, msg_work, w);
     }else if(msg_work.type == MSG_MERGE_BOUNDARY_TREE){

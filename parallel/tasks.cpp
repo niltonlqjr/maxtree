@@ -203,14 +203,22 @@ std::pair<uint32_t, uint32_t> boundary_tree_task::neighbor_idx(enum neighbor_dir
 }
 
 bool boundary_tree_task::can_merge_with(boundary_tree_task *btt2){
-    auto d = this->nb_distance;
+    /* auto d = this->nb_distance;
+    auto t1 = this->index;
+    auto t2 = btt2->index;
     return this->nb_distance == btt2->nb_distance && 
-           (this->index.first+d.first == btt2->index.first || btt2->index.first + d.first == this->index.first) && 
-           (this->index.second+d.second == btt2->index.second || btt2->index.second + d.second == this->index.second);
+           (t1.first + d.first == t2.first || t2.first + d.first == t1.first) && 
+           (t1.second + d.second == t2.second || t2.second + d.second == t1.second); */
+    return this->can_merge_with(*btt2);
 }
 
 bool boundary_tree_task::can_merge_with(boundary_tree_task &btt2){
-    return this->nb_distance == btt2.nb_distance;
+    auto d = this->nb_distance;
+    auto t1 = this->index;
+    auto t2 = btt2.index;
+    // return (this->nb_distance == btt2.nb_distance) && 
+    return (t1.first +  d.first  == t2.first  || t2.first  + d.first  == t1.first) && 
+           (t1.second + d.second == t2.second || t2.second + d.second == t1.second);
 }
 
 
@@ -334,18 +342,16 @@ boundary_tree *merge_btrees_task::execute(){
     //         return NULL;        
     //     }
     // }
-    std::string s;
-    s = "Merging: " + this->bt1->index_to_string() + " and " + this->bt2->index_to_string() + "\n";
-    std::cout << s;
+    // std::string s;
+    // s = "Merging: " + this->bt1->index_to_string() + " and " + this->bt2->index_to_string() + "\n";
+    // std::cout << s;
     new_btree = this->bt1->merge(this->bt2, this->direction);
-
     new_btree->update_tree(new_btree);
-    
     new_btree->compress_path();
     // delete this->bt1;
     // delete this->bt2;
-    s = "End Merge:: " + this->bt1->index_to_string() + " and " + this->bt2->index_to_string() + "\n";
-    std::cout << s;
+    // s = "End Merge:: " + this->bt1->index_to_string() + " and " + this->bt2->index_to_string() + "\n";
+    // std::cout << s;
     return new_btree;
 }
 
