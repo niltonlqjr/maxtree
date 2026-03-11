@@ -483,11 +483,13 @@ void worker::send_btree_task(boundary_tree_task *btt, enum message_type tp){
     // std::cout << "sending tree\n";
     zmq::message_t message_0mq(s_msg);
 
+    std::cout << "sending tree: " << btt->bt->index_to_string() << " with distance " << int_pair_to_string(btt->nb_distance) <<"\n" ;
     this->sock.send(message_0mq, zmq::send_flags::none);
 
-    // std::cout << "tree sent\n";
+    std::cout << "tree: " << btt->bt->index_to_string() << " sent(inside worker::send_btree_task) \n" ;
     zmq::message_t reply;
     auto _r = this->sock.recv(reply,zmq::recv_flags::none);
+    std::cout << "recv: " << btt->bt->index_to_string() << " received (inside worker::send_btree_task) \n" ;
 }
 
 

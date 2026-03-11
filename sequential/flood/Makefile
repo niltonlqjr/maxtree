@@ -64,7 +64,7 @@ wilkinson: base
 	g++ ${OPT} ${source_non_rec_wilk} ${utils_dir}/utils.o ${maxtree_node_dir}/maxtree_node.o \
 		${boundary_tree_dir}/boundary_tree.o ${maxtree_dir}/maxtree.o \
     	-I${maxtree_node_dir}  -I${maxtree_dir} -I${utils_dir} -I${hps_dir} \
-		${vips_args}  ${libs}-o ${dest_nonrec_wilk}
+		${vips_args}  ${libs} -o ${dest_nonrec_wilk}
 
 base: 
 	@make -C ${maxtree_node_dir}

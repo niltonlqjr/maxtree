@@ -253,8 +253,10 @@ enum neighbor_direction boundary_tree_task::define_nb_direction(enum merge_direc
 }
 
 merge_btrees_task::merge_btrees_task(boundary_tree *t1, boundary_tree *t2, enum merge_directions direction, std::pair<uint32_t, uint32_t> distance){
+    // std::cout << "bt1:" << t1->index_to_string() << " bt2:" << t2->index_to_string() << "\n";
     if((direction == MERGE_VERTICAL_BORDER) && (t1->grid_j > t2->grid_j) ||
        (direction == MERGE_HORIZONTAL_BORDER) && (t1->grid_i > t2->grid_i)){
+        // std::cout << "swap bt1:" << t1->index_to_string() << " with bt2:" << t2->index_to_string() << "\n";
         auto aux = t1;
         t1 = t2;
         t2 = aux;
@@ -300,8 +302,10 @@ merge_btrees_task::merge_btrees_task(boundary_tree_task *btt1, boundary_tree_tas
     }
     this->bt1 = btt1->bt;
     this->bt2 = btt2->bt;
+    // std::cout << "bt1:" << this->bt1->index_to_string() << " bt2:" << this->bt2->index_to_string() << "\n";
     if((direction == MERGE_VERTICAL_BORDER) && (this->bt1->grid_j > this->bt2->grid_j) ||
        (direction == MERGE_HORIZONTAL_BORDER) && (this->bt1->grid_i > this->bt2->grid_i)){
+        // std::cout << "swap bt1:" << this->bt1->index_to_string() << " with bt2:" << this->bt2->index_to_string() << "\n";
         auto aux = this->bt1;
         this->bt1 = this->bt2;
         this->bt2 = aux;

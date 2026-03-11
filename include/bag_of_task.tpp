@@ -13,6 +13,7 @@ bag_of_tasks<Task>::~bag_of_tasks(){
 }
 template <class Task>
 void bag_of_tasks<Task>::start(){
+    std::unique_lock<std::mutex> l(this->lock);
     this->running = true;
 }
 
@@ -21,7 +22,8 @@ void bag_of_tasks<Task>::insert_task(Task t){
     std::unique_lock<std::mutex> l(this->lock);
     this->tasks->push_back(t);
     this->num_task++;
-    this->wakeup_workers(false);
+    this->wakeup_workers();
+    // this->has_task.notify_all();
 }
 
 template <class Task>
@@ -33,6 +35,7 @@ int bag_of_tasks<Task>::position_of(int priority){
 
 template <class Task>
 bool bag_of_tasks<Task>::is_running(){
+    std::unique_lock<std::mutex> l(this->lock);
     return this->running;
 }
 
@@ -47,15 +50,15 @@ bool bag_of_tasks<Task>::get_task(Task &ret){
         // std::cout << "wait task\n";
 
     }
-    if(this->num_task > 0){
+    // if(this->num_task > 0){
         ret = this->tasks->front();
         this->tasks->pop_front();
         this->num_task--;
         this->no_task.notify_all();
         return true;
-    }else{
-        return false;
-    }
+    // }else{
+    //     return false;
+    // }
     
 }
 
@@ -115,16 +118,14 @@ void bag_of_tasks<Task>::wait_empty(){
 }
 
 template <class Task>
-void bag_of_tasks<Task>::wakeup_workers(bool lock){
-    if(lock){
-        std::unique_lock<std::mutex> l(this->lock);
-    }
+void bag_of_tasks<Task>::wakeup_workers(){
     this->waiting=0;
     this->has_task.notify_all();
 }
 
 template <class Task>
 void bag_of_tasks<Task>::notify_end(){
+    std::unique_lock<std::mutex> l(this->lock);
     this->num_task = 0;
     this->running = false;
     this->wakeup_workers();
@@ -132,16 +133,19 @@ void bag_of_tasks<Task>::notify_end(){
 
 template <class Task>
 int bag_of_tasks<Task>::num_waiting(){
+    std::unique_lock<std::mutex> l(this->lock);
     return this->waiting;
 }
 
 template <class Task>
 int bag_of_tasks<Task>::get_num_task(){
+    std::unique_lock<std::mutex> l(this->lock);
     return this->num_task;
 }
 
 template <class Task>
 void bag_of_tasks<Task>::print(){
+    std::unique_lock<std::mutex> l(this->lock);
     this->tasks->print();
 }
 
@@ -187,6 +191,7 @@ prio_bag_of_tasks<Task>::~prio_bag_of_tasks(){
 }
 template <class Task>
 void prio_bag_of_tasks<Task>::start(){
+    std::unique_lock<std::mutex> l(this->lock);
     this->running = true;
 }
 
@@ -195,7 +200,8 @@ void prio_bag_of_tasks<Task>::insert_task(Task t){
     std::unique_lock<std::mutex> l(this->lock);
     this->tasks->insert(t);
     this->num_task++;
-    this->wakeup_workers(false);
+    this->wakeup_workers();
+    // this->has_task.notify_all();
 }
 
 template <class Task>
@@ -207,6 +213,7 @@ int prio_bag_of_tasks<Task>::position_of(int priority){
 
 template <class Task>
 bool prio_bag_of_tasks<Task>::is_running(){
+    std::unique_lock<std::mutex> l(this->lock);
     return this->running;
 }
 
@@ -270,6 +277,7 @@ bool prio_bag_of_tasks<Task>::get_task_by_field(Task &ret, T value, T getter(Tas
 
 template <class Task>
 Task prio_bag_of_tasks<Task>::at(int pos){
+    std::unique_lock<std::mutex> l(this->lock);
     return this->tasks->at(pos);
 }
 
@@ -282,16 +290,14 @@ void prio_bag_of_tasks<Task>::wait_empty(){
 }
 
 template <class Task>
-void prio_bag_of_tasks<Task>::wakeup_workers(bool lock){
-    if(lock){
-        std::unique_lock<std::mutex> l(this->lock);
-    }
+void prio_bag_of_tasks<Task>::wakeup_workers(){
     this->waiting=0;
     this->has_task.notify_all();
 }
 
 template <class Task>
 void prio_bag_of_tasks<Task>::notify_end(){
+    std::unique_lock<std::mutex> l(this->lock);
     this->num_task = 0;
     this->running = false;
     this->wakeup_workers();
@@ -299,16 +305,19 @@ void prio_bag_of_tasks<Task>::notify_end(){
 
 template <class Task>
 int prio_bag_of_tasks<Task>::num_waiting(){
+    std::unique_lock<std::mutex> l(this->lock);
     return this->waiting;
 }
 
 template <class Task>
 int prio_bag_of_tasks<Task>::get_num_task(){
+    std::unique_lock<std::mutex> l(this->lock);
     return this->num_task;
 }
 
 template <class Task>
 void prio_bag_of_tasks<Task>::print(){
+    std::unique_lock<std::mutex> l(this->lock);
     this->tasks->print();
 }
 

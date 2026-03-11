@@ -17,6 +17,7 @@ class bag_of_tasks{
         int num_task;
         bool running;
         int waiting;
+        void wakeup_workers();
     public:
         bag_of_tasks(bool start_running = false);
         ~bag_of_tasks();
@@ -29,7 +30,6 @@ class bag_of_tasks{
         template <class T> bool get_task_by_field(Task &ret, T value, T getter(Task));
         Task at(int pos);
         void wait_empty();
-        void wakeup_workers(bool lock = true);
         void notify_end();
         int num_waiting();
         int get_num_task();
@@ -48,6 +48,7 @@ class prio_bag_of_tasks{
         int num_task;
         bool running;
         int waiting;
+        void wakeup_workers();
     public:
         prio_bag_of_tasks(bool start_running = false);
         ~prio_bag_of_tasks();
@@ -60,7 +61,6 @@ class prio_bag_of_tasks{
         template <class T> bool get_task_by_field(Task &ret, T value, T getter(Task));
         Task at(int pos);
         void wait_empty();
-        void wakeup_workers(bool lock = true);
         void notify_end();
         int num_waiting();
         int get_num_task();

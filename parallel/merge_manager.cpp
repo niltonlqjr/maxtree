@@ -37,9 +37,10 @@ boundary_tree *G_final_bt = nullptr;
 
 scheduler_of_workers<worker*> G_pool_of_workers;
 
+bag_of_tasks<input_tile_task* > G_input_tiles;
 bag_of_tasks<boundary_tree_task *> G_bound_trees;
 prio_bag_of_tasks<merge_btrees_task *> G_merge_bag;
-bag_of_tasks<input_tile_task* > G_input_tiles;
+// bag_of_tasks<merge_btrees_task *> G_merge_bag;
 
 // given that unordered_map needs a hash function for pair and there are few grids, a map is enought
 std::map <std::pair<uint32_t,uint32_t>, worker *> G_grid_id_worker;  
@@ -51,6 +52,35 @@ std::unordered_map<uint64_t, std::vector<boundary_tree_task *>* > G_waiting_neig
 std::mutex G_waiting_lock;
 
 void read_config(char conf_name[], std::string &port, std::string &protocol);
+
+void print_list_of_index(std::vector <boundary_tree_task *> *v){
+    boundary_tree_task *aux;
+    std::string msg="";
+    for(size_t i=0; i<v->size() ; i++){
+        aux = v->at(i);
+        msg += aux->bt->index_to_string() + "{" + int_pair_to_string(aux->nb_distance) + "} - ";
+    }
+    std::cout << "\n";
+}
+
+
+void print_G_waiting(){
+    std::string s = "==Waiting==\n";
+    for(auto p: G_waiting_neighbor){
+        std::string line = "";
+        std::vector <boundary_tree_task *> *v = p.second;
+        for(size_t i=0; i<v->size() ; i++){
+            auto aux = v->at(i);
+            line += aux->bt->index_to_string() + "{" + int_pair_to_string(aux->nb_distance) + "}";
+        } 
+        if(line != ""){
+            s+= std::to_string(p.first) + ": "+line + "\n";
+        }
+    }
+    
+    std::cout << s << "========\n";
+}
+
 
 bool reply_to(std::string ip, worker *w){
     zmq::context_t context(1);
@@ -218,71 +248,82 @@ boundary_tree_task *find_task_to_merge(std::vector<boundary_tree_task *> *waitin
     return nullptr;
 }
 
-void search_pair(){
-    boundary_tree_task *btt, *n, *aux, *neighbor_btt;
-    std::pair<uint32_t, uint32_t> idx_nb;
-    enum neighbor_direction nb_direction;
-    enum merge_directions merge_dir;
-    uint32_t new_distance;
-    bool change_dir, inserted;
-    std::string s;
-    
-    // while(G_total_merges < G_num_merges || G_updates_sent < G_total_tiles){
-    while(G_merge_bag.is_running()){
-        
-        bool got = G_bound_trees.get_task(btt);
-        if(got){
-            // merge_dir = define_merge_direction(btt);
-            merge_dir = btt->define_merge_direction();
-            nb_direction = btt->define_nb_direction(merge_dir);
-            idx_nb = btt->neighbor_idx(nb_direction);
-            uint64_t int_neighbor_idx = index_of(idx_nb, GRID_DIMS);
-            uint64_t self_idx = index_of(btt->index, GRID_DIMS);
-            std::string  s;
-            
-            
-            if(inside_rectangle(idx_nb, GRID_DIMS) && inside_rectangle(btt->index, GRID_DIMS)){
 
-                G_waiting_lock.lock();
-                if(G_waiting_neighbor.find(self_idx) == G_waiting_neighbor.end()){
-                    G_waiting_neighbor[self_idx] = new std::vector<boundary_tree_task *>();
-                }
-                neighbor_btt = find_task_to_merge(G_waiting_neighbor[self_idx], btt);
-                G_waiting_lock.unlock();
+// void search_pair(){
+//     boundary_tree_task *btt, *n, *aux, *neighbor_btt;
+//     std::pair<uint32_t, uint32_t> idx_nb;
+//     enum neighbor_direction nb_direction;
+//     enum merge_directions merge_dir;
+//     uint32_t new_distance;
+//     bool change_dir, inserted, got;
+//     std::string s;
+    
+//     while(G_total_merges < G_num_merges || G_updates_sent < G_total_tiles){
+//     // while(G_merge_bag.is_running()){
+//         std::cout << "will get a task\n";
+//         // got = false;
+//         // if(G_bound_trees.get_num_task() > 0){
+//         //     got = G_bound_trees.get_task(btt);
+//         //     std::cout << "got task\n";
+//         // }else{
+//         //     std::cout << "no task at boundary tree bag\n";
+//         // }
+//         got = G_bound_trees.get_task(btt);
+
+//         if(got){
+//             // merge_dir = define_merge_direction(btt);
+//             merge_dir = btt->define_merge_direction();
+//             nb_direction = btt->define_nb_direction(merge_dir);
+//             idx_nb = btt->neighbor_idx(nb_direction);
+//             uint64_t int_neighbor_idx = index_of(idx_nb, GRID_DIMS);
+//             uint64_t self_idx = index_of(btt->index, GRID_DIMS);
+//             std::string  s;
+
+//             if(inside_rectangle(idx_nb, GRID_DIMS) && inside_rectangle(btt->index, GRID_DIMS)){
+//                 G_waiting_lock.lock();
+//                 if(G_waiting_neighbor.find(self_idx) == G_waiting_neighbor.end()){
+//                     G_waiting_neighbor[self_idx] = new std::vector<boundary_tree_task *>();
+//                 }
+
+//                 std::cout << "tiles waiting for: " << btt->bt->index_to_string() << ": ";
+//                 print_list_of_index(G_waiting_neighbor[self_idx]);
                 
-                if(neighbor_btt != nullptr){
-                    //fazer merge
-                    merge_btrees_task *mbt = new merge_btrees_task(btt, neighbor_btt);
-                    G_merge_bag.insert_task(mbt);
-                }else{
-                    // se registrar no vetor do vizinho
-                    G_waiting_lock.lock();
-                    if(G_waiting_neighbor.find(int_neighbor_idx) == G_waiting_neighbor.end()){
-                        G_waiting_neighbor[int_neighbor_idx] = new std::vector<boundary_tree_task *>();
-                    }
-                    G_waiting_neighbor[int_neighbor_idx]->push_back(btt);
-                    int64_t dif = self_idx - int_neighbor_idx;
-                    s =  "tile:  \t\t" + btt->bt->index_to_string() + "\twaiting\t" + int_pair_to_string(idx_nb) + "\n";
-                    s += "linear:\t\t" + std::to_string(self_idx) + "\twaiting\t" + std::to_string(int_neighbor_idx) + "\t" + std::to_string(dif) +"\n";
-                    std::cout << s;
+//                 neighbor_btt = find_task_to_merge(G_waiting_neighbor[self_idx], btt);
+//                 G_waiting_lock.unlock();
+                
+//                 if(neighbor_btt != nullptr){
+//                     //fazer merge
+//                     merge_btrees_task *mbt = new merge_btrees_task(btt, neighbor_btt);
+//                     G_merge_bag.insert_task(mbt);
+//                 }else{
+//                     // se registrar no vetor do vizinho
+//                     G_waiting_lock.lock();
+//                     if(G_waiting_neighbor.find(int_neighbor_idx) == G_waiting_neighbor.end()){
+//                         G_waiting_neighbor[int_neighbor_idx] = new std::vector<boundary_tree_task *>();
+//                     }
+//                     G_waiting_neighbor[int_neighbor_idx]->push_back(btt);
+//                     int64_t dif = self_idx - int_neighbor_idx;
+//                     s =  "tile:  \t\t" + btt->bt->index_to_string() + "\twaiting\t" + int_pair_to_string(idx_nb) + "\n";
+//                     s += "linear:\t\t" + std::to_string(self_idx) + "\twaiting\t" + std::to_string(int_neighbor_idx) + "\t" + std::to_string(dif) +"\n";
+//                     // std::cout << s;
                     
-                    G_waiting_lock.unlock();
-                }          
-            }else if (inside_rectangle(btt->index, GRID_DIMS) ){ // the neighbor of btt is not inside the grid (it does not exist, so go to next merge)
-                btt->nb_distance.first *= 2;
-                btt->nb_distance.second *= 2;
+//                     G_waiting_lock.unlock();
+//                 }          
+//             }else if (inside_rectangle(btt->index, GRID_DIMS) ){ // the neighbor of btt is not inside the grid (it does not exist, so go to next merge)
+//                 btt->nb_distance.first *= 2;
+//                 btt->nb_distance.second *= 2;
                 
-                if(btt->nb_distance.second >= GRID_DIMS.second){
-                    btt->nb_distance.first = 1;
-                    btt->nb_distance.second = 0;
-                }
+//                 if(btt->nb_distance.second >= GRID_DIMS.second){
+//                     btt->nb_distance.first = 1;
+//                     btt->nb_distance.second = 0;
+//                 }
 
-                G_bound_trees.insert_task(btt);
-            }
-        }
-    }
+//                 G_bound_trees.insert_task(btt);
+//             }
+//         }
+//     }
     
-}
+// }
 
 
 std::pair<uint32_t, uint32_t> next_tile(std::pair<uint32_t, uint32_t> p){
@@ -307,12 +348,69 @@ void registry_worker(message &recv_msg, zmq::socket_t &sock){
 
 void recv_boundary_tree(message &recv_msg, zmq::socket_t &sock){
     boundary_tree_task btt = hps::from_string<boundary_tree_task>(recv_msg.content);
+    boundary_tree_task *neighbor_btt;
     boundary_tree_task *recv_btt = new boundary_tree_task(btt);
-    // std::cout << "recv: " << recv_btt->bt->index_to_string() << " linear index " << index_of(recv_btt->index, GRID_DIMS) << "\n";
-    G_bound_trees.insert_task(recv_btt);
+    std::string s;
+
+    std::pair<uint32_t, uint32_t> idx_nb;
+    enum neighbor_direction nb_direction;
+    enum merge_directions merge_dir;
+    uint32_t new_distance;
+    bool change_dir, inserted, got,has_waiting_nb;
+
+    s += "recv: " + recv_btt->bt->index_to_string();// + " linear index " + std::to_string(index_of(recv_btt->index, GRID_DIMS)); 
+    s += " distance: " + int_pair_to_string(recv_btt->nb_distance);
+    // s += " dimensions: " + std::to_string(recv_btt->bt->h) + " " + std::to_string(recv_btt->bt->w) + "\n";
+    s += "\n";
+    std::cout << s;
+
+    auto recv_idx = index_of(recv_btt->index,GRID_DIMS);
+
+    G_waiting_lock.lock();
+    if(G_waiting_neighbor.find(recv_idx) == G_waiting_neighbor.end()){
+        G_waiting_neighbor[recv_idx] = new std::vector<boundary_tree_task *>();
+    }
+    print_G_waiting();
+    neighbor_btt = nullptr;
+    if(!G_waiting_neighbor[recv_idx]->empty()){
+        neighbor_btt = find_task_to_merge(G_waiting_neighbor[recv_idx], recv_btt);
+        has_waiting_nb = true;
+    }else{
+        has_waiting_nb = false;
+    }
+    G_waiting_lock.unlock();
+    if(neighbor_btt != nullptr){
+        merge_btrees_task *mbt = new merge_btrees_task(recv_btt, neighbor_btt);
+        // s = "merge task: " + mbt->bt1->index_to_string() + " --- " + mbt->bt2->index_to_string() + " d: " + int_pair_to_string(mbt->distance) + "\n";
+        G_merge_bag.insert_task(mbt);
+    }else if(!has_waiting_nb){   
+        merge_dir = recv_btt->define_merge_direction();
+        nb_direction = recv_btt->define_nb_direction(merge_dir);
+        idx_nb = recv_btt->neighbor_idx(nb_direction);
+        uint64_t int_neighbor_idx = index_of(idx_nb, GRID_DIMS);
+        uint64_t self_idx = index_of(recv_btt->index, GRID_DIMS);
+        while(!inside_rectangle(idx_nb, GRID_DIMS)){
+            if(idx_nb.first >= GRID_DIMS.first){
+                return;
+            }else if(idx_nb.second >= GRID_DIMS.second){
+                recv_btt->nb_distance.first = 1;
+                recv_btt->nb_distance.second = 0;
+            }else{
+                recv_btt->nb_distance.first *= 2;
+                recv_btt->nb_distance.second *= 2;
+            }
+        }
+        G_waiting_lock.lock();
+        if(G_waiting_neighbor.find(int_neighbor_idx) == G_waiting_neighbor.end()){
+            G_waiting_neighbor[int_neighbor_idx] = new std::vector<boundary_tree_task *>();
+        }
+        G_waiting_neighbor[int_neighbor_idx]->push_back(recv_btt);
+        G_waiting_lock.unlock();
+    }
     message reply = message(0);
     std::string s_reply = hps::to_string<message>(reply);
     auto reply_return = sock.send(zmq::message_t(s_reply), zmq::send_flags::none);
+    // std::cout << " --- reply sent\n";
 }
 
 
@@ -375,15 +473,16 @@ void process_task_request(message &recv_msg, zmq::socket_t &sock){
     }else if(G_num_merges < G_total_merges){
         reply.type = MSG_MERGE_BOUNDARY_TREE;
         merge_btrees_task *btt;
+        // std::cout << "try to get task\n";
         if(G_merge_bag.get_task(btt)){
-            // btt->bt1->print_idx(" ---- ");
-            // btt->bt2->print_idx();
+            // std::cout << "got task " << btt->bt1->index_to_string() << " " << btt->bt2->index_to_string() << " d "<< int_pair_to_string(btt->distance) << "\n";
+
             reply.content = hps::to_string(*btt);
             // reply.size = reply.content.size();
-            // std::cout << "sending merge " << btt->bt1->index_to_string() << " " << btt->bt2->index_to_string() << "\n";
+            // std::cout << "sending merge " << btt->bt1->index_to_string() << " " << btt->bt2->index_to_string() << " distance "<< int_pair_to_string(btt->distance) << "\n";
         }
 
-    }else if(G_num_merges == G_total_merges && G_updates_sent < G_total_tiles){
+    }else if(G_num_merges >= G_total_merges && G_updates_sent < G_total_tiles){
         reply.type = MSG_UPDATE_BOUNDARY_TREE;
         // std::cout << "sending update\n";
         // if(G_got_full_btree.find(recv_msg.content) == G_got_full_btree.end() || G_got_full_btree[recv_msg.content] == false){
@@ -415,6 +514,8 @@ void process_task_request(message &recv_msg, zmq::socket_t &sock){
     zmq::message_t msg_reply(reply_s);
     sock.send(msg_reply, zmq::send_flags::none);
 }
+
+
 
 void manager_recv(zmq::socket_t &sock){
 
@@ -462,7 +563,7 @@ void manager_recv(zmq::socket_t &sock){
         }
         // std::cout << "end iteration<--------\n";
     }
-    G_bound_trees.notify_end();
+    // G_bound_trees.notify_end();
     // std::cout << "\n==============\nend manager_recv\n";
     
     
@@ -511,10 +612,10 @@ int main(int argc, char *argv[]){
     std::thread fill(fill_input_bag);
     std::thread receiver(manager_recv, std::ref(sock));
     // std::thread pair_maker(search_pair_naive);
-    std::thread pair_maker(search_pair);
+    // std::thread pair_maker(search_pair);
 
     fill.join();
-    pair_maker.join();
+    // pair_maker.join();
     receiver.join();
     
 }
