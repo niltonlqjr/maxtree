@@ -32,6 +32,11 @@ enum neighbor_direction{
 static const std::vector<std::pair<int32_t, int32_t>> NEIGHBOR_DIRECTION = {
     {1,0}, {0,1}, {-1,0}, {0,-1}
 };
+
+static const std::vector<std::string> NamesDirectionBorders({
+    "NB_AT_BOTTOM",  "NB_AT_RIGHT",   "NB_AT_TOP", "NB_AT_LEFT"
+});
+
 enum merge_directions{
     MERGE_HORIZONTAL_BORDER, MERGE_VERTICAL_BORDER
 };

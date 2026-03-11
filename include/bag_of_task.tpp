@@ -54,6 +54,7 @@ bool bag_of_tasks<Task>::get_task(Task &ret){
         ret = this->tasks->front();
         this->tasks->pop_front();
         this->num_task--;
+        this->wakeup_workers();
         this->no_task.notify_all();
         return true;
     // }else{
