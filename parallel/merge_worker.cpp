@@ -259,10 +259,19 @@ void merge_tiles(message &msg_work, worker *w){
     w->send_btree_task(&btt,MSG_SEND_MERGED_TREE);
     s = "sent: "  + btt.bt->index_to_string() ;
     s += " {" + mbtt.bt1->index_to_string() + " " + mbtt.bt2->index_to_string() + "}\n";
-    std::cout << s;
+    // std::cout << s;
+}
+
+void update_tree(maxtree *m){
+    m=update_task->mt;
+    m->update_from_boundary_tree(G_full_bound_tree);
+    m->filter(G_lambda);
+    std::string output_name = G_out_name + std::to_string(m->grid_i)+"-"+std::to_string(m->grid_j)+"."+G_out_ext;
 }
 
 bool do_work(vips::VImage *img_in, worker *w){
+    maxtree_task *update_task;
+    maxtree *m;
     message msg_work = w->request_work();
     
     // std::cout << "===============> type:"<< msg_work.type << " -> " << NamesMessageType[msg_work.type] << "<===============\n";
@@ -271,22 +280,13 @@ bool do_work(vips::VImage *img_in, worker *w){
     }else if(msg_work.type == MSG_MERGE_BOUNDARY_TREE){
         merge_tiles(msg_work, w);
     }else if(msg_work.type == MSG_UPDATE_BOUNDARY_TREE){
-        maxtree_task *update_task;
-        maxtree *m;
-        G_maxtrees.get_task_by_position(update_task,0);
-        std::cout << "updateing tile: " << update_task->mt->grid_i << "," << update_task->mt->grid_j << "\n";
+        
+        G_maxtrees.get_task(update_task);
         receive_global_boundary_tree(msg_work);
-        m=update_task->mt;
-        m->update_from_boundary_tree(G_full_bound_tree);
-        m->filter(G_lambda);
-        std::string output_name = G_out_name + std::to_string(m->grid_i)+"-"+std::to_string(m->grid_j)+"."+G_out_ext;
+        update_tree(m);
         m->save(output_name);
-        // std::cout << "update boundary tree of image tiles not implemented yet\n";
-        // if(G_maxtrees.empty()){
-        //     return false;
-        // }
-        return true;
-    }else if(msg_work.type == MSG_NULL){
+        std::cout << "file save:" << output_name << "\n";
+    }else if(msg_work.type == MSG_COMMAND && msg_work.content == "END"){
         return false;
     }
     return true;
