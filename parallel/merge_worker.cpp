@@ -174,22 +174,7 @@ void registry_new_worker(uint32_t local_id, std::string server_addr, std::unorde
     // sleep(1);
 }
 
-void receive_global_boundary_tree(message &m){
-    if(!G_full_bound_tree_received){
-        std::unique_lock<std::mutex> lock(G_full_bound_tree_lock);
-        if(m.content == ""){
-            G_cv.wait(lock);
-        }
-        // std::cout << "receiving global boundary tree...\n";
-        if(!G_full_bound_tree_received){
-            // std::cout << "content:\n" << m.content << "\n========\n";
-            G_full_bound_tree = new boundary_tree(hps::from_string<boundary_tree>(m.content));
-            G_full_bound_tree_received = true;
-        }
-        G_cv.notify_all();
-        // std::cout << "received\n";
-    }
-}
+
 
 void registry_threads(uint32_t num_th, std::string server_addr, std::string self_addr){
     // std::cout << "number of threads "<< num_th << "\n";  
@@ -263,10 +248,26 @@ void merge_tiles(message &msg_work, worker *w){
 }
 
 void update_tree(maxtree *m){
-    m=update_task->mt;
     m->update_from_boundary_tree(G_full_bound_tree);
     m->filter(G_lambda);
-    std::string output_name = G_out_name + std::to_string(m->grid_i)+"-"+std::to_string(m->grid_j)+"."+G_out_ext;
+    
+}
+
+void receive_global_boundary_tree(message &m){
+    if(!G_full_bound_tree_received){
+        std::unique_lock<std::mutex> lock(G_full_bound_tree_lock);
+        if(m.content == ""){
+            G_cv.wait(lock);
+        }
+        // std::cout << "receiving global boundary tree...\n";
+        if(!G_full_bound_tree_received){
+            // std::cout << "content:\n" << m.content << "\n========\n";
+            G_full_bound_tree = new boundary_tree(hps::from_string<boundary_tree>(m.content));
+            G_full_bound_tree_received = true;
+        }
+        G_cv.notify_all();
+        // std::cout << "received\n";
+    }
 }
 
 bool do_work(vips::VImage *img_in, worker *w){
@@ -283,7 +284,9 @@ bool do_work(vips::VImage *img_in, worker *w){
         
         G_maxtrees.get_task(update_task);
         receive_global_boundary_tree(msg_work);
+        m=update_task->mt;
         update_tree(m);
+        std::string output_name = G_out_name + std::to_string(m->grid_i)+"-"+std::to_string(m->grid_j)+"."+G_out_ext;
         m->save(output_name);
         std::cout << "file save:" << output_name << "\n";
     }else if(msg_work.type == MSG_COMMAND && msg_work.content == "END"){
