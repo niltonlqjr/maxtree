@@ -216,8 +216,8 @@ bool boundary_tree_task::can_merge_with(boundary_tree_task &btt2){
     auto d = this->nb_distance;
     auto t1 = this->index;
     auto t2 = btt2.index;
-    // return (this->nb_distance == btt2.nb_distance) && 
-    return (t1.first +  d.first  == t2.first  || t2.first  + d.first  == t1.first) && 
+    return (this->nb_distance == btt2.nb_distance) && 
+           (t1.first +  d.first  == t2.first  || t2.first  + d.first  == t1.first) && 
            (t1.second + d.second == t2.second || t2.second + d.second == t1.second);
 }
 
@@ -296,7 +296,8 @@ merge_btrees_task::merge_btrees_task(boundary_tree_task *btt1, boundary_tree_tas
     // std::cout << "distances: btt1 " << btt1->bt->index_to_string() << " "<< int_pair_to_string(btt1->nb_distance) << " btt2 "<< btt2->bt->index_to_string() << " " << int_pair_to_string(btt2->nb_distance)<< "\n";
     
     if(btt1->nb_distance != btt2->nb_distance){
-        throw std::runtime_error("Invalid distance of tiles\n");
+        std::string msg_err = "Invalid distance of tiles" + btt1->bt->index_to_string() + " and " + btt2->bt->index_to_string() + "\n";
+        throw std::runtime_error(msg_err);
     }else{
         distance = btt1->nb_distance;
     }

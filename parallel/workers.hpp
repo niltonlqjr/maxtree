@@ -96,6 +96,7 @@ class worker{
         
         void send_boundary_tree(boundary_tree *bt);
         void send_btree_task(boundary_tree_task *btt, enum message_type tp);
+
 };
 
 #endif
