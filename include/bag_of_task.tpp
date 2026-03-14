@@ -139,7 +139,7 @@ int bag_of_tasks<Task>::num_waiting(){
 }
 
 template <class Task>
-int bag_of_tasks<Task>::get_num_task(){
+int bag_of_tasks<Task>::size(){
     std::unique_lock<std::mutex> l(this->lock);
     return this->num_task;
 }
@@ -158,10 +158,9 @@ bool bag_of_tasks<Task>::empty(){
 
 template <class Task>
 template <class T>
-uint64_t bag_of_tasks<Task>::search_by_function(T value, T function(Task), bool lock){
-    if(lock){
-        std::unique_lock<std::mutex> l(this->lock);
-    }
+uint64_t bag_of_tasks<Task>::search_by_function(T value, T function(Task)){
+    std::unique_lock<std::mutex> l(this->lock);
+    
     uint64_t i;
     for(i = 0; i < this->tasks->size(); i++){
         if(value == function(this->tasks->at(i))){
@@ -308,7 +307,7 @@ int prio_bag_of_tasks<Task>::num_waiting(){
 }
 
 template <class Task>
-int prio_bag_of_tasks<Task>::get_num_task(){
+int prio_bag_of_tasks<Task>::size(){
     std::unique_lock<std::mutex> l(this->lock);
     return this->num_task;
 }
@@ -327,10 +326,8 @@ bool prio_bag_of_tasks<Task>::empty(){
 
 template <class Task>
 template <class T>
-uint64_t prio_bag_of_tasks<Task>::search_by_function(T value, T function(Task), bool lock){
-    if(lock){
-        std::unique_lock<std::mutex> l(this->lock);
-    }
+uint64_t prio_bag_of_tasks<Task>::search_by_function(T value, T function(Task)){
+    std::unique_lock<std::mutex> l(this->lock);
     uint64_t i;
     for(i = 0; i < this->tasks->size(); i++){
         if(value == function(this->tasks->at(i))){
@@ -368,7 +365,7 @@ void ordered_bag_of_tasks<Task>::insert_task(Task t){
     std::unique_lock<std::mutex> l(this->lock);
     this->tasks->push_back(t);
     size_t i=this->tasks->size()-1;
-    while(i > 0 && this->tasks->at(i-1) > t){
+    while(i > 0 && this->tasks->at(i-1) < t){
         this->tasks->at(i) = this->tasks->at(i-1);
         i--;
     }
@@ -490,7 +487,7 @@ int ordered_bag_of_tasks<Task>::num_waiting(){
 }
 
 template <class Task>
-int ordered_bag_of_tasks<Task>::get_num_task(){
+int ordered_bag_of_tasks<Task>::size(){
     std::unique_lock<std::mutex> l(this->lock);
     return this->num_task;
 }
@@ -509,10 +506,9 @@ bool ordered_bag_of_tasks<Task>::empty(){
 
 template <class Task>
 template <class T>
-uint64_t ordered_bag_of_tasks<Task>::search_by_function(T value, T function(Task), bool lock){
-    if(lock){
-        std::unique_lock<std::mutex> l(this->lock);
-    }
+uint64_t ordered_bag_of_tasks<Task>::search_by_function(T value, T function(Task)){
+    std::unique_lock<std::mutex> l(this->lock);
+
     uint64_t i;
     for(i = 0; i < this->tasks->size(); i++){
         if(value == function(this->tasks->at(i))){

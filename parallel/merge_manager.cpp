@@ -104,7 +104,7 @@ void search_pair_naive(){
     bool change_dir;
     std::string s;
     uint64_t self_int_idx, nb_int_idx;
-    while(G_merge_bag.is_running() || G_bound_trees.get_num_task() > 1){
+    while(G_merge_bag.is_running() || G_bound_trees.size() > 1){
 
         bool got = G_bound_trees.get_task(btt);
         if(got){
@@ -165,7 +165,7 @@ void search_pair(){
     bool change_dir;
     std::string s;
     uint64_t self_int_idx, nb_int_idx;
-    while(G_merge_bag.is_running() || G_bound_trees.get_num_task() > 1){
+    while(G_merge_bag.is_running() || G_bound_trees.size() > 1){
 
         bool got = G_bound_trees.get_task(btt);
         if(got){
@@ -260,18 +260,13 @@ TWorkerIdx get_worker_idx(worker *w){
     return w->get_index();
 }
 
-merge_btrees_task *schedule_merge(TWorkerIdx id){
-    size_t position = G_pool_of_workers.search_worker_by_function<TWorkerIdx>(id, get_worker_idx);
-    double prop_pos = (double) position / G_pool_of_workers.size();
-
-    size_t task_pos = G_merge_bag.get_num_task() * prop_pos;
-    merge_btrees_task *mbt;
-    auto got = G_merge_bag.get_task_by_position(mbt, task_pos);
-    if(got){
-        return mbt;
-    }
-    return nullptr;
+std::pair<uint64_t, uint64_t> index_int_pair(merge_btrees_task *t){
+    std::pair<uint32_t, uint32_t> pidx_bt1 = std::make_pair(t->bt1->grid_i, t->bt1->grid_j);
+    std::pair<uint32_t, uint32_t> pidx_bt2 = std::make_pair(t->bt2->grid_i, t->bt2->grid_j);
     
+    uint64_t idx_bt1 = index_of(pidx_bt1, GRID_DIMS);
+    uint64_t idx_bt2 = index_of(pidx_bt2, GRID_DIMS);
+    return std::make_pair(idx_bt1, idx_bt2);
 }
 
 void prepare_final_tree(message &reply, std::string worker){
@@ -290,6 +285,56 @@ void prepare_final_tree(message &reply, std::string worker){
     }
 }
 
+worker *choose_worker(merge_btrees_task *t){
+    worker *w;
+    size_t pos = G_merge_bag.search_by_function(index_int_pair(t), index_int_pair);
+    double prop_pos = (double) pos / G_merge_bag.size();
+    size_t worker_pos = std::round(G_pool_of_workers.size() * prop_pos);
+    try{
+        w = G_pool_of_workers.at(worker_pos);
+    }catch(...){
+        w = nullptr;
+    }
+    return w;
+
+}
+
+merge_btrees_task *align_worker_with_task(TWorkerIdx id){ // this function is called only when we have more workers than tasks (at least the same amount of workers and tasks)
+    merge_btrees_task *ret;
+    size_t pos = G_pool_of_workers.search_worker_by_function<TWorkerIdx>(id, get_worker_idx);
+    if(G_merge_bag.get_task_by_position(ret, pos)){
+        return ret;
+    }else{
+        return nullptr;
+    }
+}
+
+merge_btrees_task *choose_task(TWorkerIdx id){
+    size_t position = G_pool_of_workers.search_worker_by_function<TWorkerIdx>(id, get_worker_idx);
+    double prop_pos = (double) position / G_pool_of_workers.size();
+
+    size_t task_pos = std::round(G_merge_bag.size() * prop_pos);
+    merge_btrees_task *mbt;
+    auto got = G_merge_bag.get_task_by_position(mbt, task_pos);
+    if(got){
+        return mbt;
+    }
+    return nullptr;
+    
+}
+
+merge_btrees_task *get_balanced_task(TWorkerIdx idx){
+    merge_btrees_task *ret_task;
+    if(G_merge_bag.size() > G_pool_of_workers.size()){ // there are more tasks than worker, so, task must be "chosen" by worker
+        ret_task = choose_task(idx);
+    }else{ // there at least the same amount of  workers and task, so we need to discover the worker for the greater task doing a greedy search
+        
+        
+        
+    }
+    return ret_task;
+}
+
 void process_task_request(message &recv_msg, zmq::socket_t &sock){
     TWorkerIdx worker_idx = hps::from_string<TWorkerIdx>(recv_msg.content);
     message reply;
@@ -299,13 +344,11 @@ void process_task_request(message &recv_msg, zmq::socket_t &sock){
     // }else if(!G_merge_bag.empty()){ // there is merge to be done
     }else if(!G_merge_bag.empty()){
         reply.type = MSG_MERGE_BOUNDARY_TREE;
-        merge_btrees_task *btt;
-        if(G_merge_bag.get_task(btt)){
-            // btt->bt1->print_idx(" ---- ");
-            // btt->bt2->print_idx();
-            reply.content = hps::to_string(*btt);
-            // reply.size = reply.content.size();
-        }
+        merge_btrees_task *mbt;
+
+        // if(G_merge_bag.get_task(mbt)){
+        //     reply.content = hps::to_string(*mbt);
+        // }
 
     }else if(!G_merge_bag.is_running()){ // final boundary tree is ready
         prepare_final_tree(reply,recv_msg.content);

@@ -32,10 +32,10 @@ class bag_of_tasks{
         void wait_empty();
         void notify_end();
         int num_waiting();
-        int get_num_task();
+        int size();
         void print();
         bool empty();
-        template <class T> uint64_t search_by_function(T value, T function(Task), bool lock=false);
+        template <class T> uint64_t search_by_function(T value, T function(Task));
 };
 
 
@@ -63,10 +63,10 @@ class prio_bag_of_tasks{
         void wait_empty();
         void notify_end();
         int num_waiting();
-        int get_num_task();
+        int size();
         void print();
         bool empty();
-        template <class T> uint64_t search_by_function(T value, T function(Task), bool lock=false);
+        template <class T> uint64_t search_by_function(T value, T function(Task));
 };
 
 
@@ -94,10 +94,10 @@ class ordered_bag_of_tasks{
         void wait_empty();
         void notify_end();
         int num_waiting();
-        int get_num_task();
+        int size();
         void print();
         bool empty();
-        template <class T> uint64_t search_by_function(T value, T function(Task), bool lock=false);
+        template <class T> uint64_t search_by_function(T value, T function(Task));
 };
 
 #include "bag_of_task.tpp"

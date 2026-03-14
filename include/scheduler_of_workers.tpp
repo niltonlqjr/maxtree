@@ -105,7 +105,7 @@ void ordered_scheduler_of_workers<Worker>::insert_worker(Worker w){
     // this->workers->insert(w);
     this->workers->push_back(w);
     size_t i=this->workers->size()-1;
-    while(i > 0 && this->workers->at(i-1) > w){
+    while(i > 0 && this->workers->at(i-1) < w){
         this->workers->at(i) = this->workers->at(i-1);
         i--;
     }

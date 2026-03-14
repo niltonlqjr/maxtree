@@ -197,7 +197,7 @@ void worker::search_pair(bag_of_tasks<boundary_tree_task *> &btrees_bag,
             idx_nb = btt->neighbor_idx(nb_direction);
             if(inside_rectangle(idx_nb, GRID_DIMS) && inside_rectangle(btt->index, GRID_DIMS)){
                 try{
-                    auto got_n = btrees_bag.get_task_by_field<std::pair<uint32_t,uint32_t>>(n, idx_nb, get_task_index);
+                    auto got_n = btrees_bag.get_task_by_function<std::pair<uint32_t,uint32_t>>(n, idx_nb, get_task_index);
                     
                     if(!got_n){
                         btrees_bag.insert_task(btt);
