@@ -14,6 +14,14 @@
 
 using namespace vips;
 
+
+void read_config(char conf_name[], std::string &port, std::string &protocol);
+void search_pair_naive();
+void search_pair();
+bool mbt_lesser_than(merge_btrees_task *l, merge_btrees_task *r);
+std::pair<uint32_t, uint32_t> next_tile(std::pair<uint32_t, uint32_t> p);
+
+
 std::string self_address;
 
 uint32_t G_glines, G_gcolumns;
@@ -36,8 +44,10 @@ ordered_scheduler_of_workers <worker*> G_pool_of_workers;
 
 bag_of_tasks<input_tile_task* > G_input_tiles;
 bag_of_tasks<boundary_tree_task *> G_bound_trees;
+bag_of_tasks<merge_btrees_task *> G_merge_bag;
 // prio_bag_of_tasks<merge_btrees_task *> G_merge_bag;
-ordered_bag_of_tasks<merge_btrees_task *> G_merge_bag;
+
+// ordered_bag_of_tasks<merge_btrees_task *> G_merge_bag(mbt_lesser_than);
 
 uint64_t G_total_merges;
 
@@ -50,7 +60,7 @@ std::unordered_map<std::string, bool> G_got_full_btree;
 std::unordered_map<uint64_t, std::vector<boundary_tree_task*>> G_waiting;
 std::mutex G_waiting_lock;
 
-void read_config(char conf_name[], std::string &port, std::string &protocol);
+
 
 bool reply_to(std::string ip, worker *w){
     zmq::context_t context(1);
@@ -213,6 +223,9 @@ void search_pair(){
 
 }
 
+bool mbt_lesser_than(merge_btrees_task *l, merge_btrees_task *r){
+    return l->size() < r->size();
+}
 
 std::pair<uint32_t, uint32_t> next_tile(std::pair<uint32_t, uint32_t> p){
     std::pair<uint32_t, uint32_t> newp;
@@ -252,6 +265,7 @@ void prepare_tile(message &reply){
     }else{
         idx_reply = GRID_DIMS;
     }
+    std::cout << "tile: " << int_pair_to_string(idx_reply) << "\n";
     reply.type = MSG_TILE_IDX;
     reply.content = hps::to_string<std::pair<uint32_t,uint32_t>>(idx_reply);
 }
@@ -346,9 +360,12 @@ void process_task_request(message &recv_msg, zmq::socket_t &sock){
         reply.type = MSG_MERGE_BOUNDARY_TREE;
         merge_btrees_task *mbt;
 
-        // if(G_merge_bag.get_task(mbt)){
-        //     reply.content = hps::to_string(*mbt);
-        // }
+        if(G_merge_bag.get_task(mbt)){
+            reply.content = hps::to_string(*mbt);
+            std::cout << "mbt:" << mbt->bt1->index_to_string() << " " << mbt->bt2->index_to_string() << "\n";
+        }else{
+            reply.content = "";
+        }
 
     }else if(!G_merge_bag.is_running()){ // final boundary tree is ready
         prepare_final_tree(reply,recv_msg.content);

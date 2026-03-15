@@ -241,7 +241,7 @@ void merge_tiles(message &msg_work, worker *w){
     // s+="merge distance: " + int_pair_to_string(mbtt.distance) + "\n";
     // std::cout << s;
     boundary_tree_task btt = boundary_tree_task(merged_tree, nb_dist);
-    w->send_btree_task(&btt,MSG_SEND_MERGED_TREE);
+    w->send_btree_task(&btt, MSG_SEND_MERGED_TREE);
     s = "sent: "  + btt.bt->index_to_string() ;
     s += " {" + mbtt.bt1->index_to_string() + " " + mbtt.bt2->index_to_string() + "}\n";
     // std::cout << s;
@@ -275,7 +275,9 @@ bool do_work(vips::VImage *img_in, worker *w){
     maxtree *m;
     message msg_work = w->request_work();
     
+    // if(msg_work.type != MSG_NULL)
     // std::cout << "===============> type:"<< msg_work.type << " -> " << NamesMessageType[msg_work.type] << "<===============\n";
+    
     if(msg_work.type == MSG_TILE_IDX){
         request_process_tile(img_in, msg_work, w);
     }else if(msg_work.type == MSG_MERGE_BOUNDARY_TREE){
