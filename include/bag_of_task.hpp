@@ -54,13 +54,13 @@ class prio_bag_of_tasks: public bag_of_tasks<Task> {
 };
 
 
-template <class Task>
+template <class Task, class CompareLesser = std::less<Task> >
 class ordered_bag_of_tasks: public bag_of_tasks<Task>{
     protected:
         std::deque<Task> *tasks;
-        bool (*compare)(Task, Task);
+        // bool (*compare)(Task, Task);
     public:
-        ordered_bag_of_tasks(bool compare(Task, Task) = std::less<Task>{}, bool start_running = false);
+        ordered_bag_of_tasks(bool start_running = false);
         ~ordered_bag_of_tasks();
         void insert_task(Task t);
 

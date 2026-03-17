@@ -232,26 +232,25 @@ bool prio_bag_of_tasks<Task>::get_task(Task &ret, int priority){
 
 
 
-template <class Task>
-ordered_bag_of_tasks<Task>::ordered_bag_of_tasks(bool compare(Task, Task), bool start_running){
+template <class Task, class CompareLesser>
+ordered_bag_of_tasks<Task,CompareLesser>::ordered_bag_of_tasks(bool start_running){
     this->tasks = new std::deque<Task>();
     this->num_task = 0;
     this->running = start_running;
     this->waiting = 0;
-    this->compare = compare;
 }
-template <class Task>
-ordered_bag_of_tasks<Task>::~ordered_bag_of_tasks(){
+template <class Task, class CompareLesser>
+ordered_bag_of_tasks<Task,CompareLesser>::~ordered_bag_of_tasks(){
     delete this->tasks;
 }
 
-template <class Task>
-void ordered_bag_of_tasks<Task>::insert_task(Task t){
+template <class Task, class CompareLesser>
+void ordered_bag_of_tasks<Task,CompareLesser>::insert_task(Task t){
     std::unique_lock<std::mutex> l(this->lock);
     this->tasks->push_back(t);
     size_t i=this->tasks->size()-1;
     // while(i > 0 && this->tasks->at(i-1) < t){
-    while(i > 0 && this->compare(this->tasks->at(i-1) , t)){
+    while(i > 0 && CompareLesser(this->tasks->at(i-1) , t)){
         this->tasks->at(i) = this->tasks->at(i-1);
         i--;
     }
