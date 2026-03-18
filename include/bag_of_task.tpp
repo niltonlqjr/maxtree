@@ -228,14 +228,9 @@ bool prio_bag_of_tasks<Task>::get_task(Task &ret, int priority){
     
 }
 
-
-
-
 /*==============================================================================================================
   ========================================     Ordered bag of tasks     ========================================
   ==============================================================================================================*/
-
-
 
 template <class Task, bool CompareLesser(Task, Task)>
 ordered_bag_of_tasks<Task, CompareLesser>::ordered_bag_of_tasks(bool start_running){

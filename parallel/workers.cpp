@@ -372,7 +372,10 @@ void worker::registry(){
     auto resp_val = this->sock.recv(reply_0mq, zmq::recv_flags::none);
     TWorkerIdx reply; // = hps::from_string<TWorkerIdx>(reply_0mq);
     memcpy(&reply, reply_0mq.data(), sizeof(TWorkerIdx));
+    // std::string str = "old id: " +std::to_string(this->get_index());
     this->update_index(reply);
+    // str+="new id: " +std::to_string(this->get_index());
+    // std::cout << str + "\n";
 }
 
 void worker::registry_at(std::string server_addr){
@@ -402,9 +405,10 @@ void worker::registry_at(std::string server_addr){
 message worker::request_work(){
     // std::cout << "request_work\n";
     message request(this->self_address, this->self_address.size(), MSG_GET_TASK, this->id);
-    std::string s_msg = hps::to_string(request);
+    
+    std::string s_msg = hps::to_string<message>(request);
     zmq::message_t msg_0mq(s_msg);
-    // std::cout << "sending:" << s_msg << "\n to " << this->manager<< "\n";
+    
     // this->sock.send(msg_0mq,zmq::send_flags::none);
     this->sock.send(msg_0mq, zmq::send_flags::none);
     // std::cout << "sent\n";
@@ -519,4 +523,9 @@ void worker::send_boundary_tree(boundary_tree *bt){
     auto _r = this->sock.recv(reply,zmq::recv_flags::none);
 
     
+}
+
+
+bool worker_lesser_than(worker *l, worker*r){
+    return l->get_process_power() < r->get_process_power();
 }

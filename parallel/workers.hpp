@@ -99,4 +99,5 @@ class worker{
 
 };
 
+bool worker_lesser_than(worker *l, worker*r);
 #endif

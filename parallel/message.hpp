@@ -20,12 +20,12 @@ class message{
 
         template <class B>
         void serialize(B &buf) const{
-            buf << (unsigned int) this->type << this->size << this->content;
+            buf << (unsigned int) this->type << this->size << this->content << this->sender;
         }
 
         template <class B>
         void parse(B &buf){
-            buf >> (unsigned int&) this->type >> this->size >> this->content;
+            buf >> (unsigned int&) this->type >> this->size >> this->content >> this->sender;
         }         
 };
 
