@@ -290,7 +290,7 @@ void prepare_final_tree(message &reply, std::string worker){
         if(G_reply_btt == nullptr){
             G_bound_trees.get_task(G_reply_btt);
             G_reply_bt = G_reply_btt->bt;
-            std::cout << "Final tree got from bag. Index: "<< G_reply_bt->index_to_string() << "\n\n" ;
+            // std::cout << "Final tree got from bag. Index: "<< G_reply_bt->index_to_string() << "\n\n" ;
         }
         reply.content = hps::to_string<boundary_tree>(*G_reply_bt);
         // G_reply_bt->print_tree();
@@ -301,11 +301,11 @@ void prepare_final_tree(message &reply, std::string worker){
 }
 
 merge_btrees_task *align_worker_with_task(TWorkerIdx id){ // this function is called only when we have more workers than tasks (at least the same amount of workers and tasks)
-    std::cout << "align task and worker\n";
+    // std::cout << "align task and worker\n";
     merge_btrees_task *ret;
     size_t position = G_pool_of_workers.search_worker_by_function<TWorkerIdx>(id, get_worker_idx);
     bool got = G_merge_bag.get_task_by_position(ret, position);
-    std::cout << "position in merge bag: " << position<< "\n";
+    // std::cout << "position in merge bag: " << position<< "\n";
     if(got){
         return ret;
     }
@@ -314,10 +314,10 @@ merge_btrees_task *align_worker_with_task(TWorkerIdx id){ // this function is ca
 }
 
 merge_btrees_task *choose_task(TWorkerIdx id){
-    std::cout << "worker " << id << " chosing task\n";
+    // std::cout << "worker " << id << " chosing task\n";
     size_t position = G_pool_of_workers.search_worker_by_function<TWorkerIdx>(id, get_worker_idx);
     double prop_pos = (double) position / G_pool_of_workers.size();
-    std::cout << "position in merge bag: " << position<< "\n";
+    // std::cout << "position in merge bag: " << position<< "\n";
     size_t task_pos = std::round(G_merge_bag.size() * prop_pos);
     merge_btrees_task *mbt;
     auto got = G_merge_bag.get_task_by_position(mbt, task_pos);
@@ -367,7 +367,7 @@ void process_task_request(message &recv_msg, zmq::socket_t &sock){
         mbt = GET_MERGE_TASK(worker_idx); // GET_MERGE_TASK defined as macro to easier and more efficient replace of function
         if(mbt!=nullptr){
             reply.content = hps::to_string(*mbt);
-            std::cout << "mbt:" << mbt->bt1->index_to_string() << " " << mbt->bt2->index_to_string() << "\n";
+            // std::cout << "mbt:" << mbt->bt1->index_to_string() << " " << mbt->bt2->index_to_string() << "\n";
         }else{
             reply.type = MSG_NULL;
             reply.content = "";
@@ -376,12 +376,12 @@ void process_task_request(message &recv_msg, zmq::socket_t &sock){
     }else if(!G_merge_bag.is_running()){ // final boundary tree is ready
         prepare_final_tree(reply,recv_msg.content);
         G_updates_sent++;
-        std::cout << "updates sent " << G_updates_sent << "\n"; 
+        // std::cout << "updates sent " << G_updates_sent << "\n"; 
     }else if(G_updates_sent > G_total_tiles){
         reply.type = MSG_COMMAND;
         reply.content = "END";
         G_finished_workers++;
-        std::cout << "finish work message sent";
+        // std::cout << "finish work message sent";
         // reply.size = 0;
     }
     reply.size = reply.content.size();
@@ -413,8 +413,8 @@ void manager_recv(zmq::socket_t &sock){
         std::string rec_msg;
         rec_msg = request.to_string();
         message recv_msg = hps::from_string<message>(rec_msg);
-        std::cout << "recv_msg id:" << recv_msg.sender ;
-        std::cout << " type:"<< recv_msg.type << " -> " << NamesMessageType[recv_msg.type] << "\n";
+        
+        // std::cout << " type:"<< recv_msg.type << " -> " << NamesMessageType[recv_msg.type] << "\n";
         if(recv_msg.type == MSG_REGISTRY){
             registry_worker(recv_msg, sock);
         }else if(recv_msg.type == MSG_BOUNDARY_TREE){

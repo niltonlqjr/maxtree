@@ -2,7 +2,7 @@ script_dir=$(dirname "$0")
 if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
     echo "usage $0 [worker config file]"
     exit
-elif [ -z $1 ] || [ -f ${worker_config} ]; then
+elif [ -z $1 ] || ! [ -f ${worker_config} ]; then
     worker_config=./${script_dir}/../../configs/worker/worker_config_example.txt
     echo "No configuration file found... Using ${worker_config}"
 else

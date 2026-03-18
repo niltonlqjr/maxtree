@@ -1,4 +1,6 @@
 #include <vips/vips8>
+// #include <vips/image.h> // to include VipsAccess enum
+
 #include <iostream>
 #include <vector>
 #include <deque>
@@ -40,6 +42,7 @@ bag_of_tasks<maxtree_task *> G_maxtrees;
 // bag_of_tasks<boundary_tree_task *> boundary_trees;
 // bag_of_tasks<maxtree_task *> maxtree_dest;
 
+VipsAccess G_vips_access;
 
 std::string G_server_ip, G_self_ip;
 std::string G_server_port, G_self_port;
@@ -145,6 +148,15 @@ void read_config(char conf_name[]){
     }else if(str_save == "no_save"){
         G_out_save_type = NO_SAVE;
     }
+
+    
+    auto str_vips_access = get_field(configs, "vips_access", "VIPS_ACCESS_RANDOM");
+    try{
+        G_vips_access = VipsAccesTypeVector[str_vips_access];
+    }catch(...){
+        std::cerr << "Access type " << str_vips_access << "not defined or not supported.\nUsing VIPS_ACCESS_RANDOM.\n";
+    }
+    
 
     // std::cout << "configurations:\n";
     print_unordered_map(configs);
@@ -353,7 +365,7 @@ int main(int argc, char *argv[]){
     // check https://github.com/libvips/libvips/discussions/4063 for improvements on read
     in = new vips::VImage(
             vips::VImage::new_from_file(G_input_name.c_str(),
-            VImage::option()->set("access",  VIPS_ACCESS_SEQUENTIAL)
+            VImage::option()->set("access",  G_vips_access)
         )
     );
 

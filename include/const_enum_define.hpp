@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <unordered_map>
+#include <map>
+#include <vips/image.h>
 
 #define NO_BORDER_LEVELROOT -1
 #define NO_BOUNDARY_PARENT -1
@@ -75,6 +77,13 @@ static std::vector<std::string> NamesMessageType({
     "MSG_NULL",       "MSG_REGISTRY",   "MSG_BOUNDARY_TREE",
     "MSG_GET_TASK",   "MSG_TILE_IDX",   "MSG_MERGE_BOUNDARY_TREE",
     "MSG_SEND_MERGED_TREE",           "MSG_UPDATE_BOUNDARY_TREE"
+});
+
+static std::map<std::string, VipsAccess> VipsAccesTypeVector({
+    {"VIPS_ACCESS_RANDOM",VIPS_ACCESS_RANDOM},
+    {"VIPS_ACCESS_SEQUENTIAL",VIPS_ACCESS_SEQUENTIAL},
+    {"VIPS_ACCESS_SEQUENTIAL_UNBUFFERED",VIPS_ACCESS_SEQUENTIAL_UNBUFFERED},
+    {"VIPS_ACCESS_LAST",VIPS_ACCESS_LAST}
 });
 
 #endif
