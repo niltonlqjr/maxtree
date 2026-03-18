@@ -54,7 +54,7 @@ class prio_bag_of_tasks: public bag_of_tasks<Task> {
 };
 
 
-template <class Task, class CompareLesser = std::less<Task> >
+template <class Task, bool CompareLesser(Task, Task)>
 class ordered_bag_of_tasks: public bag_of_tasks<Task>{
     protected:
         std::deque<Task> *tasks;

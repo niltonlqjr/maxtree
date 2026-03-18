@@ -300,7 +300,8 @@ bool do_work(vips::VImage *img_in, worker *w){
 void loop_worker(vips::VImage *img, std::string server_addr){
     worker *w=local_workers.get_best_worker(true);
     w->connect();
-    while(do_work(img,  w));
+    int it=0;
+    while(do_work(img,  w)); // std::cout << it++ << "\n";
     w->disconnect();
 }
 

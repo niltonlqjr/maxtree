@@ -364,3 +364,7 @@ merge_btrees_task::~merge_btrees_task(){
     // delete this->bt1;
     // delete this->bt2;
 }
+
+bool mbt_lesser_than(merge_btrees_task *l, merge_btrees_task *r){
+    return l->size() < r->size();
+}

@@ -4,6 +4,7 @@
 
 #include <zmq.hpp>
 
+#include "bag_of_task.hpp"
 #include "utils.hpp"
 #include "workers.hpp"
 #include "scheduler_of_workers.hpp"
@@ -12,15 +13,20 @@
 #include "message.hpp"
 #include "src/hps.h"
 
+
+
+
 using namespace vips;
 
 
 void read_config(char conf_name[], std::string &port, std::string &protocol);
 void search_pair_naive();
 void search_pair();
-bool mbt_lesser_than(merge_btrees_task *l, merge_btrees_task *r);
+
 std::pair<uint32_t, uint32_t> next_tile(std::pair<uint32_t, uint32_t> p);
 
+merge_btrees_task *get_naive_task(TWorkerIdx idx);
+merge_btrees_task *get_balanced_task(TWorkerIdx idx);
 
 std::string self_address;
 
@@ -44,10 +50,10 @@ ordered_scheduler_of_workers <worker*> G_pool_of_workers;
 
 bag_of_tasks<input_tile_task* > G_input_tiles;
 bag_of_tasks<boundary_tree_task *> G_bound_trees;
-bag_of_tasks<merge_btrees_task *> G_merge_bag;
+// bag_of_tasks<merge_btrees_task *> G_merge_bag;
 // prio_bag_of_tasks<merge_btrees_task *> G_merge_bag;
 
-// ordered_bag_of_tasks<merge_btrees_task *> G_merge_bag(mbt_lesser_than);
+ordered_bag_of_tasks<merge_btrees_task *, mbt_lesser_than> G_merge_bag;
 
 uint64_t G_total_merges;
 
@@ -59,7 +65,6 @@ std::unordered_map<std::string, bool> G_got_full_btree;
 
 std::unordered_map<uint64_t, std::vector<boundary_tree_task*>> G_waiting;
 std::mutex G_waiting_lock;
-
 
 
 bool reply_to(std::string ip, worker *w){
@@ -115,7 +120,7 @@ void search_pair_naive(){
     std::string s;
     uint64_t self_int_idx, nb_int_idx;
     while(G_merge_bag.is_running() || G_bound_trees.size() > 1){
-
+        // std::cout << "search pair naive\n";
         bool got = G_bound_trees.get_task(btt);
         if(got){
             self_int_idx = index_of(btt->index, GRID_DIMS);
@@ -223,9 +228,6 @@ void search_pair(){
 
 }
 
-bool mbt_lesser_than(merge_btrees_task *l, merge_btrees_task *r){
-    return l->size() < r->size();
-}
 
 std::pair<uint32_t, uint32_t> next_tile(std::pair<uint32_t, uint32_t> p){
     std::pair<uint32_t, uint32_t> newp;
@@ -265,7 +267,7 @@ void prepare_tile(message &reply){
     }else{
         idx_reply = GRID_DIMS;
     }
-    std::cout << "tile: " << int_pair_to_string(idx_reply) << "\n";
+    std::cout << "tile: " << int_pair_to_string(idx_reply) << "sent \n";
     reply.type = MSG_TILE_IDX;
     reply.content = hps::to_string<std::pair<uint32_t,uint32_t>>(idx_reply);
 }
@@ -314,19 +316,23 @@ worker *choose_worker(merge_btrees_task *t){
 }
 
 merge_btrees_task *align_worker_with_task(TWorkerIdx id){ // this function is called only when we have more workers than tasks (at least the same amount of workers and tasks)
+    std::cout << "align task and worker\n";
     merge_btrees_task *ret;
-    size_t pos = G_pool_of_workers.search_worker_by_function<TWorkerIdx>(id, get_worker_idx);
-    if(G_merge_bag.get_task_by_position(ret, pos)){
+    size_t position = G_pool_of_workers.search_worker_by_function<TWorkerIdx>(id, get_worker_idx);
+    bool got = G_merge_bag.get_task_by_position(ret, position);
+    std::cout << "position in merge bag: " << position<< "\n";
+    if(got){
         return ret;
-    }else{
-        return nullptr;
     }
+    return nullptr;
+    
 }
 
 merge_btrees_task *choose_task(TWorkerIdx id){
+    std::cout << "worker chosing task\n";
     size_t position = G_pool_of_workers.search_worker_by_function<TWorkerIdx>(id, get_worker_idx);
     double prop_pos = (double) position / G_pool_of_workers.size();
-
+    std::cout << "position in merge bag: " << position<< "\n";
     size_t task_pos = std::round(G_merge_bag.size() * prop_pos);
     merge_btrees_task *mbt;
     auto got = G_merge_bag.get_task_by_position(mbt, task_pos);
@@ -334,7 +340,6 @@ merge_btrees_task *choose_task(TWorkerIdx id){
         return mbt;
     }
     return nullptr;
-    
 }
 
 merge_btrees_task *get_balanced_task(TWorkerIdx idx){
@@ -342,31 +347,51 @@ merge_btrees_task *get_balanced_task(TWorkerIdx idx){
     if(G_merge_bag.size() > G_pool_of_workers.size()){ // there are more tasks than worker, so, task must be "chosen" by worker
         ret_task = choose_task(idx);
     }else{ // there at least the same amount of  workers and task, so we need to discover the worker for the greater task doing a greedy search
-        
-        
-        
+        ret_task = align_worker_with_task(idx);
     }
     return ret_task;
 }
+
+merge_btrees_task *get_naive_task(TWorkerIdx idx){
+    merge_btrees_task *ret_task;
+    if(G_merge_bag.get_task(ret_task)){
+        return ret_task;
+    }else{
+        return nullptr;
+    }
+    
+}
+
+
+#define GET_MERGE_TASK(idx) get_balanced_task(idx)
 
 void process_task_request(message &recv_msg, zmq::socket_t &sock){
     TWorkerIdx worker_idx = hps::from_string<TWorkerIdx>(recv_msg.content);
     message reply;
     reply.sender = 0;
+    // std::cout << G_merge_bag.size() << " merge task waiting\n";
     if(!G_input_tiles.empty()){ // there is tiles of image to read and calculate maxtree yet
         prepare_tile(reply);
     // }else if(!G_merge_bag.empty()){ // there is merge to be done
     }else if(!G_merge_bag.empty()){
+
         reply.type = MSG_MERGE_BOUNDARY_TREE;
         merge_btrees_task *mbt;
 
-        if(G_merge_bag.get_task(mbt)){
+        // if(G_merge_bag.get_task(mbt)){
+        //     reply.content = hps::to_string(*mbt);
+        //     std::cout << "mbt:" << mbt->bt1->index_to_string() << " " << mbt->bt2->index_to_string() << "\n";
+        // }else{
+        //     reply.content = "";
+        // }
+        mbt = GET_MERGE_TASK(worker_idx); // GET_MERGE_TASK defined as macro to easier and more efficient replace of function
+        if(mbt!=nullptr){
             reply.content = hps::to_string(*mbt);
             std::cout << "mbt:" << mbt->bt1->index_to_string() << " " << mbt->bt2->index_to_string() << "\n";
         }else{
             reply.content = "";
         }
-
+        std::cout << "reply merge with: '" << reply.content << "'\n";
     }else if(!G_merge_bag.is_running()){ // final boundary tree is ready
         prepare_final_tree(reply,recv_msg.content);
         G_updates_sent++;

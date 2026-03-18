@@ -122,4 +122,6 @@ bool operator<(comparable_task &l, comparable_task &r);
 bool operator>(comparable_task &l, comparable_task &r);
 bool operator==(comparable_task &l, comparable_task &r);
 
+bool mbt_lesser_than(merge_btrees_task *l, merge_btrees_task *r);
+
 #endif
