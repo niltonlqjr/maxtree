@@ -724,8 +724,8 @@ void maxtree::save(std::string name, enum maxtee_node_field f){
             data.push_back((uint8_t)this->at_pos(i)->gval);
         }
     }
-    vips::VImage out = vips::VImage::new_from_memory(data.data(), this->w * this->h * sizeof(uint8_t), this->w, this->h, 1, VIPS_FORMAT_UCHAR);
 
+    vips::VImage out = vips::VImage::new_from_memory(data.data(), this->w * this->h * sizeof(uint8_t), this->w, this->h, 1, VIPS_FORMAT_UCHAR);
     out.write_to_file(name.c_str());
     
 }

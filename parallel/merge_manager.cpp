@@ -241,7 +241,7 @@ void registry_worker(message &recv_msg, zmq::socket_t &sock){
     worker *w_at_manager = new worker(w_rec);
     w_at_manager->update_index(current_idx);
     G_pool_of_workers.insert_worker(w_at_manager);
-    G_got_full_btree[w_at_manager->get_self_address()] = false;
+    G_got_full_btree[w_at_manager->get_name()] = false;
     zmq::message_t msg_new_id(sizeof(TWorkerIdx));
     memcpy(msg_new_id.data(), &current_idx, sizeof(TWorkerIdx));
     auto reply_return = sock.send(msg_new_id, zmq::send_flags::none);
@@ -266,7 +266,7 @@ void prepare_tile(message &reply){
     }else{
         idx_reply = GRID_DIMS;
     }
-    std::cout << "tile: " << int_pair_to_string(idx_reply) << "sent \n";
+    std::cout << "tile: " << int_pair_to_string(idx_reply) << "sent to" << reply.content << "\n";
     reply.type = MSG_TILE_IDX;
     reply.content = hps::to_string<std::pair<uint32_t,uint32_t>>(idx_reply);
 }
@@ -290,8 +290,9 @@ void prepare_final_tree(message &reply, std::string worker){
         if(G_reply_btt == nullptr){
             G_bound_trees.get_task(G_reply_btt);
             G_reply_bt = G_reply_btt->bt;
-            // std::cout << "Final tree got from bag. Index: "<< G_reply_bt->index_to_string() << "\n\n" ;
+            std::cout << "Final tree got from bag. Index: "<< G_reply_bt->index_to_string() << "\n\n" ;
         }
+        std::cout << "tree "<< G_reply_bt->index_to_string() << " was put at reply to worker: " << worker << "\n\n" ;
         reply.content = hps::to_string<boundary_tree>(*G_reply_bt);
         // G_reply_bt->print_tree();
         G_got_full_btree[worker]=true;
@@ -356,6 +357,7 @@ void process_task_request(message &recv_msg, zmq::socket_t &sock){
     TWorkerIdx worker_idx = recv_msg.sender;
     message reply;
     reply.sender = 0;
+    reply.content = recv_msg.content;
     // std::cout << G_merge_bag.size() << " merge task waiting\n";
     if(!G_input_tiles.empty()){ // there is tiles of image to read and calculate maxtree yet
         prepare_tile(reply);
@@ -453,7 +455,8 @@ void fill_input_bag(){
 }
 
 void finish_workers(zmq::socket_t &sock){
-    std::cout << "finish_workers\n";
+    std::string sout = std::to_string(G_finished_workers) + " of " + std::to_string(G_total_workers) + " workers finisehd\n";
+    std::cout << sout;
     zmq::message_t request;
     message reply;
     while(G_finished_workers < G_total_workers){
@@ -469,6 +472,8 @@ void finish_workers(zmq::socket_t &sock){
         zmq::message_t msg_reply(reply_s);
         sock.send(msg_reply, zmq::send_flags::none);
         G_finished_workers++;
+        std::string sout = "total worker finished: " + std::to_string(G_finished_workers) + "\n";
+        std::cout << sout;
     }
 }
 

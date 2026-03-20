@@ -10,11 +10,11 @@ worker::worker(worker &w){
     this->attr = w.attr;
     this->id = w.id;
     this->manager = w.manager;
-    this->self_address = w.self_address;
+    this->name = w.name;
     this->connected = false;
 }
 
-worker::worker(TWorkerIdx id, std::string manager, std::string address, std::unordered_map<std::string, TWorkerAttr> *attr){
+worker::worker(TWorkerIdx id, std::string manager, std::string name, std::unordered_map<std::string, TWorkerAttr> *attr){
     if(attr == nullptr){
         this->attr = new std::unordered_map<std::string, double>();
     }else{
@@ -22,7 +22,7 @@ worker::worker(TWorkerIdx id, std::string manager, std::string address, std::uno
     }
     this->id = id;
     this->manager = manager;
-    this->self_address = address;
+    this->name = name;
     this->connected = false;
 }
 
@@ -30,7 +30,7 @@ worker::worker(){
     this->attr = new std::unordered_map<std::string, TWorkerAttr>();
     this->id = 0;
     this->manager = "";
-    this->self_address = "";
+    this->name = "";
     this->connected = false;
 }
 
@@ -56,8 +56,8 @@ Tprocess_power worker::get_process_power(){
     return (this->attr->at("MHZ") + this->attr->at("CACHE")) * this->attr->at("RAM") ;
 }
 
-std::string worker::get_self_address(){
-    return this->self_address;
+std::string worker::get_name(){
+    return this->name;
 }
 
 bool worker::operator<(worker &r) {
@@ -404,7 +404,7 @@ void worker::registry_at(std::string server_addr){
 
 message worker::request_work(){
     // std::cout << "request_work\n";
-    message request(this->self_address, this->self_address.size(), MSG_GET_TASK, this->id);
+    message request(this->name, this->name.size(), MSG_GET_TASK, this->id);
     
     std::string s_msg = hps::to_string<message>(request);
     zmq::message_t msg_0mq(s_msg);
@@ -438,34 +438,6 @@ void worker::disconnect(){
         this->sock.disconnect(this->manager);
     }
 }
-
-
-
-// std::pair<uint32_t,uint32_t> worker::request_tile(){
-//     zmq::context_t context(1);
-//     zmq::socket_t sock(context, zmq::socket_type::req);
-//     sock.connect(this->manager);
-
-//     std::pair<uint32_t,uint32_t> reply;
-//     std::string reply_str;
-
-//     std::string msg = hps::to_string(this->id);
-//     message request(msg, msg.size(), MSG_GET_TILE, this->address);
-//     std::string s_msg = hps::to_string(request);
-//     zmq::message_t msg_0mq(s_msg);
-//     sock.send(msg_0mq,zmq::send_flags::none);
-
-//     zmq::message_t reply_0mq;
-//     auto _r = sock.recv(reply_0mq, zmq::recv_flags::none);
-//     std::cout << reply_0mq << "\n";  
-
-//     reply_str = reply_0mq.to_string();
-//     reply = hps::from_string<std::pair<uint32_t,uint32_t>>(reply_str);
-
-//     sock.disconnect(this->manager);
-
-//     return reply;
-// }
 
 
 void worker::send_btree_task(boundary_tree_task *btt, enum message_type tp){

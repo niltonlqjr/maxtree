@@ -76,7 +76,8 @@ enum message_type{
 static std::vector<std::string> NamesMessageType({
     "MSG_NULL",       "MSG_REGISTRY",   "MSG_BOUNDARY_TREE",
     "MSG_GET_TASK",   "MSG_TILE_IDX",   "MSG_MERGE_BOUNDARY_TREE",
-    "MSG_SEND_MERGED_TREE",           "MSG_UPDATE_BOUNDARY_TREE"
+    "MSG_SEND_MERGED_TREE",           "MSG_UPDATE_BOUNDARY_TREE",
+    "MSG_COMMAND"
 });
 
 static std::map<std::string, VipsAccess> VipsAccesTypeVector({

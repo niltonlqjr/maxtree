@@ -25,7 +25,7 @@ class worker{
         std::unordered_map<std::string, TWorkerAttr> *attr;
         bool busy, connected;
         std::string manager; // address of manager
-        std::string self_address; // self ip address
+        std::string name; // string composed of self ip address + "|pid=" + self pid
         zmq::context_t context;
         zmq::socket_t sock;
     public:
@@ -40,7 +40,7 @@ class worker{
         TWorkerIdx get_index();
 
         Tprocess_power get_process_power();
-        std::string get_self_address();
+        std::string get_name();
 
         bool operator<(worker &r);
         bool operator>(worker &r);
@@ -51,12 +51,12 @@ class worker{
 
         template <class B>
         void serialize(B &buf) const{
-            buf << (*(this->attr)) << this->id;
+            buf << (*(this->attr)) << this->id << this->name << this->manager;
         }
 
         template <class B>
         void parse(B &buf){
-            buf >> (*(this->attr)) >> this->id;
+            buf >> (*(this->attr)) >> this->id >> this->name >> this->manager;
         }
         
         void update_index(TWorkerIdx new_idx);
