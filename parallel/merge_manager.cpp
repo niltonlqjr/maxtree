@@ -455,7 +455,7 @@ void fill_input_bag(){
 }
 
 void finish_workers(zmq::socket_t &sock){
-    std::string sout = std::to_string(G_finished_workers) + " of " + std::to_string(G_total_workers) + " workers finisehd\n";
+    std::string sout = std::to_string(G_finished_workers) + " of " + std::to_string(G_total_workers) + " workers finisehd before function finish_workers\n";
     std::cout << sout;
     zmq::message_t request;
     message reply;
@@ -464,6 +464,7 @@ void finish_workers(zmq::socket_t &sock){
         std::string rec_msg;
         rec_msg = request.to_string();
         message recv_msg = hps::from_string<message>(rec_msg);
+        
         reply.type = MSG_COMMAND;
         reply.content = "END";
         // reply.size = 0;
@@ -472,7 +473,7 @@ void finish_workers(zmq::socket_t &sock){
         zmq::message_t msg_reply(reply_s);
         sock.send(msg_reply, zmq::send_flags::none);
         G_finished_workers++;
-        std::string sout = "total worker finished: " + std::to_string(G_finished_workers) + "\n";
+        sout = "finished worker: " + std::to_string(recv_msg.sender) + "\ttotal worker finished: " + std::to_string(G_finished_workers) + "\n";
         std::cout << sout;
     }
 }

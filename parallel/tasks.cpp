@@ -164,8 +164,20 @@ maxtree_task::maxtree_task(input_tile_task *t, bool copy) {
     }else{
         this->mt = t->tile;
     }
+    
+}
+
+void maxtree_task::compute(){
     this->mt->compute_sequential_recursive();
 }
+
+void maxtree_task::update_tree(boundary_tree *bt){
+    this->mt->update_from_boundary_tree(bt);
+}
+void maxtree_task::filter_tree(Tattribute lambda){
+    this->mt->filter(lambda);
+}
+
 
 uint64_t maxtree_task::size(){
     return this->mt->get_size();

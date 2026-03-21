@@ -37,8 +37,12 @@ class maxtree_task: public comparable_task{
     public:
         maxtree *mt; 
         maxtree_task(input_tile_task *t, bool copy = false);
+        void compute();
+        void update_tree(boundary_tree *bt);
+        void filter_tree(Tattribute lambda);
         uint64_t size();
 };
+
 
 class boundary_tree_task: public comparable_task{
     public:
