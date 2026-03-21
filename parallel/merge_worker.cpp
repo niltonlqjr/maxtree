@@ -281,6 +281,16 @@ void receive_global_boundary_tree(message &m){
     }
 }
 
+void update_filter_and_save(maxtree_task *t){
+        std::string output_name = G_out_name +std::to_string(t->mt->grid_i)+"-"+std::to_string(t->mt->grid_j)+"."+G_out_ext;
+        t->update_tree(G_full_bound_tree);
+        t->filter_tree(G_lambda);
+        t->mt->save(output_name);
+        
+        std:: string sout = "file save:" + output_name + "\n";
+        std::cout << sout;
+}
+
 bool do_work(vips::VImage *img_in, worker *w){
     maxtree_task *update_task=nullptr;
     // maxtree *m;
@@ -299,19 +309,15 @@ bool do_work(vips::VImage *img_in, worker *w){
     }else if(msg_work.type == MSG_MERGE_BOUNDARY_TREE){
         merge_tiles(msg_work, w);
     }else if(msg_work.type == MSG_UPDATE_BOUNDARY_TREE){
+        receive_global_boundary_tree(msg_work);
+        sout = "tasks waiting for update: " + std::to_string(G_maxtrees.size()) + "\n";
+        std::cout << sout;
         if(G_maxtrees.get_task(update_task)){
-            receive_global_boundary_tree(msg_work);
-            std::string output_name = G_out_name +std::to_string(update_task->mt->grid_i)+"-"+std::to_string(update_task->mt->grid_j)+"."+G_out_ext;
-            update_task->update_tree(G_full_bound_tree);
-            update_task->filter_tree(G_lambda);
-            update_task->mt->save(output_name);
-            
-            sout = "file save:" + output_name + "\n";
-            std::cout << sout;
+            update_filter_and_save(update_task);
         }
     }else if(msg_work.type == MSG_COMMAND && msg_work.content == "END"){
         sout = "finishing work "+ std::to_string(w->get_index()) + "\n";
-        // std::cout << sout;
+        std::cout << sout;
         ret = false;
     }
     
@@ -324,8 +330,15 @@ bool do_work(vips::VImage *img_in, worker *w){
 
 void loop_worker(vips::VImage *img, std::string server_addr){
     worker *w=G_local_workers.get_best_worker(true);
+    
     w->connect();
     while(do_work(img,  w)); // std::cout << it++ << "\n";
+
+    maxtree_task *update_task=nullptr;
+    
+    while(G_maxtrees.get_task(update_task)){
+        update_filter_and_save(update_task);
+    }
     std::string sout = "worker " + std::to_string(w->get_index()) + " finished \n";
     // std::cout << sout;
     w->disconnect();

@@ -16,9 +16,8 @@ class bag_of_tasks{
         std::deque<Task> *tasks;
         std::mutex lock;
         std::condition_variable has_task, no_task;
-        int num_task;
         bool running;
-        int waiting;
+        uint32_t waiting;
         void wakeup_workers();
     public:
         bag_of_tasks(bool start_running = false);

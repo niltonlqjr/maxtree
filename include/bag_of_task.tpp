@@ -3,7 +3,7 @@
 template <class Task>
 bag_of_tasks<Task>::bag_of_tasks(bool start_running){
     this->tasks = new std::deque<Task>();
-    this->num_task = 0;
+    
     this->running = start_running;
     this->waiting = 0;
 }
@@ -22,7 +22,7 @@ void bag_of_tasks<Task>::insert_task(Task t){
     // std::cout << "insert task\n";
     std::unique_lock<std::mutex> l(this->lock);
     this->tasks->push_back(t);
-    this->num_task++;
+    
     this->wakeup_workers();
     // this->has_task.notify_all();
 }
@@ -42,10 +42,10 @@ bool bag_of_tasks<Task>::is_running(){
 
 template <class Task>
 bool bag_of_tasks<Task>::get_task(Task &ret){
-    // std::cout << "get task - num_task:" << this->num_task << " tasks->size:" << this->tasks->size() << "\n";
+    // std::cout << "get task - tasks->size():" << this->tasks->size() << "\n";
     std::unique_lock<std::mutex> l(this->lock);
 
-    while(this->num_task <= 0 && this->running){
+    while(this->tasks->size() <= 0 && this->running){
         this->waiting++;
         // std::cout << "wait task\n";
         this->has_task.wait(l);
@@ -56,7 +56,7 @@ bool bag_of_tasks<Task>::get_task(Task &ret){
         ret = this->tasks->front();
         // std::cout << ret << "\n";
         this->tasks->pop_front();
-        this->num_task--;
+        
         this->wakeup_workers();
         return true;
     }else{
@@ -67,12 +67,12 @@ bool bag_of_tasks<Task>::get_task(Task &ret){
 
 template <class Task>
 bool bag_of_tasks<Task>::get_task_by_position(Task &ret, size_t position){
-    // std::cout << "get task by position - num_task:" << this->num_task << " tasks->size:" << this->tasks->size() << "\n";
+    // std::cout << "get task by position - tasks->size():" << this->tasks->size() << " tasks->size:" << this->tasks->size() << "\n";
     std::unique_lock<std::mutex> l(this->lock);
-    if(this->num_task > 0 && position < this->tasks->size()){
+    if(this->tasks->size() > 0 && position < this->tasks->size()){
         ret = this->tasks->at(position);
         this->tasks->erase(this->tasks->begin() + position);
-        this->num_task--;
+        
         this->no_task.notify_all();
         return true;
     }
@@ -83,7 +83,7 @@ bool bag_of_tasks<Task>::get_task_by_position(Task &ret, size_t position){
 template <class Task>
 template <class T> 
 bool bag_of_tasks<Task>::get_task_by_function(Task &ret, T value, T function(Task)){
-    // std::cout << "get task by function - num_task:" << this->num_task << " tasks->size:" << this->tasks->size() << "\n";
+    // std::cout << "get task by function - tasks->size():" << this->tasks->size() << " tasks->size:" << this->tasks->size() << "\n";
     std::unique_lock<std::mutex> l(this->lock);
     Task t;
 
@@ -92,7 +92,7 @@ bool bag_of_tasks<Task>::get_task_by_function(Task &ret, T value, T function(Tas
         t = *it; 
         if(value == function(t)){
             ret = t;
-            this->num_task--;
+            
             this->tasks->erase(it);
             this->no_task.notify_all();
             return true;
@@ -115,7 +115,7 @@ Task bag_of_tasks<Task>::at(int pos){
 template <class Task>
 void bag_of_tasks<Task>::wait_empty(){
     std::unique_lock<std::mutex> l(this->lock);
-    while(this->num_task > 0){
+    while(this->tasks->size() > 0){
         this->no_task.wait(l);
     }
 }
@@ -129,7 +129,6 @@ void bag_of_tasks<Task>::wakeup_workers(){
 template <class Task>
 void bag_of_tasks<Task>::notify_end(){
     std::unique_lock<std::mutex> l(this->lock);
-    this->num_task = 0;
     this->running = false;
     this->wakeup_workers();
 }
@@ -143,7 +142,7 @@ int bag_of_tasks<Task>::num_waiting(){
 template <class Task>
 int bag_of_tasks<Task>::size(){
     std::unique_lock<std::mutex> l(this->lock);
-    return this->num_task;
+    return this->tasks->size();
 }
 
 template <class Task>
@@ -181,7 +180,6 @@ uint64_t bag_of_tasks<Task>::search_by_function(T value, T function(Task)){
 template <class Task>
 prio_bag_of_tasks<Task>::prio_bag_of_tasks(bool start_running){
     this->tasks = new min_heap<Task>();
-    this->num_task = 0;
     this->running = start_running;
     this->waiting = 0;
 }
@@ -195,14 +193,13 @@ void prio_bag_of_tasks<Task>::insert_task(Task t){
     // std::cout << "prio insert task\n";
     std::unique_lock<std::mutex> l(this->lock);
     this->tasks->insert(t);
-    this->num_task++;
     this->wakeup_workers();
     // this->has_task.notify_all();
 }
 
 template <class Task>
 bool prio_bag_of_tasks<Task>::get_task(Task &ret, int priority){
-    // std::cout << "prio get task num_task:" << this->num_task << " tasks->size:" << this->tasks->size() << "\n";
+    // std::cout << "prio get task tasks->size():" << this->tasks->size() << " tasks->size:" << this->tasks->size() << "\n";
     std::unique_lock<std::mutex> l(this->lock);
     int pos;
     if(priority == -1){
@@ -210,16 +207,16 @@ bool prio_bag_of_tasks<Task>::get_task(Task &ret, int priority){
     }else{
         pos = this->position_of(priority);
     }
-    while(this->num_task <= 0 && this->running){
+    while(this->tasks->size() <= 0 && this->running){
         this->waiting++;
         this->has_task.wait(l);
     }
     // if(!this->running){
     //     return false;
-    if(this->num_task > 0){
+    if(this->tasks->size() > 0){
         ret = this->tasks->at(pos);
         this->tasks->remove_at(pos);
-        this->num_task--;
+        
         return true;
     }else{
         return false;
@@ -234,7 +231,7 @@ bool prio_bag_of_tasks<Task>::get_task(Task &ret, int priority){
 template <class Task, bool CompareLesser(Task, Task)>
 ordered_bag_of_tasks<Task, CompareLesser>::ordered_bag_of_tasks(bool start_running){
     this->tasks = new std::deque<Task>();
-    this->num_task = 0;
+    
     this->running = start_running;
     this->waiting = 0;
 }
@@ -245,7 +242,7 @@ ordered_bag_of_tasks<Task, CompareLesser>::~ordered_bag_of_tasks(){
 
 template <class Task, bool CompareLesser(Task, Task)>
 void ordered_bag_of_tasks<Task, CompareLesser>::insert_task(Task t){
-    // std::cout << "ordered insert task" << this->num_task << "\n";
+    // std::cout << "ordered insert task:" << this->tasks->size() << "\n";
     std::unique_lock<std::mutex> l(this->lock);
     this->tasks->push_back(t);
     
@@ -254,7 +251,5 @@ void ordered_bag_of_tasks<Task, CompareLesser>::insert_task(Task t){
         this->tasks->at(i) = this->tasks->at(i-1);
         i--;
     }
-
-    this->num_task++;
     this->wakeup_workers();
 }

@@ -190,9 +190,11 @@ clean:
 	@make -C ${maxtree_dir} clean
 	@make -C ${boundary_tree_dir} clean
 	@make -C ${utils_dir} clean
-	rm ${dest_merge} || true
-	rm ${dest_divide} || true
-	rm ${dest_grow} || true
+	@rm ${dest_merge} || true
+	@rm ${dest_divide} || true
+	@rm ${dest_grow} || true
+	@rm ${dest_merge_manager} || true
+	@rm ${dest_merge_work} || true
 
 #heap.o:
 #	g++ ${OBJ_CPP_FLAGS} ${heap_dir}/heap.cpp -I${heap_dir} -o ${heap_dir}/heap.o
