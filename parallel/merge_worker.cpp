@@ -224,9 +224,7 @@ void request_process_tile(vips::VImage *img_in, message &msg_work, worker *w){
 
     maxtree_task *mtt = new maxtree_task(t);
     mtt->compute();
-    if(mtt == nullptr){
-        std::cerr << "INSERIU NULL NA BAG\n";
-    }
+
     G_maxtrees.insert_task(mtt);
 
     // std::cout << "maxtree\n" << mtt.mt->to_string() << "\n--------------\n";
@@ -265,11 +263,6 @@ void merge_tiles(message &msg_work, worker *w){
     // std::cout << s;
 }
 
-void update_tree(maxtree *m){
-    m->update_from_boundary_tree(G_full_bound_tree);
-    m->filter(G_lambda);
-}
-
 void receive_global_boundary_tree(message &m){
     std::unique_lock<std::mutex> lock(G_full_bound_tree_lock);
     if(!G_full_bound_tree_received){
@@ -289,7 +282,7 @@ void receive_global_boundary_tree(message &m){
 }
 
 bool do_work(vips::VImage *img_in, worker *w){
-    maxtree_task *update_task;
+    maxtree_task *update_task=nullptr;
     // maxtree *m;
     message msg_work = w->request_work();
     std::string sout;
@@ -318,7 +311,7 @@ bool do_work(vips::VImage *img_in, worker *w){
         }
     }else if(msg_work.type == MSG_COMMAND && msg_work.content == "END"){
         sout = "finishing work "+ std::to_string(w->get_index()) + "\n";
-        std::cout << sout;
+        // std::cout << sout;
         ret = false;
     }
     
@@ -334,7 +327,7 @@ void loop_worker(vips::VImage *img, std::string server_addr){
     w->connect();
     while(do_work(img,  w)); // std::cout << it++ << "\n";
     std::string sout = "worker " + std::to_string(w->get_index()) + " finished \n";
-    std::cout << sout;
+    // std::cout << sout;
     w->disconnect();
     
 }
@@ -347,7 +340,6 @@ void make_worker_threads(uint32_t numth, VImage *in, std::string server){
     }
     for(size_t i=0; i<workers_threads.size(); i++){
         workers_threads[i].join();
-
     }
 }
 

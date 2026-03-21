@@ -379,7 +379,7 @@ void process_task_request(message &recv_msg, zmq::socket_t &sock){
         prepare_final_tree(reply,recv_msg.content);
         G_updates_sent++;
         // std::cout << "updates sent " << G_updates_sent << "\n"; 
-    }else if(G_updates_sent > G_total_tiles){
+    }else if(G_updates_sent >= G_total_tiles){
         reply.type = MSG_COMMAND;
         reply.content = "END";
         G_finished_workers++;

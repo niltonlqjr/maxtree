@@ -52,16 +52,16 @@ bool bag_of_tasks<Task>::get_task(Task &ret){
         // std::cout << "wait task\n";
 
     }
-    // if(this->num_task > 0){
+    if(this->tasks->size() > 0){
         ret = this->tasks->front();
+        // std::cout << ret << "\n";
         this->tasks->pop_front();
         this->num_task--;
         this->wakeup_workers();
-        this->no_task.notify_all();
         return true;
-    // }else{
-    //     return false;
-    // }
+    }else{
+        return false;
+    }
     
 }
 
@@ -220,7 +220,6 @@ bool prio_bag_of_tasks<Task>::get_task(Task &ret, int priority){
         ret = this->tasks->at(pos);
         this->tasks->remove_at(pos);
         this->num_task--;
-        this->no_task.notify_all();
         return true;
     }else{
         return false;
@@ -249,13 +248,13 @@ void ordered_bag_of_tasks<Task, CompareLesser>::insert_task(Task t){
     // std::cout << "ordered insert task" << this->num_task << "\n";
     std::unique_lock<std::mutex> l(this->lock);
     this->tasks->push_back(t);
+    
     size_t i=this->tasks->size()-1;
-    // while(i > 0 && this->tasks->at(i-1) < t){
     while(i > 0 && CompareLesser(this->tasks->at(i-1) , t)){
         this->tasks->at(i) = this->tasks->at(i-1);
         i--;
     }
+
     this->num_task++;
     this->wakeup_workers();
-    // this->has_task.notify_all();
 }
