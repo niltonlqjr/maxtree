@@ -8,7 +8,7 @@
 - rapidyaml: [Git repository](https://github.com/biojppm/rapidyaml)
 
 ### Only headers repository used:
-- HPS: [github](https://github.com/jl2922/hps.git)
+- HPS: [Git repository](https://github.com/jl2922/hps.git)
     - Already cloned int hps folder, but the original project is the github link above
 
 ### Docker ready to use
