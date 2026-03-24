@@ -13,7 +13,7 @@
 
 ### Docker ready to use
 
-- Docker on [github](https://github.com/niltonlqjr/docker-libvips)
+- Docker on [github](https://github.com/niltonlqjr/docker-maxtree)
 
 ### Build
 
