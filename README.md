@@ -7,6 +7,10 @@
     - [How to get](http://wiki.zeromq.org/intro:get-the-software)
 - rapidyaml: [Git repository](https://github.com/biojppm/rapidyaml)
 
+### Only headers repository used:
+- HPS: [github](https://github.com/jl2922/hps.git)
+    - Already cloned int hps folder, but the original project is the github link above
+
 ### Docker ready to use
 
 - Docker on [github](https://github.com/niltonlqjr/docker-libvips)
