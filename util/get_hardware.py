@@ -21,7 +21,7 @@ def get_cpu_clock(proc_dir):
             string = f.read().strip()
             freq_khz = float(string)
             freq_mhz = freq_khz / 1000
-        return freq_mhz
+        return str(freq_mhz)
     except Exception:
         return 0.0
 
@@ -29,13 +29,13 @@ def get_cpu_cache(cache_dir):
     try:
         fnl = os.path.join(cache_dir, cache_level_filename)
         fns = os.path.join(cache_dir, cache_size_filename)
-        with open(fnl,'r') as f:
-            l = f.read()
+        with open(fnl) as f:
+            l = int(f.read())
         with open(fns) as f:
             s = f.read()
-        lvl=f'CPU_L{l}Cache'
+        lvl='CPU_L'+str(l)+'Cache'
         reg_exp=re.search('[0-9]+',s)
-        sz=int(reg_exp.group())
+        sz=reg_exp.group()
         return lvl,sz
     except:
         return None, 0
@@ -72,6 +72,7 @@ def get_core_info(cpu_prefix, cache_prefix):
         d = os.path.join(cache_prefix,dir)
         cache_name, cache_value = get_cpu_cache(d)
         core_info[cache_name] = cache_value
+        print(cache_name, cache_value)
     cpu_freq_filename = os.path.join(cpu_prefix)
     frequency = get_cpu_clock(cpu_freq_filename)
     core_info['CPU_ClockMaximumFrequency'] = frequency
@@ -87,9 +88,9 @@ def main():
         report.append(get_core_info(cpu_dir,cache_dir))
 
 
-    output_file = "hardware_info.yaml"
+    output_file = "hardware.yaml"
     with open(output_file, 'w') as f:
-        yaml.dump(report, f, sort_keys=False, default_flow_style=False)
+        yaml.dump(report, f)
     
     print(f"Relatório YAML gerado com sucesso: {output_file}")
 
