@@ -53,7 +53,8 @@ TWorkerAttr worker::get_attr(std::string s){
 }
 
 Tprocess_power worker::get_process_power(){
-    return (this->attr->at("MHZ") + this->attr->at("CACHE")) * this->attr->at("RAM") ;
+
+    return calculate_process_power(this->attr);
 }
 
 std::string worker::get_name(){

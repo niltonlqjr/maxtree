@@ -9,6 +9,7 @@
 #include "bag_of_task.hpp"
 #include "tasks.hpp"
 #include "message.hpp"
+#include "custom.hpp"
 
 #ifndef __WORKERS_HPP__
 #define __WORKERS_HPP__

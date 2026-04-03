@@ -7,8 +7,8 @@ maxtree_dir=../include
 boundary_tree_dir=../include
 utils_dir=../include
 heap_dir=../include
+custom_dir=../include
 hps_dir=../hps
-
 
 tasks_dir=.
 message_dir=.
@@ -82,10 +82,11 @@ ${dest_merge_work}:base tasks.o message.o workers.o
 	 	${maxtree_node_dir}/maxtree_node.o \
 		${maxtree_dir}/maxtree.o \
 		${boundary_tree_dir}/boundary_tree.o \
+		${custom_dir}/custom.o \
 		${tasks_dir}/tasks.o \
 		${message_dir}/message.o \
 		${workers_dir}/workers.o \
-		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} \
+		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} -I${custom_dir} \
 		-I${heap_dir} -I${hps_dir} \
 		${vips_args} ${zmq_args} -o ${dest_merge_work} \
 		${CPP_libs}
@@ -97,10 +98,11 @@ ${merge_name_manager}:base tasks.o message.o workers.o
 	 	${maxtree_node_dir}/maxtree_node.o \
 		${maxtree_dir}/maxtree.o \
 		${boundary_tree_dir}/boundary_tree.o \
+		${custom_dir}/custom.o \
 		${tasks_dir}/tasks.o \
 		${message_dir}/message.o \
 		${workers_dir}/workers.o \
-		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} \
+		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} -I${custom_dir} \
 		-I${heap_dir} -I${hps_dir} \
 		${vips_args} ${zmq_args} -o ${dest_merge_manager} \
 		${CPP_libs}

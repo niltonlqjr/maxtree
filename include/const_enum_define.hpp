@@ -20,6 +20,7 @@
 #define Tprocess_power double
 #define TWorkerIdx unsigned int
 #define TWorkerAttr double
+#define TWorkerAttr_NULL 0.0
 
 #define DEFAULT_PORT "7233"
 
