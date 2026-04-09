@@ -12,14 +12,19 @@ consome_arg(){
 
 line=`echo $@ | tr -s ' '`
 
-echo $line
+echo "args: $line"
 
 worker_config=./${script_dir}/../../configs/worker/worker_config_example.txt
 manager_config=./${script_dir}/../../configs/manager/manager_config_example.txt
 
 if [ -z $1 ]; then
-        echo "No configuration file found... Using ${worker_config}"
-        echo "No configuration manager file found... Using ${manager_config}"
+    
+    echo "No configuration manager file found... Using ${manager_config}"
+elif [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+    echo "usage: $0 [OPTIONS]"
+    echo "OPTIONS:"
+    echo "    -m <manager configuration file> "
+    exit
 else
     while [[ ! -z $line ]]
     do
