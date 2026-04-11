@@ -37,7 +37,7 @@ bool verbose;
 
 bool running;
 
-static const int nth = 2;
+static const int nth = 1;
 
 TWorkerIdx G_idx_at_manager=1; //index count of workers. Index 0 is for manager
 
@@ -321,7 +321,7 @@ merge_btrees_task *choose_task(TWorkerIdx id){
     // std::cout << "position in merge bag: " << position<< "\n";
     size_t task_pos = std::round(G_merge_bag.size() * prop_pos);
     merge_btrees_task *mbt;
-    auto got = G_merge_bag.get_task_by_position(mbt, task_pos);
+    bool got = G_merge_bag.get_task_by_position(mbt, task_pos);
     if(got){
         return mbt;
     }
@@ -493,9 +493,8 @@ int main(int argc, char *argv[]){
     G_updates_sent = 0;
     G_total_workers = 0;
     G_finished_workers = 0;
-    zmq::context_t context_rec(nth);
+    
     zmq::context_t context_reg(nth);
-    zmq::socket_t  receiver_sock(context_rec, zmq::socket_type::pull);
     zmq::socket_t  sock(context_reg, zmq::socket_type::rep);
     
     self_address = protocol+"://*:"+port;

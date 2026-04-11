@@ -69,6 +69,9 @@ template <class Task>
 bool bag_of_tasks<Task>::get_task_by_position(Task &ret, size_t position){
     // std::cout << "get task by position - tasks->size():" << this->tasks->size() << " tasks->size:" << this->tasks->size() << "\n";
     std::unique_lock<std::mutex> l(this->lock);
+    while(this->tasks->size() <= 0 && this->running){
+        this->has_task.wait(l);
+    }
     if(this->tasks->size() > 0 && position < this->tasks->size()){
         ret = this->tasks->at(position);
         this->tasks->erase(this->tasks->begin() + position);
