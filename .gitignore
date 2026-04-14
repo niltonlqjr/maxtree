@@ -2,6 +2,7 @@
 **/saidas/*
 **/**/saidas/*
 parallel/logs/**
+parallel/test_scripts/**
 outros/*
 output/*
 util/*.txt

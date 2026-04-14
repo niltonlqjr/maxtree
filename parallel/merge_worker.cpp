@@ -234,6 +234,7 @@ void request_process_tile(vips::VImage *img_in, message &msg_work, worker *w){
     // btt.bt->print_tree();
 
     w->send_btree_task(&btt,MSG_BOUNDARY_TREE);
+    btt.free_tree();
 }
 
 void merge_tiles(message &msg_work, worker *w){
@@ -248,6 +249,7 @@ void merge_tiles(message &msg_work, worker *w){
     // mbtt.bt2->print_idx();
     boundary_tree *merged_tree = mbtt.execute();
     // std::cout << "MERGE DONE\n";
+    mbtt.free_trees();
     nb_dist = std::make_pair<uint32_t, uint32_t>(mbtt.distance.first * 2, mbtt.distance.second * 2);
     if(nb_dist.second >= GRID_DIMS.second){
         nb_dist.first = 1;
@@ -258,9 +260,10 @@ void merge_tiles(message &msg_work, worker *w){
     // std::cout << s;
     boundary_tree_task btt = boundary_tree_task(merged_tree, nb_dist);
     w->send_btree_task(&btt, MSG_SEND_MERGED_TREE);
-    s = "sent: "  + btt.bt->index_to_string() ;
-    s += " {" + mbtt.bt1->index_to_string() + " " + mbtt.bt2->index_to_string() + "}\n";
+    // s = "sent: "  + btt.bt->index_to_string() ;
+    // s += " {" + mbtt.bt1->index_to_string() + " " + mbtt.bt2->index_to_string() + "}\n";
     // std::cout << s;
+    btt.free_tree();
 }
 
 void receive_global_boundary_tree(message &m){

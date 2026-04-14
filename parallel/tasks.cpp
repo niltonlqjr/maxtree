@@ -203,6 +203,11 @@ boundary_tree_task::boundary_tree_task(){
     this->nb_distance = std::make_pair<uint32_t, uint32_t>(0, 0);
 }
 
+void boundary_tree_task::free_tree(){
+    this->bt->delete_boundary_tree();
+    this->bt = nullptr;
+}
+
 uint64_t boundary_tree_task::size(){
     return this->bt->boundary_tree_lroot->size();
     // return this->index;
@@ -348,6 +353,12 @@ merge_btrees_task::merge_btrees_task(){
     this->direction = MERGE_VERTICAL_BORDER;
 }
 
+void merge_btrees_task::free_trees(){
+    this->bt1->delete_boundary_tree();
+    this->bt2->delete_boundary_tree();
+    this->bt1 = this->bt2 = nullptr;
+}
+
 uint64_t merge_btrees_task::size(){
     return this->bt1->boundary_tree_lroot->size() + this->bt2->boundary_tree_lroot->size();
 }
@@ -372,10 +383,10 @@ boundary_tree *merge_btrees_task::execute(){
     return new_btree;
 }
 
-merge_btrees_task::~merge_btrees_task(){
-    // delete this->bt1;
-    // delete this->bt2;
-}
+// merge_btrees_task::~merge_btrees_task(){
+//     delete this->bt1;
+//     delete this->bt2;
+// }
 
 bool mbt_lesser_than(merge_btrees_task *l, merge_btrees_task *r){
     return l->size() < r->size();
