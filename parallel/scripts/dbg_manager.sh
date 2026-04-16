@@ -37,9 +37,10 @@ fi
 manager_bin=merge_manager
 worker_bin=merge_worker
 
+debug='gdb --args'
 
 if [[ -f ${manager_config} ]]; then
-   ./${script_dir}/../exec/${manager_bin} ${manager_config} 
+   ${debug} ./${script_dir}/../exec/${manager_bin} ${manager_config} 
 else
     echo "File not found ${manager_config}"
 fi

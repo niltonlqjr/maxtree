@@ -177,7 +177,6 @@ void registry_new_worker(uint32_t local_id, std::string server_addr, std::unorde
     for(auto k_v: worker_attr){
         w->set_attr(k_v.first, k_v.second);
     }
-    w->connect();
     // std::cout << "registring id: " << local_id << " of total " << num_th << " threads\n";
     // workers_threads.push_back(new std::thread(w->registry_at, server_addr));
     // workers_threads.push_back(std::thread(&worker::registry,w));

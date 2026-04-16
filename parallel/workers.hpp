@@ -24,7 +24,7 @@ class worker{
     private:
         TWorkerIdx id;
         std::unordered_map<std::string, TWorkerAttr> *attr;
-        bool busy, connected;
+        bool busy, connected, registered;
         std::string manager; // address of manager
         std::string name; // string composed of self ip address + "|pid=" + self pid
         zmq::context_t context;
