@@ -45,6 +45,7 @@ boundary_tree *G_reply_bt=nullptr;
 boundary_tree_task *G_reply_btt=nullptr;
 
 scheduler_of_workers<worker*> G_pool_of_workers;
+scheduler_of_workers<worker*> G_waiting_workers;
 // ordered_scheduler_of_workers <worker*, worker_lesser_than> G_pool_of_workers;
 
 bag_of_tasks<input_tile_task* > G_input_tiles;
@@ -384,6 +385,22 @@ void process_task_request(message &recv_msg, zmq::socket_t &sock){
     zmq::message_t msg_reply(reply_s);
     auto __ret0 = sock.send(msg_id, zmq::send_flags::sndmore);
     auto reply_return = sock.send(msg_reply, zmq::send_flags::none);
+}
+
+void task_sender(message &recv_msg, zmq::socket_t &sock){
+    TWorkerIdx worker_idx = recv_msg.sender;
+    worker *w;
+    message reply;
+    while(G_merge_bag.is_running()){
+        w = G_waiting_workers.get_best_worker();
+        reply.size = reply.content.size();
+        std::string reply_s = hps::to_string(reply);
+        zmq::message_t msg_id(std::to_string(worker_idx));
+        zmq::message_t msg_reply(reply_s);
+        auto __ret0 = sock.send(msg_id, zmq::send_flags::sndmore);
+        auto reply_return = sock.send(msg_reply, zmq::send_flags::none); 
+    }
+    
 }
 
 void manager_recv(zmq::socket_t &sock){
