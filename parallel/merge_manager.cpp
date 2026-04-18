@@ -13,9 +13,6 @@
 #include "message.hpp"
 #include "src/hps.h"
 
-
-
-
 using namespace vips;
 
 
@@ -44,13 +41,12 @@ TWorkerIdx G_idx_at_manager=1; //index count of workers. Index 0 is for manager
 boundary_tree *G_reply_bt=nullptr;
 boundary_tree_task *G_reply_btt=nullptr;
 
-scheduler_of_workers<worker*> G_pool_of_workers;
-scheduler_of_workers<worker*> G_waiting_workers;
-// ordered_scheduler_of_workers <worker*, worker_lesser_than> G_pool_of_workers;
+hash_scheduler_of_worker<TWorkerIdx, worker*> G_busy_workers;
+// scheduler_of_workers<worker*> G_waiting_workers;
+ordered_scheduler_of_workers <worker*, worker_lesser_than> G_waiting_workers;
 
 bag_of_tasks<input_tile_task* > G_input_tiles;
 bag_of_tasks<boundary_tree_task *> G_bound_trees;
-
 bag_of_tasks<merge_btrees_task *> G_merge_bag;
 // prio_bag_of_tasks<merge_btrees_task *> G_merge_bag;
 // ordered_bag_of_tasks<merge_btrees_task *, mbt_lesser_than> G_merge_bag;
@@ -227,7 +223,8 @@ void registry_worker(message &recv_msg, zmq::socket_t &sock, std::string worker_
     TWorkerIdx current_idx=G_idx_at_manager++;
     worker *w_at_manager = new worker(w_rec);
     w_at_manager->update_index(current_idx);
-    G_pool_of_workers.insert_worker(w_at_manager);
+    // G_waiting_workers.insert_worker(current_idx, w_at_manager);
+    G_waiting_workers.insert_worker(w_at_manager);
     G_got_full_btree[w_at_manager->get_name()] = false;
     zmq::message_t msg_new_id(sizeof(TWorkerIdx));
     memcpy(msg_new_id.data(), &current_idx, sizeof(TWorkerIdx));
@@ -296,7 +293,7 @@ void prepare_final_tree(message &reply, std::string worker){
 merge_btrees_task *align_worker_with_task(TWorkerIdx id){ // this function is called only when we have more workers than tasks (at least the same amount of workers and tasks)
     // std::cout << "align task and worker\n";
     merge_btrees_task *ret;
-    size_t position = G_pool_of_workers.search_worker_by_function<TWorkerIdx>(id, get_worker_idx);
+    size_t position = G_waiting_workers.search_worker_by_function<TWorkerIdx>(id, get_worker_idx);
     bool got = G_merge_bag.get_task_by_position(ret, position);
     // std::cout << "position in merge bag: " << position<< "\n";
     if(got){
@@ -308,8 +305,8 @@ merge_btrees_task *align_worker_with_task(TWorkerIdx id){ // this function is ca
 
 merge_btrees_task *choose_task(TWorkerIdx id){
     // std::cout << "worker " << id << " chosing task\n";
-    size_t position = G_pool_of_workers.search_worker_by_function<TWorkerIdx>(id, get_worker_idx);
-    double prop_pos = (double) position / G_pool_of_workers.size();
+    size_t position = G_waiting_workers.search_worker_by_function<TWorkerIdx>(id, get_worker_idx);
+    double prop_pos = (double) position / G_busy_workers.size();
     // std::cout << "position in merge bag: " << position<< "\n";
     size_t task_pos = std::round(G_merge_bag.size() * prop_pos);
     merge_btrees_task *mbt;
@@ -322,7 +319,7 @@ merge_btrees_task *choose_task(TWorkerIdx id){
 
 merge_btrees_task *get_task_balanced(TWorkerIdx idx){
     merge_btrees_task *ret_task;
-    if(G_merge_bag.size() > G_pool_of_workers.size()){ // there are more tasks than worker, so, task must be "chosen" by worker
+    if(G_merge_bag.size() > G_busy_workers.size()){ // there are more tasks than worker, so, task must be "chosen" by worker
         ret_task = choose_task(idx);
     }else{ // there at least the same amount of  workers and task, so we need to discover the worker for the greater task doing a greedy search
         ret_task = align_worker_with_task(idx);
@@ -345,29 +342,51 @@ merge_btrees_task *get_task_naive(TWorkerIdx idx){
 
 #define GET_MERGE_TASK(idx) get_task_balanced(idx)
 
+
+
+void task_sender(message &recv_msg, zmq::socket_t &sock){
+    TWorkerIdx worker_idx = recv_msg.sender;
+    worker *w;
+    message reply;
+    while(G_merge_bag.is_running()){
+        w = G_waiting_workers.get_worker();
+        // std::cout << G_merge_bag.size() << " merge task waiting\n";
+        reply.type = MSG_MERGE_BOUNDARY_TREE;
+        merge_btrees_task *mbt;
+        mbt = nullptr;
+        while(mbt == nullptr){
+            mbt = GET_MERGE_TASK(worker_idx); // GET_MERGE_TASK defined as macro to easier and more efficient replace of function
+        }
+        reply.content = hps::to_string(*mbt);
+        // std::cout << "mbt:" << mbt->bt1->index_to_string() << " " << mbt->bt2->index_to_string() << "\n";
+        // std::cout << "reply merge with: '" << reply.content << "'\n";
+        reply.size = reply.content.size();
+        std::string reply_s = hps::to_string(reply);
+        zmq::message_t msg_id(std::to_string(worker_idx));
+        zmq::message_t msg_reply(reply_s);
+        auto __ret0 = sock.send(msg_id, zmq::send_flags::sndmore);
+        auto reply_return = sock.send(msg_reply, zmq::send_flags::none); 
+    }
+    
+}
+
+
 void process_task_request(message &recv_msg, zmq::socket_t &sock){
     TWorkerIdx worker_idx = recv_msg.sender;
     message reply;
     reply.sender = 0;
     reply.content = recv_msg.content;
     std::cout << "worker " << worker_idx << "request a task\n";
+    worker *w;
+    bool must_reply = true;
     // std::cout << G_merge_bag.size() << " merge task waiting\n";
     if(!G_input_tiles.empty()){ // there is tiles of image to read and calculate maxtree yet
         prepare_tile(reply);
     // }else if(!G_merge_bag.empty()){ // there is merge to be done
     }else if(!G_merge_bag.empty()){
-        // std::cout << G_merge_bag.size() << " merge task waiting\n";
-        reply.type = MSG_MERGE_BOUNDARY_TREE;
-        merge_btrees_task *mbt;
-        mbt = GET_MERGE_TASK(worker_idx); // GET_MERGE_TASK defined as macro to easier and more efficient replace of function
-        if(mbt!=nullptr){
-            reply.content = hps::to_string(*mbt);
-            // std::cout << "mbt:" << mbt->bt1->index_to_string() << " " << mbt->bt2->index_to_string() << "\n";
-        }else{
-            reply.type = MSG_NULL;
-            reply.content = "";
-        }
-        // std::cout << "reply merge with: '" << reply.content << "'\n";
+        // G_busy_workers.search_worker_by_function<TWorkerIdx>(worker_idx, ) 
+        w = G_busy_workers.get_worker(worker_idx);
+        G_waiting_workers.insert_worker(w);
     }else if(!G_merge_bag.is_running()){ // final boundary tree is ready
         prepare_final_tree(reply,recv_msg.content);
         G_updates_sent++;
@@ -379,28 +398,14 @@ void process_task_request(message &recv_msg, zmq::socket_t &sock){
         // std::cout << "finish work message sent";
         // reply.size = 0;
     }
-    reply.size = reply.content.size();
-    std::string reply_s = hps::to_string(reply);
-    zmq::message_t msg_id(std::to_string(worker_idx));
-    zmq::message_t msg_reply(reply_s);
-    auto __ret0 = sock.send(msg_id, zmq::send_flags::sndmore);
-    auto reply_return = sock.send(msg_reply, zmq::send_flags::none);
-}
-
-void task_sender(message &recv_msg, zmq::socket_t &sock){
-    TWorkerIdx worker_idx = recv_msg.sender;
-    worker *w;
-    message reply;
-    while(G_merge_bag.is_running()){
-        w = G_waiting_workers.get_best_worker();
+    if(must_reply){
         reply.size = reply.content.size();
         std::string reply_s = hps::to_string(reply);
         zmq::message_t msg_id(std::to_string(worker_idx));
         zmq::message_t msg_reply(reply_s);
         auto __ret0 = sock.send(msg_id, zmq::send_flags::sndmore);
-        auto reply_return = sock.send(msg_reply, zmq::send_flags::none); 
+        auto reply_return = sock.send(msg_reply, zmq::send_flags::none);
     }
-    
 }
 
 void manager_recv(zmq::socket_t &sock){
@@ -413,7 +418,7 @@ void manager_recv(zmq::socket_t &sock){
 
     zmq::message_t request,idx;
     std::pair<uint32_t, uint32_t> current_tile(0,0);
-    std::unordered_map<TWorkerIdx, bool > busy_workers;
+    
     
     G_num_merges = 0;
     uint64_t calculated_tiles = 0;
@@ -440,15 +445,13 @@ void manager_recv(zmq::socket_t &sock){
             recv_boundary_tree(recv_msg, sock);
             G_num_merges++;
             // std::cout << "merge "<< num_merges << " of " << G_total_merges <<" ends\n";
-            busy_workers.erase(recv_msg.sender);
+            // busy_workers.erase(recv_msg.sender);
             if(G_num_merges >= G_total_merges){
                 G_merge_bag.notify_end();
                 std::cout << "merge bag end\n";
             }
         }else if(recv_msg.type == MSG_GET_TASK){
             process_task_request(recv_msg, sock);
-            busy_workers[recv_msg.sender] = true;
-
         }
         // std::cout << "end iteration<--------\n";
     }

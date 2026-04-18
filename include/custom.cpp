@@ -88,7 +88,7 @@ Tprocess_power calculate_process_power(std::unordered_map<std::string, TWorkerAt
     TWorkerAttr ram_power;
     TWorkerAttr cache_power;
     TWorkerAttr ram_freq = hardware_attributes->at("RAMFREQ");
-    proccessor_power = hardware_attributes->at("MHZ");
+    proccessor_power = hardware_attributes->at("CPUMHZ");
     cache_power = hardware_attributes->at("CACHE");
     ram_power = hardware_attributes->at("RAMSIZE") * ram_freq != 0? ram_freq : 1;
 

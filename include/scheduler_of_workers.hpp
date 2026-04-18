@@ -14,17 +14,16 @@
 template <class Worker>
 class scheduler_of_workers{
     protected:
+        void wait_free_worker(std::unique_lock<std::mutex> &l);
         std::mutex lock;
         std::condition_variable cv;
-        std::deque<Worker> *workers;
-        uint64_t total_workers;
-        uint64_t free_workers;
+        std::deque<Worker> workers;
+        
     public:
         scheduler_of_workers();
         void insert_worker(Worker w);
-        Worker get_best_worker(bool wait_at_least_one=false);
+        Worker get_worker();
         template <class T> size_t search_worker_by_function(T value, T function(Worker));
-        void wait_free_worker();
         void finish_worker(Worker w);
         Worker at(size_t i);
         size_t size();
@@ -36,10 +35,31 @@ class ordered_scheduler_of_workers : public scheduler_of_workers<Worker>{
     public:
         ordered_scheduler_of_workers();
         void insert_worker(Worker w);
-        Worker get_best_worker(bool wait_at_least_one=false);
+        Worker get_worker();
+};
+
+template <class Type_idx, class Worker>
+class hash_scheduler_of_worker{
+    protected:
+        std::mutex lock;
+        std::condition_variable cv;
+        std::unordered_map<Type_idx, Worker> workers;
+        void wait_free_worker(std::unique_lock<std::mutex> &l);
+    public:
+        hash_scheduler_of_worker();
+        void insert_worker(Type_idx idx, Worker w);
+        Worker search_worker_by_idx(Type_idx idx);
+        Worker get_worker(Type_idx idx);
+        size_t size();
+
+        
+
+
 };
 
 
 #include "scheduler_of_workers.tpp"
 
 #endif
+
+

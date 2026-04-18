@@ -532,6 +532,6 @@ void worker::send_boundary_tree(boundary_tree *bt){
 }
 
 
-bool worker_lesser_than(worker *l, worker*r){
+bool worker_lesser_than(worker *l, worker *r){
     return l->get_process_power() < r->get_process_power();
 }

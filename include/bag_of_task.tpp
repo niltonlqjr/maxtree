@@ -46,7 +46,7 @@ bool bag_of_tasks<Task>::get_task(Task &ret){
     std::unique_lock<std::mutex> l(this->lock);
 
     while(this->tasks->size() <= 0 && this->running){
-        this->waiting++;
+        // this->waiting++;
         // std::cout << "wait task\n";
         this->has_task.wait(l);
         // std::cout << "wait task\n";
