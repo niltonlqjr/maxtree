@@ -22,7 +22,7 @@ if all workers are busy, it throws std::range_error
 template <class Worker>
 Worker scheduler_of_workers<Worker>::get_worker(){
     std::unique_lock<std::mutex> l(this->lock);
-    this->wait_free_worker(l);
+    this->wait_worker(l);
     
     // Worker r = this->workers.at(0);
     Worker r = this->workers.back();
@@ -36,18 +36,19 @@ template <class Worker>
 template <class T>
 size_t scheduler_of_workers<Worker>::search_worker_by_function(T value, T function(Worker)){
     std::unique_lock<std::mutex> l(this->lock);
+    this->wait_worker(l);
     for(size_t i=0; i < this->workers.size(); i++){
         if(function(this->workers.at(i)) == value){
             return i;
         }
     }
-    throw std::out_of_range("Worker not found");
+    throw std::out_of_range("scheduler_of_workers<Worker>::search_worker_by_function --- Worker not found");
 }
 
 
 template<class Worker>
-void scheduler_of_workers<Worker>::wait_free_worker(std::unique_lock<std::mutex>  &l){
-    while(this->workers.size() < 0){
+inline void scheduler_of_workers<Worker>::wait_worker(std::unique_lock<std::mutex>  &l){
+    while(this->workers.size() <= 0){
         this->cv.wait(l);
     }
 }
@@ -60,7 +61,7 @@ void scheduler_of_workers<Worker>::finish_worker(Worker w){
         try{
             worker = this->workers.at(i);
         }catch(...){
-            throw std::out_of_range("worker not found");
+            throw std::out_of_range("scheduler_of_workers<Worker>::finish_worker --- Worker not found");
         }
         if(worker == w){
             this->workers.remove_at(i);
@@ -75,7 +76,7 @@ Worker scheduler_of_workers<Worker>::at(size_t i){
     try{
         ret = this->workers.at(i);
     }catch(...){
-        throw std::out_of_range("worker not found");
+        throw std::out_of_range("scheduler_of_workers<Worker>::at --- Worker not found");
     }
     return ret;
 }
@@ -118,7 +119,7 @@ if all workers are busy, it throws std::range_error
 template <class Worker, bool CompareLesser(Worker, Worker)>
 Worker ordered_scheduler_of_workers<Worker, CompareLesser>::get_worker(){
     std::unique_lock<std::mutex> l(this->lock);
-    this->wait_free_worker(l);
+    this->wait_worker(l);
     // Worker r = this->workers.at(0);
     Worker r = this->workers.front();
     this->workers.pop_front();
@@ -148,7 +149,7 @@ inline Worker hash_scheduler_of_worker<Type_idx, Worker>::search_worker_by_idx(T
 }
 
 template <class Type_idx, class Worker>
-inline void hash_scheduler_of_worker<Type_idx, Worker>::wait_free_worker(std::unique_lock<std::mutex> &l){
+inline void hash_scheduler_of_worker<Type_idx, Worker>::wait_worker(std::unique_lock<std::mutex> &l){
     while(this->workers.size() <= 0){
         this->cv.wait(l);
     }
@@ -165,8 +166,8 @@ inline size_t hash_scheduler_of_worker<Type_idx, Worker>::size(){
 template <class Type_idx, class Worker>
 inline Worker hash_scheduler_of_worker<Type_idx, Worker>::get_worker(Type_idx idx){
     std::unique_lock<std::mutex> l(this->lock);
-    this->wait_free_worker(l);
-    Worker ret = this->workers[idx];
+    this->wait_worker(l);
+    Worker ret = this->workers.at(idx);
     this->workers.erase(idx);
     return ret;
 }

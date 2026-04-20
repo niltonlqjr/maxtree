@@ -387,7 +387,7 @@ void worker::registry(){
 
 void worker::registry_at(std::string server_addr){
     zmq::context_t context(1);
-    zmq::socket_t connect_manager(context,zmq::socket_type::req);
+    zmq::socket_t connect_manager(context,zmq::socket_type::dealer);
     connect_manager.connect(server_addr);
 
     std::string msg_content = hps::to_string(*this);
@@ -449,12 +449,12 @@ void worker::connect(){
             std::cout << "creating socket\n";
         }else{
             this->sock.set(zmq::sockopt::routing_id, std::to_string(this->id));
-            std::cout << "set routing id to:" << this->id << "\n";
+            std::cout << "set routing id to:" << std::to_string(this->id) << "\n";
         }
         this->sock.connect(this->manager);
         std::cout << "connected at: " << this->manager << "\n";
-        this->connected = true;
     }
+    this->connected = true;
 }
 
 void worker::disconnect(){
@@ -462,7 +462,7 @@ void worker::disconnect(){
         this->sock.disconnect(this->manager);
         std::cout << "disconnected from "<< this->manager << "\n";
     }
-    connected = false;
+    this->connected = false;
 }
 
 
@@ -493,8 +493,10 @@ void worker::send_btree_task(boundary_tree_task *btt, enum message_type tp){
     zmq::message_t idx;
     // std::cout << "recv "<< __LINE__ <<"\n";
     // auto idx_recv = this->sock.recv(idx, zmq::recv_flags::none);
-    // std::cout << "recv "<< __LINE__ <<"\n";
+    std::cout << "send btree task line "<< __LINE__ <<"\n";
     auto _r = this->sock.recv(reply, zmq::recv_flags::none);
+    std::cout << "send btree task line "<< __LINE__ <<"\n";
+    // std::cout << "received: "<< reply.to_string() << " as ack\n";
     // std::cout << "received ack (inside worker::send_btree_task) \n" ;
 }
 

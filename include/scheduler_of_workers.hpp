@@ -14,7 +14,7 @@
 template <class Worker>
 class scheduler_of_workers{
     protected:
-        void wait_free_worker(std::unique_lock<std::mutex> &l);
+        void wait_worker(std::unique_lock<std::mutex> &l);
         std::mutex lock;
         std::condition_variable cv;
         std::deque<Worker> workers;
@@ -44,7 +44,7 @@ class hash_scheduler_of_worker{
         std::mutex lock;
         std::condition_variable cv;
         std::unordered_map<Type_idx, Worker> workers;
-        void wait_free_worker(std::unique_lock<std::mutex> &l);
+        void wait_worker(std::unique_lock<std::mutex> &l);
     public:
         hash_scheduler_of_worker();
         void insert_worker(Type_idx idx, Worker w);
