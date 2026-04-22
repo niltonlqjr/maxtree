@@ -138,6 +138,8 @@ inline hash_scheduler_of_worker<Type_idx, Worker>::hash_scheduler_of_worker(){
 template <class Type_idx, class Worker>
 inline void hash_scheduler_of_worker<Type_idx, Worker>::insert_worker(Type_idx idx, Worker w){
     std::unique_lock<std::mutex> l(this->lock);
+    // std::string _s= "++++++++> inserting worker " + std::to_string(w->get_index()) + "\n";
+    // std::cout << _s;
     this->workers[idx] = w; // this->workers.insert(idx, w);
 
 }
@@ -169,5 +171,7 @@ inline Worker hash_scheduler_of_worker<Type_idx, Worker>::get_worker(Type_idx id
     this->wait_worker(l);
     Worker ret = this->workers.at(idx);
     this->workers.erase(idx);
+    // std::string _s= "--------> removing worker " + std::to_string(ret->get_index()) + "\n";
+    // std::cout << _s;
     return ret;
 }

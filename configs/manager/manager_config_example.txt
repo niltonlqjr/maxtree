@@ -4,7 +4,7 @@
 # the args names (lvalue) and values (rvalue) are preprocessed by a right trim and left trim
 
 # grid lines
-glines=6
+glines=4
 # grid columns
 gcolumns=8
 

@@ -346,8 +346,10 @@ void worker::update_filter(bag_of_tasks<maxtree_task *> &src, bag_of_tasks<maxtr
     if(verbose) std::cout << "worker update\n";
     // while(src.is_running()){
         got_task = src.get_task(mtt);
-        // s = "updating (" + std::to_string(mtt->mt->grid_i) + "," + std::to_string(mtt->mt->grid_j) + ") \n";
-        // std::cout << s;
+        if(verbose){
+            s = "updating (" + std::to_string(mtt->mt->grid_i) + "," + std::to_string(mtt->mt->grid_j) + ") \n";
+            std::cout << s;
+        }
         if(got_task){
             this->busy = true;
             mtt->mt->update_from_boundary_tree(global_bt);
@@ -402,9 +404,11 @@ void worker::registry_at(std::string server_addr){
 
     connect_manager.send(message_0mq, zmq::send_flags::none);
     zmq::message_t reply_0mq;
-    // std::cout << "recv "<< __LINE__ <<"\n";
     // auto resp_idx = connect_manager.recv(idx, zmq::recv_flags::none);
-    // std::cout << "recv "<< __LINE__ <<"\n";
+    if(verbose){
+        std::cout << "recv "<< __LINE__ <<"\n";
+        std::cout << "recv "<< __LINE__ <<"\n";
+    }
     auto resp_val = connect_manager.recv(reply_0mq, zmq::recv_flags::none);
     TWorkerIdx reply; // = hps::from_string<TWorkerIdx>(reply_0mq);
     memcpy(&reply, reply_0mq.data(), sizeof(TWorkerIdx));
@@ -420,19 +424,23 @@ message worker::request_work(){
     
     std::string s_msg = hps::to_string<message>(request);
     zmq::message_t msg_0mq(s_msg);
-    
+    std::string _m;
     // this->sock.send(msg_0mq,zmq::send_flags::none);
     this->sock.send(msg_0mq, zmq::send_flags::none);
     // std::cout << "sent\n";
     zmq::message_t reply_zmq;
     std::string reply_str;
     zmq::message_t idx;
-    // std::cout << "recv "<< __LINE__ <<"\n";
     // auto idx_recv = this->sock.recv(idx, zmq::recv_flags::none);
-    // std::cout << "recv "<< __LINE__ <<"\n";
+    // if(verbose) 
+        _m = "request work waiting response for worker "+ std::to_string(this->get_index()) +"\n";
+        std::cout << _m;
+    // }
     auto _r = this->sock.recv(reply_zmq, zmq::recv_flags::none);
     reply_str = reply_zmq.to_string();
-    // std::cout << "request_work end\n";
+    /* if(verbose) */ 
+        _m = "worker "+ std::to_string(this->get_index()) +" get response\n";
+        std::cout << _m;
     
     return hps::from_string<message>(reply_str);
 }
@@ -466,13 +474,13 @@ void worker::disconnect(){
 }
 
 
-void worker::send_btree_task(boundary_tree_task *btt, enum message_type tp){
+void worker::send_btree_task(boundary_tree_task *btt, enum message_type type){
     if(!this->connected){
         this->connect();
     }
     std::string msg_content = hps::to_string(*btt);
-    message m = message(msg_content, msg_content.size(), tp, this->id);
-
+    message m = message(msg_content, msg_content.size(), type, this->id);
+    std::string _m;
     std::string s_msg = hps::to_string(m);
     // std::cout << "sending: -->" << s_msg << "<--\n";
     // std::cout << "sending: -->";
@@ -487,17 +495,25 @@ void worker::send_btree_task(boundary_tree_task *btt, enum message_type tp){
 
     // std::cout << "sending tree: " << btt->bt->index_to_string() << " with distance " << int_pair_to_string(btt->nb_distance) <<"\n" ;
     this->sock.send(message_0mq, zmq::send_flags::none);
+    if(verbose){
+        _m = "worker " + std::to_string(this->get_index()) + " sent message \n";
+        std::cout << _m;
+    }
 
     // std::cout << "tree: " << btt->bt->index_to_string() << " sent(inside worker::send_btree_task) \n" ;
     zmq::message_t reply;
     zmq::message_t idx;
-    // std::cout << "recv "<< __LINE__ <<"\n";
     // auto idx_recv = this->sock.recv(idx, zmq::recv_flags::none);
-    std::cout << "send btree task line "<< __LINE__ <<"\n";
+    _m = "worker " + std::to_string(this->get_index()) + " waiting ack \n";
+    std::cout << _m;
     auto _r = this->sock.recv(reply, zmq::recv_flags::none);
-    std::cout << "send btree task line "<< __LINE__ <<"\n";
-    // std::cout << "received: "<< reply.to_string() << " as ack\n";
-    // std::cout << "received ack (inside worker::send_btree_task) \n" ;
+    _m = "worker " + std::to_string(this->get_index()) + " ack received \n";
+    std::cout << _m;
+    if(verbose){
+        
+        std::cout << "received: "<< reply.to_string() << " as ack\n";
+        std::cout << "received ack (inside worker::send_btree_task) \n" ;
+    }
 }
 
 
@@ -517,7 +533,7 @@ void worker::send_boundary_tree(boundary_tree *bt){
     // }
 
     // std::cout << " <--\n";
-    std::cout << "sending tree\n";
+    if(verbose) std::cout << "sending tree\n";
     zmq::message_t message_0mq(s_msg);
 
     this->sock.send(message_0mq, zmq::send_flags::none);
@@ -525,9 +541,11 @@ void worker::send_boundary_tree(boundary_tree *bt){
     std::cout << "tree sent\n";
     zmq::message_t reply;
     zmq::message_t idx;
-    // std::cout << "recv "<< __LINE__ <<"\n";
+    if(verbose){
+        std::cout << "recv "<< __LINE__ <<"\n";
+        std::cout << "recv "<< __LINE__ <<"\n";
+    }
     // auto idx_recv = this->sock.recv(idx, zmq::recv_flags::none);
-    // std::cout << "recv "<< __LINE__ <<"\n";
     auto _r = this->sock.recv(reply,zmq::recv_flags::none);
 
     

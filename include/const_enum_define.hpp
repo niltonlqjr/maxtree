@@ -88,4 +88,6 @@ static std::map<std::string, VipsAccess> VipsAccesTypeVector({
     {"VIPS_ACCESS_LAST",VIPS_ACCESS_LAST}
 });
 
+
+
 #endif

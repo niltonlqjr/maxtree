@@ -160,6 +160,7 @@ bool bag_of_tasks<Task>::empty(){
     return this->tasks->size() == 0;
 }
 
+
 template <class Task>
 template <class T>
 uint64_t bag_of_tasks<Task>::search_by_function(T value, T function(Task)){
