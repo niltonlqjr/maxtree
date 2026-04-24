@@ -257,9 +257,9 @@ void merge_tiles(message &msg_work, worker *w){
         nb_dist.first = 1;
         nb_dist.second = 0;
     }
-    /* if(verbose) */{
-        s = "merge tiles end "+ mbtt.bt1->index_to_string() + " " + mbtt.bt2->index_to_string();
-        s+="merge distance: " + int_pair_to_string(mbtt.distance) + "\n";
+    if(verbose){
+        s = "merge tiles end " + mbtt.bt1->index_to_string() + " " + mbtt.bt2->index_to_string();
+        s+= " merge distance " + int_pair_to_string(mbtt.distance) + "\n";
         std::cout << s;
     }
     boundary_tree_task btt = boundary_tree_task(merged_tree, nb_dist);
@@ -313,10 +313,11 @@ bool do_work(vips::VImage *img_in, worker *w){
     message msg_work = w->request_work();
     
     // std::cout << "request task\n";
-    std::string sout;
+    std::string sout, _m;
     bool ret=true;
-
-    std::cout << "received " << NamesMessageType[msg_work.type] << "\n";
+    _m =  "received " + NamesMessageType[msg_work.type] + " <---------- \n";
+    std::cout << _m;
+    // std::cout << "received " << NamesMessageType[msg_work.type] << " <---------- \n";
     // if(msg_work.type != MSG_NULL){
     //     sout ="===============> type:" + std::to_string(msg_work.type) + " -> " + NamesMessageType[msg_work.type] + " to worker:" + std::to_string(w->get_index()) + "<===============\n";
     //     std::cout << sout;

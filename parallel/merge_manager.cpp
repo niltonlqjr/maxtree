@@ -50,8 +50,8 @@ ordered_scheduler_of_workers <worker*, worker_lesser_than> G_waiting_workers;
 
 bag_of_tasks<input_tile_task* > G_input_tiles;
 bag_of_tasks<boundary_tree_task *> G_bound_trees;
-// bag_of_tasks<merge_btrees_task *> G_merge_bag;
-prio_bag_of_tasks<merge_btrees_task *> G_merge_bag;
+bag_of_tasks<merge_btrees_task *> G_merge_bag;
+// prio_bag_of_tasks<merge_btrees_task *> G_merge_bag;
 // ordered_bag_of_tasks<merge_btrees_task *, mbt_lesser_than> G_merge_bag;
 
 uint64_t G_total_merges;
@@ -135,9 +135,9 @@ void search_pair_naive(){
             }else if (inside_rectangle(btt->index, GRID_DIMS)){ // the neighbor of btt is not inside the grid (it does not exist, so go to next merge)
                 if(btt->nb_distance.first == 0){
                     if(btt->nb_distance.second < GRID_DIMS.second){ //this tile doesn't need to merge, just try to found a neighbor further than the actual
-                        if(verbose){
+                        // if(verbose){
                             std::string s = int_pair_to_string(btt->index) + " line distance * 2 = "+ int_pair_to_string(btt->nb_distance) + "\n";
-                        }
+                        // }
                         btt->nb_distance.second *= 2;
                     }else{ // there is no more neighbor on this line to merge, so this line must be merged with the other lines
                         btt->nb_distance.first = 1; 
@@ -358,10 +358,10 @@ void task_sender(zmq::socket_t &sock){
             // _m = "sending task to worker: " + std::to_string(worker_idx) + "\n";
             // std::cout << _m;
             G_sock_lock.lock();
-            std::cout << "task sender lock\n";
+            // std::cout << "task sender lock\n";
             auto __ret0 = sock.send(msg_id, zmq::send_flags::sndmore);
             auto reply_return = sock.send(msg_reply, zmq::send_flags::none);
-            std::cout << "task sender unlock\n";
+            // std::cout << "task sender unlock\n";
             G_sock_lock.unlock();
             // _m = "task has been sent to worker: " + std::to_string(worker_idx) + "\n";
             // std::cout << _m;
@@ -399,16 +399,17 @@ void recv_boundary_tree(message &recv_msg, zmq::socket_t &sock){
     boundary_tree_task *new_bttask = new boundary_tree_task(btt);
     G_bound_trees.insert_task(new_bttask);
     // std::cout << "recv_boundary_tree: " << G_bound_trees.size() << "\n";
-    std::string smsg="ACK";
-    message reply = message(smsg, smsg.size(), MSG_COMMAND, 0);
-    std::string s_reply = hps::to_string<message>(reply);
-    zmq::message_t msg_idx(std::to_string(recv_msg.sender));
-    // zmq::message_t msg_idx(recv_msg.sender);
-    G_sock_lock.lock();
-    auto __ret0 = sock.send(msg_idx, zmq::send_flags::sndmore);
-    auto reply_return = sock.send(zmq::message_t(s_reply), zmq::send_flags::none);
-    std::cout << "ACK sent to " << msg_idx.to_string() << "and should be: "<< recv_msg.sender <<  "\n";
-    G_sock_lock.unlock();
+    // std::string smsg="ACK";
+    // message reply = message(smsg, smsg.size(), MSG_COMMAND, 0);
+    // std::string s_reply = hps::to_string<message>(reply);
+    // zmq::message_t msg_idx(std::to_string(recv_msg.sender));
+    // std::cout << msg_idx.to_string() << "\n";
+  
+    // G_sock_lock.lock();
+    // auto __ret0 = sock.send(msg_idx, zmq::send_flags::sndmore);
+    // auto reply_return = sock.send(zmq::message_t(s_reply), zmq::send_flags::none);
+    // std::cout << "ACK sent to " << msg_idx.to_string() << "and should be: "<< recv_msg.sender <<  "\n";
+    // G_sock_lock.unlock();
 }
 
 void process_task_request(message &recv_msg, zmq::socket_t &sock){
@@ -428,7 +429,7 @@ void process_task_request(message &recv_msg, zmq::socket_t &sock){
         // G_busy_workers.search_worker_by_function<TWorkerIdx>(worker_idx, ) 
         if(verbose) std::cout << "process task request line: "<< __LINE__ <<"\n";
         try{
-            w = G_busy_workers.get_worker(worker_idx);
+            w = G_busy_workers.get_worker(recv_msg.sender);
             if(verbose) std::cout << "process task request line: "<< __LINE__ << "\n";
             G_waiting_workers.insert_worker(w);
         }catch(...){
@@ -458,12 +459,15 @@ void process_task_request(message &recv_msg, zmq::socket_t &sock){
         if(verbose) std::cout << "process task request line: "<< __LINE__ <<"\n";
         reply.size = reply.content.size();
         std::string reply_s = hps::to_string(reply);
-        zmq::message_t msg_id(std::to_string(worker_idx));
+        std::string str_id = std::to_string(worker_idx);
+        zmq::message_t msg_id(str_id);
         zmq::message_t msg_reply(reply_s);
         G_sock_lock.lock();
         auto __ret0 = sock.send(msg_id, zmq::send_flags::sndmore);
         auto reply_return = sock.send(msg_reply, zmq::send_flags::none);
         G_sock_lock.unlock();
+    }else{
+        std::cout << " ========> not reply <==========\n";
     }
 }
 
@@ -490,12 +494,12 @@ void manager_recv(zmq::socket_t &sock){
             _m = "!!!!!!!! busy: " + std::to_string(G_busy_workers.size()) + " !!!!!!!!!\n";
             std::cout << _m;
         }
-        G_sock_lock.lock();
-        std::cout << "manager recv lock "<< ++_lc << "\n";
+        // G_sock_lock.lock();
+        // std::cout << "manager recv lock "<< ++_lc << "\n";
         auto idx_recv = sock.recv(idx, zmq::recv_flags::none);
         auto res_recv = sock.recv(request,zmq::recv_flags::none);
-        std::cout << "manager recv unlock "<< _lc <<"\n";
-        G_sock_lock.unlock();
+        // std::cout << "manager recv unlock "<< _lc <<"\n";
+        // G_sock_lock.unlock();
         // std::cout << "message received from: " << idx.to_string() << "\n";
         std::string rec_msg;
         rec_msg = request.to_string();
@@ -503,6 +507,9 @@ void manager_recv(zmq::socket_t &sock){
         message recv_msg = hps::from_string<message>(rec_msg);
         
         // std::cout << " type:"<< recv_msg.type << " -> " << NamesMessageType[recv_msg.type] << "\n";
+        _m = "type:"+ NamesMessageType[recv_msg.type] + " sender (at message):" + std::to_string(recv_msg.sender) 
+            + " sender (sock.recv):" + idx.to_string() +  "\n";
+        std::cout << _m;
         if(recv_msg.type == MSG_REGISTRY){
             registry_worker(recv_msg, sock, idx.to_string());
         }else if(recv_msg.type == MSG_BOUNDARY_TREE){
@@ -550,11 +557,27 @@ void finish_workers(zmq::socket_t &sock){
     std::cout << sout;
     zmq::message_t request, idx;
     message reply;
+    worker *w;
+    while(G_waiting_workers.size() > 0){
+        w = G_waiting_workers.get_worker();
+        reply.type = MSG_COMMAND;
+        reply.content = "END";
+        // reply.size = 0;
+        reply.size = reply.content.size();
+        std::string reply_s = hps::to_string(reply);
+        zmq::message_t msg_reply(reply_s);
+        zmq::message_t msg_idx(std::to_string(w->get_index()));
+        auto __ret0 = sock.send(msg_idx, zmq::send_flags::sndmore);
+        auto reply_return = sock.send(msg_reply, zmq::send_flags::none);
+        G_finished_workers++;
+        sout = "finished worker: " + std::to_string(w->get_index()) + "\ttotal worker finished: " + std::to_string(G_finished_workers) + "\n";
+        std::cout << sout;
+    }
     while(G_finished_workers < G_total_workers){
-        G_sock_lock.lock();
+        // G_sock_lock.lock();
         auto idx_recv = sock.recv(idx, zmq::recv_flags::none);
         auto res_recv = sock.recv(request,zmq::recv_flags::none);
-        G_sock_lock.unlock();
+        // G_sock_lock.unlock();
         std::string rec_msg;
         rec_msg = request.to_string();
         message recv_msg = hps::from_string<message>(rec_msg);
@@ -566,24 +589,21 @@ void finish_workers(zmq::socket_t &sock){
         std::string reply_s = hps::to_string(reply);
         zmq::message_t msg_reply(reply_s);
         zmq::message_t msg_idx(std::to_string(recv_msg.sender));
-        G_sock_lock.lock();
+        // G_sock_lock.lock();
         auto __ret0 = sock.send(msg_idx, zmq::send_flags::sndmore);
         auto reply_return = sock.send(msg_reply, zmq::send_flags::none);
-        G_sock_lock.unlock();
+        // G_sock_lock.unlock();
         G_finished_workers++;
         sout = "finished worker: " + std::to_string(recv_msg.sender) + "\ttotal worker finished: " + std::to_string(G_finished_workers) + "\n";
         std::cout << sout;
     }
 }
 
-void server_front(zmq::socket_t &sock){
-    // receive message from worker
-    // thread to process message
-    // get message and worker to send message
-    // send message
- 
+void finish_workers_old(zmq::socket_t &sock){
+    std::string sout = std::to_string(G_finished_workers) + " of " + std::to_string(G_total_workers) + " workers finisehd before function finish_workers\n";
+    std::cout << sout;
+    zmq::message_t request, idx;
 }
-
 
 int main(int argc, char *argv[]){
     
