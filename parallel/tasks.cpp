@@ -31,6 +31,17 @@ task_exception::task_exception(std::string &m){
     this->msg = m;
 }
  */
+/* class registry_task: public comparable_task{
+    public:
+        message m;
+        std::string idzmq;
+        registry_task();
+        registry_task(message &recv_msg, std::string id_zmq);
+        uint64_t size();
+        void registry();
+} */
+
+
 
 // Input tile task
 input_tile_task::input_tile_task(uint32_t i, uint32_t j, uint32_t nb_rt, uint32_t nb_rl){

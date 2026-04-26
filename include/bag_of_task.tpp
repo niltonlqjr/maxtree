@@ -112,6 +112,7 @@ bool bag_of_tasks<Task>::get_task_by_function(Task &ret, T value, T function(Tas
 
 template <class Task>
 Task bag_of_tasks<Task>::at(int pos){
+    std::unique_lock<std::mutex> l(this->lock);
     return this->tasks->at(pos);
 }
 

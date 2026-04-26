@@ -315,13 +315,9 @@ bool do_work(vips::VImage *img_in, worker *w){
     // std::cout << "request task\n";
     std::string sout, _m;
     bool ret=true;
-    _m =  "received " + NamesMessageType[msg_work.type] + " <---------- \n";
+    _m =  "received " + NamesMessageType[msg_work.type] + " <----------" + std::to_string(w->get_index()) + " \n";
     std::cout << _m;
-    // std::cout << "received " << NamesMessageType[msg_work.type] << " <---------- \n";
-    // if(msg_work.type != MSG_NULL){
-    //     sout ="===============> type:" + std::to_string(msg_work.type) + " -> " + NamesMessageType[msg_work.type] + " to worker:" + std::to_string(w->get_index()) + "<===============\n";
-    //     std::cout << sout;
-    // }
+
     
     if(msg_work.type == MSG_TILE_IDX){
         request_process_tile(img_in, msg_work, w);
@@ -408,7 +404,7 @@ int main(int argc, char *argv[]){
 
     G_self_ip = "localhost";
     GRID_DIMS = std::make_pair(G_glines,G_gcolumns);
-
+    std::cout << G_glines<<","<<G_gcolumns<<"\n";
     if (VIPS_INIT(argv[0])) { 
         vips_error_exit (NULL);
     } 

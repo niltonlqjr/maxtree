@@ -32,6 +32,8 @@ class scheduler_of_workers{
 
 template <class Worker, bool CompareLesser(Worker, Worker)>
 class ordered_scheduler_of_workers : public scheduler_of_workers<Worker>{
+    // protected:
+        
     public:
         ordered_scheduler_of_workers();
         void insert_worker(Worker w);

@@ -22,11 +22,14 @@ if all workers are busy, it throws std::range_error
 template <class Worker>
 Worker scheduler_of_workers<Worker>::get_worker(){
     std::unique_lock<std::mutex> l(this->lock);
-    this->wait_worker(l);
-    
-    // Worker r = this->workers.at(0);
-    Worker r = this->workers.back();
-    this->workers.pop_back();
+    // this->wait_worker(l);
+    while(this->workers.size() <= 0){
+        this->cv.wait(l);
+    }
+
+    Worker r = this->workers.at(0);
+    // Worker r = this->workers.front();
+    this->workers.pop_front();
     return r;
     
 }
@@ -36,7 +39,10 @@ template <class Worker>
 template <class T>
 size_t scheduler_of_workers<Worker>::search_worker_by_function(T value, T function(Worker)){
     std::unique_lock<std::mutex> l(this->lock);
-    this->wait_worker(l);
+    // this->wait_worker(l);
+    while(this->workers.size() <= 0){
+        this->cv.wait(l);
+    }
     for(size_t i=0; i < this->workers.size(); i++){
         if(function(this->workers.at(i)) == value){
             return i;
@@ -48,7 +54,8 @@ size_t scheduler_of_workers<Worker>::search_worker_by_function(T value, T functi
 
 template<class Worker>
 inline void scheduler_of_workers<Worker>::wait_worker(std::unique_lock<std::mutex>  &l){
-    while(this->workers.size() <= 0){
+    while(this->workers.empty()){
+        std::cout << "waiting_worker\n";
         this->cv.wait(l);
     }
 }
@@ -97,6 +104,7 @@ inline ordered_scheduler_of_workers<Worker, CompareLesser>::ordered_scheduler_of
     // this->workers = new max_heap<Worker>();
 }
 
+
 template <class Worker, bool CompareLesser(Worker, Worker)>
 void ordered_scheduler_of_workers<Worker, CompareLesser>::insert_worker(Worker w){
     std::unique_lock<std::mutex> l(this->lock);
@@ -119,9 +127,12 @@ if all workers are busy, it throws std::range_error
 template <class Worker, bool CompareLesser(Worker, Worker)>
 Worker ordered_scheduler_of_workers<Worker, CompareLesser>::get_worker(){
     std::unique_lock<std::mutex> l(this->lock);
-    this->wait_worker(l);
-    // Worker r = this->workers.at(0);
-    Worker r = this->workers.front();
+    // this->wait_worker(l);
+    while(this->workers.size() <= 0){
+        this->cv.wait(l);
+    }
+    Worker r = this->workers.at(0);
+    // Worker r = this->workers.front();
     this->workers.pop_front();
     return r;
     
@@ -168,7 +179,12 @@ inline size_t hash_scheduler_of_worker<Type_idx, Worker>::size(){
 template <class Type_idx, class Worker>
 inline Worker hash_scheduler_of_worker<Type_idx, Worker>::get_worker(Type_idx idx){
     std::unique_lock<std::mutex> l(this->lock);
-    this->wait_worker(l);
+    // this->wait_worker(l);
+
+    while(this->workers.size() <= 0){
+        this->cv.wait(l);
+    }
+
     Worker ret = this->workers.at(idx);
     this->workers.erase(idx);
     // std::string _s= "--------> removing worker " + std::to_string(ret->get_index()) + "\n";

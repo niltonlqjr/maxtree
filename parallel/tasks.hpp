@@ -6,6 +6,7 @@
 #include "const_enum_define.hpp"
 #include "maxtree.hpp"
 #include "boundary_tree.hpp"
+#include "message.hpp"
 #ifndef __TASKS_HPP__
 #define __TASKS_HPP__
 
@@ -16,6 +17,7 @@ class comparable_task{
         virtual uint64_t size() = 0;
         
 };
+
 
 class input_tile_task: public comparable_task{
     public:
