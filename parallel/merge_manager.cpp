@@ -296,7 +296,6 @@ void message_sender(zmq::socket_t &sock){
     std::string _m, string_idx, reply_s;
     std::pair< std::string, worker *> registry_queue_element;
 
-    
     {//unique_lock scope
         std::unique_lock<std::mutex> l(G_sender_lock);
         if(G_total_workers.load() <= 0){
@@ -338,6 +337,12 @@ void message_sender(zmq::socket_t &sock){
             reply.size = reply.content.size();
             string_idx = std::to_string(worker_idx);
             reply_s = hps::to_string(reply);
+        }else if(!G_merge_bag.is_running()){
+            w = G_waiting_workers.get_worker();
+            prepare_final_tree(reply, w->get_name());
+            string_idx = std::to_string(w->get_index());
+            reply_s = hps::to_string(reply);
+            
         }
         else if(G_updates_sent.load() >= G_total_tiles.load()){
             w = G_waiting_workers.get_worker();
