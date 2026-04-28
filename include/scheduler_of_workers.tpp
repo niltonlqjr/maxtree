@@ -94,6 +94,12 @@ size_t scheduler_of_workers<Worker>::size(){
     return this->workers.size();
 }
 
+template <class Worker>
+bool scheduler_of_workers<Worker>::empty(){
+    std::unique_lock<std::mutex> l(this->lock);
+    return this->workers.size() == 0;
+}
+
 /*==============================================================================================================
   ====================================     ordered_scheduler_of_workers     ====================================
   ==============================================================================================================*/
@@ -190,4 +196,11 @@ inline Worker hash_scheduler_of_worker<Type_idx, Worker>::get_worker(Type_idx id
     // std::string _s= "--------> removing worker " + std::to_string(ret->get_index()) + "\n";
     // std::cout << _s;
     return ret;
+}
+
+
+template <class Type_idx, class Worker>
+inline bool hash_scheduler_of_worker<Type_idx, Worker>::empty(){
+    std::unique_lock<std::mutex> l(this->lock);
+    return this->workers.size() == 0;
 }

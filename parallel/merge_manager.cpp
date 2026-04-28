@@ -315,7 +315,6 @@ void message_sender(zmq::socket_t &sock){
             reply.type = MSG_NEW_IDX;
             reply_s = hps::to_string(reply);
             G_busy_workers.insert_worker(registry_queue_element.second->get_index(), registry_queue_element.second);
-            
             _m = "Registring: " + string_idx + " as "+ reply.content +"\n";
             std::cout << _m;
         }else if((G_input_tiles.is_running() || !G_input_tiles.empty())
@@ -342,12 +341,12 @@ void message_sender(zmq::socket_t &sock){
             prepare_final_tree(reply, w->get_name());
             string_idx = std::to_string(w->get_index());
             reply_s = hps::to_string(reply);
-            
-        }
-        else if(G_updates_sent.load() >= G_total_tiles.load()){
+            G_updates_sent.fetch_add(1);
+        }else if(G_updates_sent.load() >= G_total_tiles.load()){
             w = G_waiting_workers.get_worker();
             string_idx = std::to_string(w->get_index());
             reply_s = create_end_command_msg();
+            G_updates_sent.fetch_add(1);
         }
         if(string_idx != ""){
             zmq::message_t msg_id(string_idx);
@@ -496,17 +495,17 @@ void finish_workers(zmq::socket_t &sock){
     zmq::message_t request, idx;
     message reply;
     worker *w;
-/*     while(G_waiting_workers.size() > 0){
+    while(G_waiting_workers.size() > 0){
         w = G_waiting_workers.get_worker();
         std::string reply_s = create_end_command_msg();
         zmq::message_t msg_reply(reply_s);
         zmq::message_t msg_idx(std::to_string(w->get_index()));
         auto __ret0 = sock.send(msg_idx, zmq::send_flags::sndmore);
         auto reply_return = sock.send(msg_reply, zmq::send_flags::none);
-        G_finished_workers++;
+        G_finished_workers.fetch_add(1);
         sout = "finished worker: " + std::to_string(w->get_index()) + "\ttotal worker finished: " + std::to_string(G_finished_workers) + "\n";
         std::cout << sout;
-    } */
+    }
     std::cout << "Waiting workers queue end\n";
     while(G_finished_workers.load() < G_total_workers.load()){
         // G_sock_lock.lock();
@@ -582,7 +581,7 @@ int main(int argc, char *argv[]){
     receiver.join();
     merge_task_sender.join();
 
-    // finish_workers(sock);
+    finish_workers(sock);
     
 }
 

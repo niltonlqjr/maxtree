@@ -27,6 +27,7 @@ class scheduler_of_workers{
         void finish_worker(Worker w);
         Worker at(size_t i);
         size_t size();
+        bool empty();
 };
 
 
@@ -53,6 +54,7 @@ class hash_scheduler_of_worker{
         Worker search_worker_by_idx(Type_idx idx);
         Worker get_worker(Type_idx idx);
         size_t size();
+        bool empty();
 
         
 
