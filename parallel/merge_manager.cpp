@@ -115,7 +115,7 @@ void search_pair_naive(){
     bool change_dir;
     std::string s;
     uint64_t self_int_idx, nb_int_idx;
-    while(G_merge_bag.is_running() || G_bound_trees.size() > 1){
+    while(G_merge_bag.is_running()){ // || G_bound_trees.size() > 1){
         // std::cout << "search_pair_naive\n";
         
         bool got = G_bound_trees.get_task(btt);
@@ -304,7 +304,7 @@ void message_sender(zmq::socket_t &sock){
         }
     }
 
-    while(G_updates_sent.load() < G_total_tiles.load()){
+    while(G_updates_sent.load() < G_total_workers.load()){
         string_idx = "";
         
         if(!G_registry_queue.empty()){
@@ -342,12 +342,13 @@ void message_sender(zmq::socket_t &sock){
             string_idx = std::to_string(w->get_index());
             reply_s = hps::to_string(reply);
             G_updates_sent.fetch_add(1);
-        }else if(G_updates_sent.load() >= G_total_tiles.load()){
-            w = G_waiting_workers.get_worker();
-            string_idx = std::to_string(w->get_index());
-            reply_s = create_end_command_msg();
-            G_updates_sent.fetch_add(1);
         }
+        // else if(G_updates_sent.load() >= G_total_workers.load()){
+        //     w = G_waiting_workers.get_worker();
+        //     string_idx = std::to_string(w->get_index());
+        //     reply_s = create_end_command_msg();
+        //     G_updates_sent.fetch_add(1);
+        // }
         if(string_idx != ""){
             zmq::message_t msg_id(string_idx);
             zmq::message_t msg_reply(reply_s);
@@ -355,8 +356,8 @@ void message_sender(zmq::socket_t &sock){
             auto __ret0 = sock.send(msg_id, zmq::send_flags::sndmore);
             auto reply_return = sock.send(msg_reply, zmq::send_flags::none);
             G_sock_lock.unlock();
-            _m = "message " +  NamesMessageType[reply.type] + " sent to index: " + string_idx + "\n";
-            std::cout << _m;
+            // _m = "message " +  NamesMessageType[reply.type] + " sent to index: " + string_idx + "\n";
+            // std::cout << _m;
         }
     }
 }
@@ -373,7 +374,9 @@ void registry_worker(message &recv_msg, std::string worker_zmq_id){
     
     // _m = "worker " + std::to_string(w_at_manager->get_index()) + " going to waiting queue\n";
     // std::cout << _m;
-    G_got_full_btree[w_at_manager->get_name()] = false;
+    if(G_merge_bag.is_running()){
+        G_got_full_btree[w_at_manager->get_name()] = false;
+    }
 
     auto registry_task = std::make_pair(worker_zmq_id, w_at_manager);
     G_registry_queue.insert_task(registry_task);
@@ -435,15 +438,15 @@ void manager_recv(zmq::socket_t &sock){
     std::string rec_msg;
     // TWorkerIdx current_idx;
     while(G_updates_sent.load() < G_total_tiles.load()){
-        std::cout << "before recv in inside manager_recv\n";
+        // std::cout << "before recv in inside manager_recv\n";
         auto idx_recv = sock.recv(idx, zmq::recv_flags::none);
         auto res_recv = sock.recv(request,zmq::recv_flags::none);
         
         rec_msg = request.to_string();
         message recv_msg = hps::from_string<message>(rec_msg);
         
-        _m = "worker: " + idx.to_string() + " requested " + NamesMessageType[recv_msg.type] + "\n";
-        std::cout << _m;
+        // _m = "worker: " + idx.to_string() + " requested " + NamesMessageType[recv_msg.type] + "\n";
+        // std::cout << _m;
         
         if(recv_msg.type == MSG_REGISTRY){
             registry_worker(recv_msg, idx.to_string());
@@ -461,20 +464,6 @@ void manager_recv(zmq::socket_t &sock){
     }
     G_bound_trees.notify_end();
 }
-
-/*
-    recv_boundary_tree(recv_msg, sock);
-    G_num_merges++;
-    if(verbose){
-        _m = " ===========> merge " + std::to_string( G_num_merges )+ " of " + std::to_string(G_total_merges) +" ends\n";
-        std::cout << _m;
-    }
-    // busy_workers.erase(recv_msg.sender);
-    if(G_num_merges >= G_total_merges){
-        G_merge_bag.notify_end();
-        std::cout << "merge bag end\n";
-    }
-*/
 
 
 void fill_input_bag(){
@@ -533,11 +522,6 @@ void finish_workers(zmq::socket_t &sock){
     }
 }
 
-void finish_workers_old(zmq::socket_t &sock){
-    std::string sout = std::to_string(G_finished_workers) + " of " + std::to_string(G_total_workers) + " workers finisehd before function finish_workers\n";
-    std::cout << sout;
-    zmq::message_t request, idx;
-}
 
 int main(int argc, char *argv[]){
     
@@ -577,11 +561,14 @@ int main(int argc, char *argv[]){
     // std::thread pair_maker(search_pair);
 
     fill.join();
+    std::cout << "fill\n";
     pair_maker.join();
+    std::cout << "pair maker\n";
     receiver.join();
+    std::cout << "receiver\n";
     merge_task_sender.join();
 
-    finish_workers(sock);
+    // finish_workers(sock);
     
 }
 
