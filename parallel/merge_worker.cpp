@@ -257,11 +257,11 @@ void merge_tiles(message &msg_work, worker *w){
         nb_dist.first = 1;
         nb_dist.second = 0;
     }
-    if(verbose){
+    // if(verbose){
         s = "merge tiles end " + mbtt.bt1->index_to_string() + " " + mbtt.bt2->index_to_string();
         s+= " merge distance " + int_pair_to_string(mbtt.distance) + "\n";
         std::cout << s;
-    }
+    // }
     boundary_tree_task btt = boundary_tree_task(merged_tree, nb_dist);
     if(verbose){
         _m = "sending merged tree of worker " + std::to_string(w->get_index()) + "\n";
@@ -332,20 +332,7 @@ bool do_work(vips::VImage *img_in, worker *w){
         }
         ret = false;
     }
-    // else if(msg_work.type == MSG_COMMAND){
-    //     // if(verbose){
-    //         sout = "worker " + std::to_string(w->get_index()) + " received the command: " + msg_work.content + "\n";
-    //         std::cout << sout;
-    //     // }
-    //     if(msg_work.content == "END"){
-    //         ret = false;
-    //     }
-    // }
-    
-    // if(msg_work.type != MSG_NULL){
-    //     std::string sout ="===============> message of type:" + std::to_string(msg_work.type) + " -> " + NamesMessageType[msg_work.type] + " finished at worker:" + std::to_string(w->get_index()) + "<===============\n";
-    //     std::cout << sout;
-    // }
+
     return ret;
 }
 
@@ -357,7 +344,8 @@ void loop_worker(vips::VImage *img, std::string server_addr){
 
     maxtree_task *update_task=nullptr;
     
-    while(G_maxtrees.get_task(update_task)){
+    while(!G_maxtrees.empty()){
+        G_maxtrees.get_task(update_task);
         update_filter_and_save(update_task, w);
     }
     std::string sout = "worker " + std::to_string(w->get_index()) + " finished \n";

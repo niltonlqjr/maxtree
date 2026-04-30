@@ -352,6 +352,11 @@ void worker::connect(){
 
 void worker::disconnect(){
     if(this->connected){
+        std::string str_cmd("DISCONNECT");
+        message msg_disconnect(str_cmd, 10, MSG_COMMAND, this->id);
+        std::string str_msg = hps::to_string<message>(msg_disconnect);
+        zmq::message_t zmq_msg(str_msg);
+        this->sock.send(zmq_msg, zmq::send_flags::none);
         this->sock.disconnect(this->manager);
         std::cout << this->id << " disconnected from "<< this->manager << "\n";
     }
@@ -367,7 +372,8 @@ void worker::send_btree_task(boundary_tree_task *btt, enum message_type type){
     message m = message(msg_content, msg_content.size(), type, this->id);
     std::string _m;
     std::string s_msg = hps::to_string(m);
-    _m = std::to_string(this->id) + " -------> sending: " + NamesMessageType[type] + "\n";
+    _m = std::to_string(this->id) + " -------> sending: " + NamesMessageType[type] + btt->bt->index_to_string() 
+        + " distance: " + int_pair_to_string(btt->nb_distance) + "\n";
     std::cout << _m;
     zmq::message_t message_0mq(s_msg);
 

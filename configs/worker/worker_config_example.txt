@@ -8,9 +8,9 @@
 threads=12
 
 # grid lines
-glines=4
+glines=8
 # grid columns
-gcolumns=8
+gcolumns=16
 
 # print some information(true/false)
 verbose=false

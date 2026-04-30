@@ -45,7 +45,7 @@ bool bag_of_tasks<Task>::get_task(Task &ret){
     // std::cout << "get task - tasks->size():" << this->tasks->size() << "\n";
     std::unique_lock<std::mutex> l(this->lock);
 
-    while(this->tasks->size() <= 0){
+    while(this->tasks->size() <= 0 && this->running){
         // this->waiting++;
         // std::cout << "wait task\n";
         this->has_task.wait(l);
@@ -69,7 +69,7 @@ template <class Task>
 bool bag_of_tasks<Task>::get_task_by_position(Task &ret, size_t position){
     // std::cout << "get task by position - tasks->size():" << this->tasks->size() << " tasks->size:" << this->tasks->size() << "\n";
     std::unique_lock<std::mutex> l(this->lock);
-    while(this->tasks->size()){
+    while(this->tasks->size() && this->running){
         this->has_task.wait(l);
     }
     if(this->tasks->size() > 0 && position < this->tasks->size()){
@@ -102,12 +102,6 @@ bool bag_of_tasks<Task>::get_task_by_function(Task &ret, T value, T function(Tas
         }
     }
     return false;
-
-    // catch(std::runtime_error &e){
-    //     return false;
-    // }catch(std::out_of_range &e){
-    //     return false;
-    // }
 }
 
 template <class Task>
@@ -197,8 +191,10 @@ template <class Task>
 void prio_bag_of_tasks<Task>::insert_task(Task t){
     // std::cout << "prio insert task\n";
     std::unique_lock<std::mutex> l(this->lock);
-    this->tasks->insert(t);
-    this->wakeup_workers();
+    if(this->running){
+        this->tasks->insert(t);
+        this->wakeup_workers();
+    }
     // this->has_task.notify_all();
 }
 
@@ -212,7 +208,7 @@ bool prio_bag_of_tasks<Task>::get_task(Task &ret, int priority){
     }else{
         pos = this->position_of(priority);
     }
-    while(this->tasks->size() <= 0){
+    while(this->tasks->size() <= 0 && this->running){
         this->waiting++;
         this->has_task.wait(l);
     }
@@ -249,12 +245,14 @@ template <class Task, bool CompareLesser(Task, Task)>
 void ordered_bag_of_tasks<Task, CompareLesser>::insert_task(Task t){
     // std::cout << "ordered insert task:" << this->tasks->size() << "\n";
     std::unique_lock<std::mutex> l(this->lock);
-    this->tasks->push_back(t);
-    
-    size_t i=this->tasks->size()-1;
-    while(i > 0 && CompareLesser(this->tasks->at(i-1) , t)){
-        this->tasks->at(i) = this->tasks->at(i-1);
-        i--;
+    if(this->running){
+        this->tasks->push_back(t);
+        
+        size_t i=this->tasks->size()-1;
+        while(i > 0 && CompareLesser(this->tasks->at(i-1) , t)){
+            this->tasks->at(i) = this->tasks->at(i-1);
+            i--;
+        }
+        this->wakeup_workers();
     }
-    this->wakeup_workers();
 }

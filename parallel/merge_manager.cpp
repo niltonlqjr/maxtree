@@ -31,7 +31,7 @@ merge_btrees_task *get_task_balanced(TWorkerIdx idx);
 std::string self_address;
 
 uint32_t G_glines, G_gcolumns;
-std::atomic<uint64_t> G_updates_sent, G_finished_workers, G_num_merges;
+std::atomic<uint64_t> G_updates_sent, G_finished_workers, G_num_merges, G_workers_finished;
 std::atomic<uint64_t> G_total_merges,  G_total_tiles, G_total_workers;
 
 bool print_only_trees;
@@ -113,19 +113,22 @@ void search_pair_naive(){
     enum merge_directions merge_dir;
     uint32_t new_distance;
     bool change_dir;
-    std::string s;
+    std::string s, _m;
     uint64_t self_int_idx, nb_int_idx;
     while(G_merge_bag.is_running()){ // || G_bound_trees.size() > 1){
-        // std::cout << "search_pair_naive\n";
         
         bool got = G_bound_trees.get_task(btt);
+        _m = "G_merge_bag size:" + std::to_string(G_merge_bag.size()) + " G_bound_trees size:" + std::to_string(G_bound_trees.size()) +"\n" ;
+        _m += "Got btree:" + btt->bt->index_to_string() + " distance:" + int_pair_to_string(btt->nb_distance) + "\n";
+        std::cout << _m;
+        
         if(got){
             self_int_idx = index_of(btt->index, GRID_DIMS);
             merge_dir = btt->define_merge_direction();
             nb_direction = btt->define_nb_direction(merge_dir);
             idx_nb = btt->neighbor_idx(nb_direction);
             if(inside_rectangle(idx_nb, GRID_DIMS) && inside_rectangle(btt->index, GRID_DIMS)){
-                try{
+                // try{
                     auto got_n = G_bound_trees.get_task_by_function<std::pair<uint32_t,uint32_t>>(n, idx_nb, get_task_index);
                     if(!got_n){
                         G_bound_trees.insert_task(btt);
@@ -137,13 +140,13 @@ void search_pair_naive(){
                         G_bound_trees.insert_task(n);
                         G_bound_trees.insert_task(btt);
                     }
-                }
-                catch(std::runtime_error &e){
-                    std::cerr << e.what();
-                    G_bound_trees.insert_task(btt);
-                }catch(std::out_of_range &r){
-                    std::cerr << "try to access an out of range element\n";
-                }
+                // }
+                // catch(std::runtime_error &e){
+                //     std::cerr << e.what();
+                //     G_bound_trees.insert_task(btt);
+                // }catch(std::out_of_range &r){
+                //     std::cerr << "try to access an out of range element\n";
+                // }
             }else if (inside_rectangle(btt->index, GRID_DIMS)){ // the neighbor of btt is not inside the grid (it does not exist, so go to next merge)
                 if(btt->nb_distance.first == 0){
                     if(btt->nb_distance.second < GRID_DIMS.second){ //this tile doesn't need to merge, just try to found a neighbor further than the actual
@@ -161,6 +164,9 @@ void search_pair_naive(){
                     }
                 }
                 G_bound_trees.insert_task(btt);   
+            }
+            else{
+                std::cout << "------------------->nao deveria entrar aqui!\n";
             }
         }
     }
@@ -437,7 +443,7 @@ void manager_recv(zmq::socket_t &sock){
     uint64_t calculated_tiles = 0;
     std::string rec_msg;
     // TWorkerIdx current_idx;
-    while(G_updates_sent.load() < G_total_tiles.load()){
+    do{
         // std::cout << "before recv in inside manager_recv\n";
         auto idx_recv = sock.recv(idx, zmq::recv_flags::none);
         auto res_recv = sock.recv(request,zmq::recv_flags::none);
@@ -457,12 +463,14 @@ void manager_recv(zmq::socket_t &sock){
             G_num_merges.fetch_add(1);
             if(G_num_merges.load() >= G_total_merges.load()){
                 G_merge_bag.notify_end();
+                G_bound_trees.notify_end();
             }
         }else if(recv_msg.type == MSG_GET_TASK){
             process_task_request(recv_msg);
         }
-    }
-    G_bound_trees.notify_end();
+    }while(G_updates_sent.load() < G_total_workers.load());
+    std::cout << "manager_recv reached last line (" << __LINE__ << ")\n";
+    
 }
 
 
@@ -537,6 +545,7 @@ int main(int argc, char *argv[]){
     G_updates_sent.store(0);
     G_total_workers.store(0) ;
     G_finished_workers.store(0);
+    G_workers_finished.store(0);
     
     zmq::context_t context_reg(nth);
     // zmq::socket_t  sock(context_reg, zmq::socket_type::rep);
@@ -562,11 +571,12 @@ int main(int argc, char *argv[]){
 
     fill.join();
     std::cout << "fill\n";
-    pair_maker.join();
-    std::cout << "pair maker\n";
     receiver.join();
     std::cout << "receiver\n";
     merge_task_sender.join();
+    std::cout << "task sender\n";
+    pair_maker.join();
+    std::cout << "pair maker\n";
 
     // finish_workers(sock);
     
