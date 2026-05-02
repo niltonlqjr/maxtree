@@ -15,9 +15,8 @@ class bag_of_tasks{
     protected:
         std::deque<Task> *tasks;
         std::mutex lock;
-        std::condition_variable has_task, no_task;
+        std::condition_variable has_task;
         bool running;
-        uint32_t waiting;
         void wakeup_workers();
     public:
         bag_of_tasks(bool start_running = false);
@@ -30,10 +29,8 @@ class bag_of_tasks{
         bool get_task_by_position(Task &ret, size_t position);
         template <class T> bool get_task_by_function(Task &ret, T value, T function(Task));
         Task at(int pos);
-        void wait_empty();
         void notify_end();
-        int num_waiting();
-        int size();
+        size_t size();
         void print();
         bool empty();
         template <class T> uint64_t search_by_function(T value, T function(Task));

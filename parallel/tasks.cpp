@@ -265,13 +265,14 @@ enum merge_directions boundary_tree_task::define_merge_direction(){
 enum neighbor_direction boundary_tree_task::define_nb_direction(enum merge_directions merge_dir){
     enum neighbor_direction ret;
     if(merge_dir == MERGE_VERTICAL_BORDER){
-        if(this->bt->grid_j % int_pow(2,this->nb_distance.second) == 0){
+        // if(this->bt->grid_j % int_pow(2,this->nb_distance.second-1) == 0){
+        if(this->bt->grid_j % (2 * this->nb_distance.second) == 0){
             ret = NB_AT_RIGHT;
         }else{
             ret = NB_AT_LEFT;
         }
     }else if(merge_dir == MERGE_HORIZONTAL_BORDER){
-        if(this->bt->grid_i % int_pow(2,this->nb_distance.first) == 0){
+        if(this->bt->grid_i % (2 * this->nb_distance.first) == 0){
             ret = NB_AT_BOTTOM;
         }else{
             ret = NB_AT_TOP;

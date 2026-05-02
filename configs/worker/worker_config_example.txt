@@ -8,7 +8,7 @@
 threads=12
 
 # grid lines
-glines=8
+glines=32
 # grid columns
 gcolumns=16
 

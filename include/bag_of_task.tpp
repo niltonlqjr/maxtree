@@ -5,7 +5,7 @@ bag_of_tasks<Task>::bag_of_tasks(bool start_running){
     this->tasks = new std::deque<Task>();
     
     this->running = start_running;
-    this->waiting = 0;
+    
 }
 template <class Task>
 bag_of_tasks<Task>::~bag_of_tasks(){
@@ -46,7 +46,7 @@ bool bag_of_tasks<Task>::get_task(Task &ret){
     std::unique_lock<std::mutex> l(this->lock);
 
     while(this->tasks->size() <= 0 && this->running){
-        // this->waiting++;
+        
         // std::cout << "wait task\n";
         this->has_task.wait(l);
         // std::cout << "wait task\n";
@@ -75,8 +75,6 @@ bool bag_of_tasks<Task>::get_task_by_position(Task &ret, size_t position){
     if(this->tasks->size() > 0 && position < this->tasks->size()){
         ret = this->tasks->at(position);
         this->tasks->erase(this->tasks->begin() + position);
-        
-        this->no_task.notify_all();
         return true;
     }
     return false;
@@ -97,7 +95,6 @@ bool bag_of_tasks<Task>::get_task_by_function(Task &ret, T value, T function(Tas
             ret = t;
             
             this->tasks->erase(it);
-            this->no_task.notify_all();
             return true;
         }
     }
@@ -111,16 +108,7 @@ Task bag_of_tasks<Task>::at(int pos){
 }
 
 template <class Task>
-void bag_of_tasks<Task>::wait_empty(){
-    std::unique_lock<std::mutex> l(this->lock);
-    while(this->tasks->size() > 0){
-        this->no_task.wait(l);
-    }
-}
-
-template <class Task>
 void bag_of_tasks<Task>::wakeup_workers(){
-    this->waiting=0;
     this->has_task.notify_all();
 }
 
@@ -132,13 +120,7 @@ void bag_of_tasks<Task>::notify_end(){
 }
 
 template <class Task>
-int bag_of_tasks<Task>::num_waiting(){
-    std::unique_lock<std::mutex> l(this->lock);
-    return this->waiting;
-}
-
-template <class Task>
-int bag_of_tasks<Task>::size(){
+size_t bag_of_tasks<Task>::size(){
     std::unique_lock<std::mutex> l(this->lock);
     return this->tasks->size();
 }
@@ -180,7 +162,7 @@ template <class Task>
 prio_bag_of_tasks<Task>::prio_bag_of_tasks(bool start_running){
     this->tasks = new min_heap<Task>();
     this->running = start_running;
-    this->waiting = 0;
+    
 }
 template <class Task>
 prio_bag_of_tasks<Task>::~prio_bag_of_tasks(){
@@ -209,7 +191,7 @@ bool prio_bag_of_tasks<Task>::get_task(Task &ret, int priority){
         pos = this->position_of(priority);
     }
     while(this->tasks->size() <= 0 && this->running){
-        this->waiting++;
+        
         this->has_task.wait(l);
     }
     // if(!this->running){
@@ -234,7 +216,7 @@ ordered_bag_of_tasks<Task, CompareLesser>::ordered_bag_of_tasks(bool start_runni
     this->tasks = new std::deque<Task>();
     
     this->running = start_running;
-    this->waiting = 0;
+    
 }
 template <class Task, bool CompareLesser(Task, Task)>
 ordered_bag_of_tasks<Task, CompareLesser>::~ordered_bag_of_tasks(){
