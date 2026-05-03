@@ -29,7 +29,7 @@ std::pair<uint32_t, uint32_t> next_tile(std::pair<uint32_t, uint32_t> p);
 
 merge_btrees_task *get_task_naive(TWorkerIdx idx);
 merge_btrees_task *get_task_balanced(TWorkerIdx idx);
-std::string self_address;
+
 
 uint32_t G_glines, G_gcolumns;
 std::atomic<uint64_t> G_updates_sent, G_finished_workers, G_num_merges, G_workers_finished;
@@ -78,7 +78,7 @@ std::condition_variable_any G_sender_cv;
 
 
 
-void read_config(char conf_name[], std::string &port, std::string &protocol){
+void read_config(char conf_name[], std::string &port_recv, std::string &port_send,  std::string &protocol){
 
     auto configs = parse_config(conf_name);
 
@@ -92,7 +92,8 @@ void read_config(char conf_name[], std::string &port, std::string &protocol){
     G_glines = std::stoi(configs->at("glines"));
     G_gcolumns = std::stoi(configs->at("gcolumns"));
 
-    port = get_field(configs, "port", DEFAULT_PORT);
+    port_recv = get_field(configs, "port_recv", DEFAULT_RECV_PORT);
+    port_send = get_field(configs, "port_send", DEFAULT_SEND_PORT);
     protocol = get_field(configs, "protocol", "tcp");
 }
 
@@ -227,88 +228,14 @@ void prepare_tile(message &reply){
     reply.content = hps::to_string<std::pair<uint32_t,uint32_t>>(idx_reply);
 }
 
-void message_sender(zmq::socket_t &sock){
-    TWorkerIdx worker_idx;
-    worker *w;
-    size_t pos_w;
-    message reply;
-    merge_btrees_task *mbt;
-    std::string _m, string_idx, reply_s;
-    std::pair< std::string, worker *> registry_queue_element;
-
-    {//unique_lock scope
-        std::unique_lock<std::mutex> l(G_sender_lock);
-        if(G_total_workers.load() <= 0){
-            std::cout << "sender waiting for workers\n";
-            G_sender_cv.wait(l);
-        }
-    }
-
-    while(G_updates_sent.load() < G_total_workers.load()){
-        string_idx = "";
-        
-        if(!G_registry_queue.empty()){
-            G_registry_queue.get_task(registry_queue_element);
-            string_idx = registry_queue_element.first;
-            reply.content = std::to_string(registry_queue_element.second->get_index());
-            reply.size = reply.content.size();
-            reply.type = MSG_NEW_IDX;
-            reply_s = hps::to_string(reply);
-            G_busy_workers.insert_worker(registry_queue_element.second->get_index(), registry_queue_element.second);
-            _m = "Registring: " + string_idx + " as "+ reply.content +"\n";
-            std::cout << _m;
-        }else if((G_input_tiles.is_running() || !G_input_tiles.empty())
-                 && G_waiting_workers.size() > 0){
-            prepare_tile(reply);
-            w = G_waiting_workers.get_worker();
-            worker_idx = w->get_index();
-            G_busy_workers.insert_worker(worker_idx, w);
-            string_idx = std::to_string(worker_idx);
-            reply_s = hps::to_string(reply);
-        }else if(G_merge_bag.is_running() && !G_merge_bag.empty()
-                 && G_waiting_workers.size() > 0){
-            w = G_waiting_workers.get_worker();
-            worker_idx = w->get_index();
-            G_busy_workers.insert_worker(worker_idx, w);
-            reply.type = MSG_MERGE_BOUNDARY_TREE;
-            G_merge_bag.get_task(mbt);
-            reply.content = hps::to_string(*mbt);
-            reply.size = reply.content.size();
-            string_idx = std::to_string(worker_idx);
-            reply_s = hps::to_string(reply);
-        }else if(!G_merge_bag.is_running()){
-            w = G_waiting_workers.get_worker();
-            prepare_final_tree(reply, w->get_name());
-            string_idx = std::to_string(w->get_index());
-            reply_s = hps::to_string(reply);
-            G_updates_sent.fetch_add(1);
-        }
-        // else if(G_updates_sent.load() >= G_total_workers.load()){
-        //     w = G_waiting_workers.get_worker();
-        //     string_idx = std::to_string(w->get_index());
-        //     reply_s = create_end_command_msg();
-        //     G_updates_sent.fetch_add(1);
-        // }
-        if(string_idx != ""){
-            zmq::message_t msg_id(string_idx);
-            zmq::message_t msg_reply(reply_s);
-            G_sock_lock.lock();
-            auto __ret0 = sock.send(msg_id, zmq::send_flags::sndmore);
-            auto reply_return = sock.send(msg_reply, zmq::send_flags::none);
-            G_sock_lock.unlock();
-            // _m = "message " +  NamesMessageType[reply.type] + " sent to index: " + string_idx + "\n";
-            // std::cout << _m;
-        }
-    }
-    std::cout << "message_sender end<===========\n";
-}
 
 
-void registry_worker(message &recv_msg, std::string worker_zmq_id){
+void registry_worker(message &recv_msg, std::string worker_zmq_id, zmq::socket_t &sock){
     worker w_rec = hps::from_string<worker>(recv_msg.content);
     TWorkerIdx current_idx=G_idx_at_manager++;
     worker *w_at_manager = new worker(w_rec);
-    std::string _m;
+    std::string _m, string_idx, reply_s;
+    message reply;
 
     w_at_manager->update_index(current_idx);
     // G_waiting_workers.insert_worker(w_at_manager);
@@ -319,8 +246,23 @@ void registry_worker(message &recv_msg, std::string worker_zmq_id){
         G_got_full_btree[w_at_manager->get_name()] = false;
     }
 
-    auto registry_task = std::make_pair(worker_zmq_id, w_at_manager);
-    G_registry_queue.insert_task(registry_task);
+   
+    string_idx = worker_zmq_id;
+    reply.content = std::to_string(w_at_manager->get_index());
+    reply.size = reply.content.size();
+    reply.type = MSG_NEW_IDX;
+    reply_s = hps::to_string(reply);
+    G_busy_workers.insert_worker(w_at_manager->get_index(), w_at_manager);
+    
+    _m = "Registring: " + string_idx + " as "+ reply.content +"\n";
+    std::cout << _m;
+
+    zmq::message_t msg_id(string_idx);
+    zmq::message_t msg_reply(reply_s);
+    // G_sock_lock.lock();
+    auto __ret0 = sock.send(msg_id, zmq::send_flags::sndmore);
+    auto __ret1 = sock.send(msg_reply, zmq::send_flags::none);
+    
 
     {//unique_lock scope
         std::unique_lock<std::mutex>(G_sender_lock);
@@ -436,6 +378,7 @@ void search_pair(){
     
     while(G_merge_bag.is_running()){
         bool got = G_bound_trees.get_task(btt); /* <========= thread 6 */
+        _m = "task tile: " + btt->bt->index_to_string() + "\n";
         self_int_idx = index_of(btt->index, GRID_DIMS);
         merge_dir = btt->define_merge_direction();
         nb_direction = btt->define_nb_direction(merge_dir);
@@ -481,7 +424,8 @@ void search_pair(){
                 }
             }else{
                 btt_linear_idx = index_of(btt->index, GRID_DIMS);
-                waiting_pair[btt_linear_idx] = btt;
+                // waiting_pair[btt_linear_idx] = btt;
+                G_bound_trees.insert_task(btt);
                 _m = "going to waiting " + btt->bt->index_to_string() + " distance: " + int_pair_to_string(btt->nb_distance) 
                     + "linear: " + std::to_string(btt_linear_idx) + "\n";
                 // std::cout << _m;
@@ -500,6 +444,8 @@ void search_pair(){
                 }
             }
             G_bound_trees.insert_task(btt);   
+        }else{
+            std::cout << "====> nenhuma das tasks dentro do grid!\n";
         }
     }
     std::cout << "search_pair end<=======\n";
@@ -507,7 +453,7 @@ void search_pair(){
 
 
 
-void manager_recv(zmq::socket_t &sock){
+void manager_recv(zmq::socket_t &sock_recv){
     zmq::message_t request,idx;
     std::pair<uint32_t, uint32_t> current_tile(0,0);
     std::string _m;
@@ -519,9 +465,10 @@ void manager_recv(zmq::socket_t &sock){
     do{
         // std::cout << "before recv in inside manager_recv\n";
         // G_sock_lock.lock();
-        // std::cout << "waiting message\n";
-        auto idx_recv = sock.recv(idx, zmq::recv_flags::none);/* <======== thread 5*/
-        auto res_recv = sock.recv(request,zmq::recv_flags::none);
+        // std::cout << "manager recv waiting message\n";
+        auto idx_recv = sock_recv.recv(idx, zmq::recv_flags::none);/* <======== thread 5*/
+        auto res_recv = sock_recv.recv(request,zmq::recv_flags::none);
+        // std::cout << "message received\n";
         // G_sock_lock.unlock();
         
         rec_msg = request.to_string();
@@ -531,7 +478,7 @@ void manager_recv(zmq::socket_t &sock){
         // std::cout << _m;
         
         if(recv_msg.type == MSG_REGISTRY){
-            registry_worker(recv_msg, idx.to_string());
+            registry_worker(recv_msg, idx.to_string(), sock_recv);
         }else if(recv_msg.type == MSG_BOUNDARY_TREE){
             recv_boundary_tree(recv_msg);
         }else if(recv_msg.type == MSG_SEND_MERGED_TREE){
@@ -550,6 +497,79 @@ void manager_recv(zmq::socket_t &sock){
     
 }
 
+void message_sender(zmq::socket_t &sock_send){
+    TWorkerIdx worker_idx;
+    worker *w;
+    size_t pos_w;
+    message reply;
+    merge_btrees_task *mbt;
+    std::string _m, string_idx, reply_s;
+    std::pair< std::string, worker *> registry_queue_element;
+
+    {//unique_lock scope
+        std::unique_lock<std::mutex> l(G_sender_lock);
+        if(G_total_workers.load() <= 0){
+            std::cout << "sender waiting for workers\n";
+            G_sender_cv.wait(l);
+        }
+    }
+
+    while(G_updates_sent.load() < G_total_workers.load()){
+        string_idx = "";
+        
+        //  if(!G_registry_queue.empty()){
+        //     G_registry_queue.get_task(registry_queue_element);
+        //     string_idx = registry_queue_element.first;
+        //     reply.content = std::to_string(registry_queue_element.second->get_index());
+        //     reply.size = reply.content.size();
+        //     reply.type = MSG_NEW_IDX;
+        //     reply_s = hps::to_string(reply);
+        //     G_busy_workers.insert_worker(registry_queue_element.second->get_index(), registry_queue_element.second);
+        //     _m = "Registring: " + string_idx + " as "+ reply.content +"\n";
+        //     std::cout << _m;
+        // }else  
+        if((G_input_tiles.is_running() || !G_input_tiles.empty())
+                 && G_waiting_workers.size() > 0){
+            prepare_tile(reply);
+            w = G_waiting_workers.get_worker();
+            worker_idx = w->get_index();
+            G_busy_workers.insert_worker(worker_idx, w);
+            string_idx = std::to_string(worker_idx);
+            reply_s = hps::to_string(reply);
+        }else if(G_merge_bag.is_running() && !G_merge_bag.empty()
+                 && G_waiting_workers.size() > 0){
+            w = G_waiting_workers.get_worker();
+            worker_idx = w->get_index();
+            G_busy_workers.insert_worker(worker_idx, w);
+            reply.type = MSG_MERGE_BOUNDARY_TREE;
+            G_merge_bag.get_task(mbt);
+            reply.content = hps::to_string(*mbt);
+            reply.size = reply.content.size();
+            string_idx = std::to_string(worker_idx);
+            reply_s = hps::to_string(reply);
+        }else if(!G_merge_bag.is_running()){
+            w = G_waiting_workers.get_worker();
+            prepare_final_tree(reply, w->get_name());
+            string_idx = std::to_string(w->get_index());
+            reply_s = hps::to_string(reply);
+            G_updates_sent.fetch_add(1);
+        }
+
+        if(string_idx != ""){
+            zmq::message_t msg_id(string_idx);
+            zmq::message_t msg_reply(reply_s);
+            // G_sock_lock.lock();
+            auto __ret0 = sock_send.send(msg_id, zmq::send_flags::sndmore);
+            auto reply_return = sock_send.send(msg_reply, zmq::send_flags::none);
+            // G_sock_lock.unlock();
+            _m = "message " +  NamesMessageType[reply.type] + " sent to index: " + string_idx + "\n";
+            std::cout << _m;
+        }
+    }
+    std::cout << "message_sender end<===========\n";
+}
+
+
 
 void fill_input_bag(){
     std::pair<uint32_t, uint32_t> current_tile(0,0);
@@ -562,7 +582,7 @@ void fill_input_bag(){
     }
     G_input_tiles.notify_end();
 }
-
+/* 
 void finish_workers(zmq::socket_t &sock){
     std::string sout = std::to_string(G_finished_workers) + " of " + std::to_string(G_total_workers.load()) + " workers finisehd before function finish_workers\n";
     std::cout << sout;
@@ -605,14 +625,14 @@ void finish_workers(zmq::socket_t &sock){
         sout = "finished worker: " + std::to_string(recv_msg.sender) + "\ttotal worker finished: " + std::to_string(G_finished_workers) + "\n";
         std::cout << sout;
     }
-}
+} */
 
 
 int main(int argc, char *argv[]){
     
-    std::string port, protocol;
+    std::string port_recv, port_send, self_address_recv, self_address_send ,protocol;
 
-    read_config(argv[1], port, protocol);
+    read_config(argv[1], port_recv, port_send, protocol);
     GRID_DIMS = std::make_pair(G_glines,G_gcolumns);
     //  Prepare contexts and sockets
     
@@ -624,15 +644,22 @@ int main(int argc, char *argv[]){
     G_finished_workers.store(0);
     G_workers_finished.store(0);
     
-    zmq::context_t context_reg(nth);
+    zmq::context_t context_send(nth);
+    zmq::context_t context_recv(nth);
+    
     // zmq::socket_t  sock(context_reg, zmq::socket_type::rep);
-    zmq::socket_t sock(context_reg, zmq::socket_type::router);
+    zmq::socket_t sock_send(context_send, zmq::socket_type::router);
+    zmq::socket_t sock_recv(context_recv, zmq::socket_type::router);
     
-    self_address = protocol+"://*:"+port;
-    std::string address = self_address;
-    sock.bind(address);
+    self_address_recv = protocol+"://*:"+port_recv;
+    sock_recv.bind(self_address_recv);
     
-    std::cout << "running at port " << port << "\n";
+    self_address_send = protocol+"://*:"+port_send;
+    sock_send.bind(self_address_send);
+
+    std::cout << "receiver socket running at port " << port_recv << "\n";
+    std::cout << "sender socket running at port " << port_send << "\n";
+
 
     
     G_sender_running=false;
@@ -642,10 +669,10 @@ int main(int argc, char *argv[]){
 
  
     std::thread fill(fill_input_bag);
-    std::thread receiver(manager_recv, std::ref(sock));
+    std::thread receiver(manager_recv, std::ref(sock_recv));
     // std::thread pair_maker(search_pair_naive);
     std::thread pair_maker(search_pair);
-    std::thread merge_task_sender(message_sender, std::ref(sock));
+    std::thread merge_task_sender(message_sender, std::ref(sock_send));
     // std::thread pair_maker(search_pair);
 
     fill.join();

@@ -45,7 +45,7 @@ bag_of_tasks<maxtree_task *> G_maxtrees;
 VipsAccess G_vips_access;
 
 std::string G_server_ip, G_self_ip;
-std::string G_server_port, G_self_port;
+std::string G_server_recv_port, G_server_send_port;
 std::string G_protocol;
 
 std::string G_hardware_specs_filename;
@@ -72,15 +72,18 @@ scheduler_of_workers<worker *> G_local_workers;
 
 
 /* ======================= signatures ================================= */
-void verify_args(int argc, char *argv[]);
+/* void verify_args(int argc, char *argv[]);
 void read_config(char conf_name[]);
 std::unordered_map<std::string, float> read_CPU_SPECS(std::string cpu_sepcs = "CPU_INFO.data");
-void registry_new_worker(uint32_t local_id, std::string server_addr, std::unordered_map<std::string, TWorkerAttr> &worker_attr);
-void registry_threads(uint32_t num_th, std::string server_addr, std::string self_addr);
+void registry_new_worker(uint32_t local_id, std::string server_addr, std::string server_addr, std::unordered_map<std::string, TWorkerAttr> &worker_attr, zmq::context_t &context);
+void registry_threads(uint32_t num_th, std::string server_addr, std::string self_addr, zmq::context_t &context);
 bool do_work(vips::VImage *img_in, worker *w);
-void loop_worker(vips::VImage *img, std::string server_addr);
-void make_worker_threads(uint32_t numth, VImage *in, std::string server);
+void loop_worker(vips::VImage *img, zmq::context_t &context);
+void make_worker_threads(uint32_t numth, VImage *in, zmq::context_t &context); */
 /* ======================= implementations ================================= */
+
+zmq::context_t context;
+
 
 void verify_args(int argc, char *argv[]){
     std::cout << "argc: " << argc << " argv:" ;
@@ -118,9 +121,9 @@ void read_config(char conf_name[]){
     
     G_server_ip = get_field(configs, "server_ip", "127.0.0.1");
     
-    G_server_port = get_field(configs, "server_port", DEFAULT_PORT);
+    G_server_recv_port = get_field(configs, "server_recv_port", DEFAULT_RECV_PORT);
 
-    G_self_port = get_field(configs, "self_port", DEFAULT_PORT);
+    G_server_send_port = get_field(configs, "server_send_port", DEFAULT_SEND_PORT);
 
     G_protocol = get_field(configs, "protocol", "tcp");
 
@@ -130,7 +133,9 @@ void read_config(char conf_name[]){
 
     G_hardware_specs_filename = get_field(configs, "hw_specs", "hardware.yaml");
 
-    auto str_G_num_threads = get_field(configs, "threads", "");
+    G_self_ip = get_field("self_ip", "localhost");
+
+    auto str_G_num_threads = get_field(configs, "threads", "1");
     G_num_threads = std::stoi(str_G_num_threads);
     
     G_pixel_connection = 4;
@@ -170,9 +175,10 @@ void worker_read_attributes(worker *w, std::string conf_workers_file){
     auto configs = parse_hw_config(conf_workers_file);
 }
 
-void registry_new_worker(uint32_t local_id, std::string server_addr, std::unordered_map<std::string, TWorkerAttr> &worker_attr){
+void registry_new_worker(uint32_t local_id, std::string server_send_addr, std::string server_recv_addr,
+                         std::unordered_map<std::string, TWorkerAttr> &worker_attr){
 
-    worker *w = new worker(local_id, server_addr, G_self_ip + " | pid= " +std::to_string(getpid()));
+    worker *w = new worker(local_id, server_send_addr, server_recv_addr, G_self_ip + " | pid= " +std::to_string(getpid()));
     
     for(auto k_v: worker_attr){
         w->set_attr(k_v.first, k_v.second);
@@ -180,14 +186,14 @@ void registry_new_worker(uint32_t local_id, std::string server_addr, std::unorde
     // std::cout << "registring id: " << local_id << " of total " << num_th << " threads\n";
     // workers_threads.push_back(new std::thread(w->registry_at, server_addr));
     // workers_threads.push_back(std::thread(&worker::registry,w));
-    w->registry();
+    w->registry(context);
     G_local_workers.insert_worker(w);
     // sleep(1);
 }
 
 
 
-void registry_threads(uint32_t num_th, std::string server_addr, std::string self_addr){
+void registry_threads(uint32_t num_th, std::string server_send_addr, std::string server_recv_addr){
     // std::cout << "number of threads "<< num_th << "\n";  
     std::cout << "start registration\n";
     std::vector<std::thread> workers_threads;
@@ -196,7 +202,9 @@ void registry_threads(uint32_t num_th, std::string server_addr, std::string self
     //workers register phase
     for(uint32_t local_id=0; local_id < num_th; local_id++){
         std::cout << "registrando worker " << local_id<< "\n";
-        workers_threads.push_back(std::thread(registry_new_worker, local_id, server_addr, std::ref(workers_conf->at(local_id % wcs))));
+        workers_threads.push_back(std::thread(
+            registry_new_worker, local_id, server_send_addr, server_recv_addr, std::ref(workers_conf->at(local_id % wcs))
+        ));
     }
     for(size_t i=0; i<workers_threads.size(); i++){
         workers_threads[i].join();
@@ -336,10 +344,10 @@ bool do_work(vips::VImage *img_in, worker *w){
     return ret;
 }
 
-void loop_worker(vips::VImage *img, std::string server_addr){
+void loop_worker(vips::VImage *img){
     worker *w=G_local_workers.get_worker();
     
-    w->connect();
+    w->connect(context);
     while(do_work(img,  w)); // std::cout << it++ << "\n";
 
     maxtree_task *update_task=nullptr;
@@ -355,10 +363,10 @@ void loop_worker(vips::VImage *img, std::string server_addr){
 }
 
 
-void make_worker_threads(uint32_t numth, VImage *in, std::string server){
+void make_worker_threads(uint32_t numth, VImage *in){
     std::vector<std::thread> workers_threads;
     for(uint32_t i=0; i<numth; i++){
-        workers_threads.push_back(std::thread(loop_worker, in, server));
+        workers_threads.push_back(std::thread(loop_worker, in));
     }
     for(size_t i=0; i<workers_threads.size(); i++){
         workers_threads[i].join();
@@ -370,7 +378,6 @@ int main(int argc, char *argv[]){
     enum save_type out_save_type;
     maxtree *t;
     input_tile_task *tile;
-
     if(argc < 2){
         std::cout << "usage:" << argv[0] << "<configuration file> [input image] [output prefix name]\n"
                   << "ps: input image must have it extension\n"
@@ -381,6 +388,7 @@ int main(int argc, char *argv[]){
 
     read_config(argv[1]);
 
+    
     if(argc >= 3){
         G_input_name = argv[2];
     }else if(G_input_name == ""){
@@ -392,7 +400,7 @@ int main(int argc, char *argv[]){
         G_out_name = argv[3];
     }
 
-    G_self_ip = "localhost";
+    
     GRID_DIMS = std::make_pair(G_glines,G_gcolumns);
     std::cout << G_glines<<","<<G_gcolumns<<"\n";
     if (VIPS_INIT(argv[0])) { 
@@ -406,17 +414,17 @@ int main(int argc, char *argv[]){
         )
     );
 
-    std::string server_addr = G_protocol + "://" + G_server_ip + ":" + G_server_port;
-    std::string self_addr = G_protocol + "://" + G_self_ip + ":" + G_self_port;
+    std::string server_recv_addr = G_protocol + "://" + G_server_ip + ":" + G_server_recv_port;
+    std::string server_send_addr = G_protocol + "://" + G_server_ip + ":" + G_server_send_port;
 
-    registry_threads(G_num_threads, server_addr, self_addr);
+    registry_threads(G_num_threads, server_send_addr, server_recv_addr);
     // calc_tile_boundary_tree(G_num_threads, server_addr, self_addr);
     // calc_tile_boundary_tree(in, server_addr);
     // test_send_bound_tree(in, server_addr);
     // std::cout << "threads registered\n";
     has_tasks=true;
     
-    make_worker_threads(G_num_threads, in, server_addr);
+    make_worker_threads(G_num_threads, in);
 
     // apos registrar as threads, o fluxo será o seguinte:
     // pedir tile, calcular maxtree e boundary tree responder boundary tree
@@ -428,7 +436,7 @@ int main(int argc, char *argv[]){
     for(size_t i=0; i < G_local_workers.size(); i++){
         worker *w = G_local_workers.at(i);
         // std::cout << "delete worker local: " <<  i << " registered as " << w->get_index() << " at manager\n";
-        // delete w;
+        delete w;
     }
 
     

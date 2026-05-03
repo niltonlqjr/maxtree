@@ -25,13 +25,13 @@ class worker{
         TWorkerIdx id;
         std::unordered_map<std::string, TWorkerAttr> *attr;
         bool busy, connected, registered;
-        std::string manager; // address of manager
+        std::string manager_send, manager_recv; // address of manager
         std::string name; // string composed of self ip address + "|pid=" + self pid
-        zmq::context_t context;
-        zmq::socket_t sock;
+        // zmq::context_t context;
+        zmq::socket_t server_sock_send, server_sock_recv;
     public:
         
-        worker(TWorkerIdx id, std::string manager = "", std::string address = "", std::unordered_map<std::string, TWorkerAttr> *attr = nullptr);
+        worker(TWorkerIdx id, std::string manager_send = "", std::string manager_recv = "", std::string address = "", std::unordered_map<std::string, TWorkerAttr> *attr = nullptr);
         worker(worker &w);
         worker();
         // ~worker();
@@ -52,12 +52,12 @@ class worker{
 
         template <class B>
         void serialize(B &buf) const{
-            buf << (*(this->attr)) << this->id << this->name << this->manager;
+            buf << (*(this->attr)) << this->id << this->name;
         }
 
         template <class B>
         void parse(B &buf){
-            buf >> (*(this->attr)) >> this->id >> this->name >> this->manager;
+            buf >> (*(this->attr)) >> this->id >> this->name; 
         }
         
         void update_index(TWorkerIdx new_idx);
@@ -82,17 +82,17 @@ class worker{
                            Tattribute lambda);
         
         /* sign up for server address stored on this->manager*/
-        void registry();
+        void registry(zmq::context_t &context);
 
         /* sign up for server address server_addr*/
-        void registry_at(std::string server_addr);
+        void registry_at(std::string server_addr_send, std::string server_addr_recv, zmq::context_t &context);
 
         /* request one task to server. if sock is nullptr, then
         this->sock is used, otherwise, use sock passed as arg */
         message request_work();
         bool send_answer(message &m);
 
-        void connect();
+        void connect(zmq::context_t &context);
         void disconnect();
         
         void send_boundary_tree(boundary_tree *bt);

@@ -8,8 +8,11 @@ glines=32
 # grid columns
 gcolumns=16
 
-# server port (to send messages)
-port = 7233
+# server receive port (to registry workers and receive messages)
+port_recv = 7233
+
+#server send port (to receive messages from clients)
+port_send = 7234
 
 # comunication protocol
 protocol = tcp

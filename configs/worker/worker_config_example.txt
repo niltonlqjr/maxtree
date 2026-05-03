@@ -19,11 +19,12 @@ colored = false
 
 # main server (IP address)
 server_ip = 127.0.0.1
-# main server port (to send messages)
-server_port = 7233
 
-# self port (to receive messages)
-self_port = 7234
+# server receive port (to registry at server and send messages )
+server_recv_port = 7233
+
+#server send port (to receive messages from server)
+server_send_port = 7234
 
 #atribute value to filter
 lambda=100000

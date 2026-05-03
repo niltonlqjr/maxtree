@@ -22,7 +22,8 @@
 #define TWorkerAttr double
 #define TWorkerAttr_NULL 0.0
 
-#define DEFAULT_PORT "7233"
+#define DEFAULT_RECV_PORT "7233"
+#define DEFAULT_SEND_PORT "7234"
 
 
 
