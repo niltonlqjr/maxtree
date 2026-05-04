@@ -684,7 +684,8 @@ int main(int argc, char *argv[]){
     std::cout << "pair maker\n";
 
     // finish_workers(sock);
-    
+    sock_recv.close();
+    sock_send.close();
 }
 
 
