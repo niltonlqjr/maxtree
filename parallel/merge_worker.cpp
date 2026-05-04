@@ -75,14 +75,14 @@ scheduler_of_workers<worker *> G_local_workers;
 /* void verify_args(int argc, char *argv[]);
 void read_config(char conf_name[]);
 std::unordered_map<std::string, float> read_CPU_SPECS(std::string cpu_sepcs = "CPU_INFO.data");
-void registry_new_worker(uint32_t local_id, std::string server_addr, std::string server_addr, std::unordered_map<std::string, TWorkerAttr> &worker_attr, zmq::context_t &context);
+void registry_new_worker(uint32_t local_id, std::string server_addr, std::string server_addr, std::unordered_map<std::string, TWorkerAttr> &worker_attr);
 void registry_threads(uint32_t num_th, std::string server_addr, std::string self_addr, zmq::context_t &context);
 bool do_work(vips::VImage *img_in, worker *w);
 void loop_worker(vips::VImage *img, zmq::context_t &context);
 void make_worker_threads(uint32_t numth, VImage *in, zmq::context_t &context); */
 /* ======================= implementations ================================= */
 
-zmq::context_t context;
+// zmq::context_t *context;
 
 
 void verify_args(int argc, char *argv[]){
@@ -133,7 +133,7 @@ void read_config(char conf_name[]){
 
     G_hardware_specs_filename = get_field(configs, "hw_specs", "hardware.yaml");
 
-    G_self_ip = get_field("self_ip", "localhost");
+    G_self_ip = get_field(configs, "self_ip", "localhost");
 
     auto str_G_num_threads = get_field(configs, "threads", "1");
     G_num_threads = std::stoi(str_G_num_threads);
@@ -176,7 +176,7 @@ void worker_read_attributes(worker *w, std::string conf_workers_file){
 }
 
 void registry_new_worker(uint32_t local_id, std::string server_send_addr, std::string server_recv_addr,
-                         std::unordered_map<std::string, TWorkerAttr> &worker_attr){
+                         std::unordered_map<std::string, TWorkerAttr> &worker_attr, zmq::context_t &context){
 
     worker *w = new worker(local_id, server_send_addr, server_recv_addr, G_self_ip + " | pid= " +std::to_string(getpid()));
     
@@ -193,7 +193,7 @@ void registry_new_worker(uint32_t local_id, std::string server_send_addr, std::s
 
 
 
-void registry_threads(uint32_t num_th, std::string server_send_addr, std::string server_recv_addr){
+void registry_threads(uint32_t num_th, std::string server_send_addr, std::string server_recv_addr, zmq::context_t &context){
     // std::cout << "number of threads "<< num_th << "\n";  
     std::cout << "start registration\n";
     std::vector<std::thread> workers_threads;
@@ -203,7 +203,7 @@ void registry_threads(uint32_t num_th, std::string server_send_addr, std::string
     for(uint32_t local_id=0; local_id < num_th; local_id++){
         std::cout << "registrando worker " << local_id<< "\n";
         workers_threads.push_back(std::thread(
-            registry_new_worker, local_id, server_send_addr, server_recv_addr, std::ref(workers_conf->at(local_id % wcs))
+            registry_new_worker, local_id, server_send_addr, server_recv_addr, std::ref(workers_conf->at(local_id % wcs)), std::ref(context) 
         ));
     }
     for(size_t i=0; i<workers_threads.size(); i++){
@@ -344,7 +344,7 @@ bool do_work(vips::VImage *img_in, worker *w){
     return ret;
 }
 
-void loop_worker(vips::VImage *img){
+void loop_worker(vips::VImage *img, zmq::context_t &context){
     worker *w=G_local_workers.get_worker();
     
     w->connect(context);
@@ -359,18 +359,24 @@ void loop_worker(vips::VImage *img){
     std::string sout = "worker " + std::to_string(w->get_index()) + " finished \n";
     // std::cout << sout;
     w->disconnect();/*  */
+    w->close_sockets();
     
 }
 
 
-void make_worker_threads(uint32_t numth, VImage *in){
+void make_worker_threads(uint32_t numth, VImage *in, zmq::context_t &context){
     std::vector<std::thread> workers_threads;
     for(uint32_t i=0; i<numth; i++){
-        workers_threads.push_back(std::thread(loop_worker, in));
+        workers_threads.push_back(std::thread(loop_worker, in, std::ref(context)));
     }
+
     for(size_t i=0; i<workers_threads.size(); i++){
         workers_threads[i].join();
+        std::string _m;
+        _m = "worker: "+ std::to_string(i+1) +  " of " + std::to_string(workers_threads.size()) +" join\n";
+        std::cout << _m;
     }
+    std::cout << "\n\n==================\nall threads finished!\n\n";
 }
 
 int main(int argc, char *argv[]){
@@ -395,6 +401,7 @@ int main(int argc, char *argv[]){
         std::cout << "input file not defined, please, define it in config file or in command line.\n";
         exit(EX_NOINPUT);
     }
+    zmq::context_t context;
 
     if(argc >= 4){
         G_out_name = argv[3];
@@ -417,14 +424,14 @@ int main(int argc, char *argv[]){
     std::string server_recv_addr = G_protocol + "://" + G_server_ip + ":" + G_server_recv_port;
     std::string server_send_addr = G_protocol + "://" + G_server_ip + ":" + G_server_send_port;
 
-    registry_threads(G_num_threads, server_send_addr, server_recv_addr);
+    registry_threads(G_num_threads, server_send_addr, server_recv_addr, context);
     // calc_tile_boundary_tree(G_num_threads, server_addr, self_addr);
     // calc_tile_boundary_tree(in, server_addr);
     // test_send_bound_tree(in, server_addr);
     // std::cout << "threads registered\n";
     has_tasks=true;
     
-    make_worker_threads(G_num_threads, in);
+    make_worker_threads(G_num_threads, in, context);
 
     // apos registrar as threads, o fluxo será o seguinte:
     // pedir tile, calcular maxtree e boundary tree responder boundary tree
@@ -433,13 +440,15 @@ int main(int argc, char *argv[]){
     // pedir tarefa de merge, realizar merge;
 
 
-    for(size_t i=0; i < G_local_workers.size(); i++){
-        worker *w = G_local_workers.at(i);
-        // std::cout << "delete worker local: " <<  i << " registered as " << w->get_index() << " at manager\n";
-        delete w;
-    }
+    // for(size_t i=0; i < G_local_workers.size(); i++){
+    //     worker *w = G_local_workers.at(i);
+    //     std::cout << "delete worker local: " <<  i << " registered as " << w->get_index() << " at manager\n";
+    //     w->close_sockets();
+    // }
+    std::cout << "calling vips shutdown\n";
+    vips_shutdown();
+    std::cout << "shutdown done!\n";
 
-    
-    
+    return 0;
     
 }

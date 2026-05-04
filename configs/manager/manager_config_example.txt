@@ -3,10 +3,11 @@
 # blank lines also be ignored
 # the args names (lvalue) and values (rvalue) are preprocessed by a right trim and left trim
 
+
 # grid lines
-glines=32
+glines=40
 # grid columns
-gcolumns=16
+gcolumns=40
 
 # server receive port (to registry workers and receive messages)
 port_recv = 7233

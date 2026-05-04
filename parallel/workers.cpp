@@ -380,6 +380,11 @@ void worker::disconnect(){
     this->connected = false;
 }
 
+void worker::close_sockets(){
+    this->server_sock_recv.close();
+    this->server_sock_recv.close();
+    std::cout << "worker " << this->id << " sockets closed\n";
+}
 
 void worker::send_btree_task(boundary_tree_task *btt, enum message_type type){
     if(!this->connected){

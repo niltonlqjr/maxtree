@@ -6,11 +6,11 @@
 # number of threads for the process 
 
 threads=12
-
 # grid lines
-glines=32
+glines=40
 # grid columns
-gcolumns=16
+gcolumns=40
+
 
 # print some information(true/false)
 verbose=false

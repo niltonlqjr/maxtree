@@ -474,8 +474,8 @@ void manager_recv(zmq::socket_t &sock_recv){
         rec_msg = request.to_string();
         message recv_msg = hps::from_string<message>(rec_msg);
         
-        // _m = "worker: " + idx.to_string() + " requested " + NamesMessageType[recv_msg.type] + "\n";
-        // std::cout << _m;
+        _m = "worker: " + idx.to_string() + " requested " + NamesMessageType[recv_msg.type] + "\n";
+        std::cout << _m;
         
         if(recv_msg.type == MSG_REGISTRY){
             registry_worker(recv_msg, idx.to_string(), sock_recv);
@@ -569,8 +569,6 @@ void message_sender(zmq::socket_t &sock_send){
     std::cout << "message_sender end<===========\n";
 }
 
-
-
 void fill_input_bag(){
     std::pair<uint32_t, uint32_t> current_tile(0,0);
     std::pair<uint32_t,uint32_t> grid_idx = current_tile;
@@ -582,6 +580,7 @@ void fill_input_bag(){
     }
     G_input_tiles.notify_end();
 }
+
 /* 
 void finish_workers(zmq::socket_t &sock){
     std::string sout = std::to_string(G_finished_workers) + " of " + std::to_string(G_total_workers.load()) + " workers finisehd before function finish_workers\n";
