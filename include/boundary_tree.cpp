@@ -92,9 +92,6 @@ void boundary_tree::delete_boundary_tree(){
     // delete borders
 
     for(uint32_t i=0;i < this->border_elements->size(); i++){
-        // for(auto e: *this->border_elements->at(i)){
-            // delete e;
-        // }
         delete this->border_elements->at(i);
     }
     delete this->border_elements;
@@ -103,7 +100,8 @@ void boundary_tree::delete_boundary_tree(){
     // delete tree 
     for(auto n: *this->boundary_tree_lroot){
         if(this->delete_nodes){
-             delete n.second;
+            // std::cout << ">>>>delete_node" + n.second->to_string() + "!!!!!!<<<<<<<\n";
+            delete n.second;
         }
     }
     delete this->boundary_tree_lroot;
@@ -131,7 +129,13 @@ bool boundary_tree::insert_bnode_lroot_tree(boundary_node *n, bool copy){
         n = new boundary_node(n);
         n->bound_tree_ptr = this;
     }
+    
+    if(this->boundary_tree_lroot->find(n->ptr_node->global_idx) != this->boundary_tree_lroot->end()){
+        delete this->boundary_tree_lroot->at(n->ptr_node->global_idx);
+    }
+
     this->boundary_tree_lroot->emplace(n->ptr_node->global_idx, n);
+    
     //if(verbose) std::cout << "node " << n->ptr_node->global_idx << " sucessfully inserted \n";
     return true;
 }
@@ -558,29 +562,17 @@ void boundary_tree::merge_branches(boundary_node *x, boundary_node *y,
             if(addx && addy){
                 incx_node->ptr_node->attribute = b;
                 incy_node->ptr_node->attribute = b;
-                // thisx->ptr_node->attribute = b;
-                // thisy->ptr_node->attribute = b;
-                // x->ptr_node->attribute = b;
-                // y->ptr_node->attribute = b;
+
                 carryx_out = x->ptr_node->attribute;
                 carryy_out = y->ptr_node->attribute;
-                // carryx_out = incx_node->ptr_node->attribute;
-                // carryy_out = incy_node->ptr_node->attribute;
-                // carryx_out = thisx->ptr_node->attribute;
-                // carryy_out = thisy->ptr_node->attribute;
-
             }else if(addy){
                 carryy_out = y->ptr_node->attribute;;
                 carryx_out = incx_node->ptr_node->attribute;
-                // carryx_out = x->ptr_node->attribute;
-                // carryx_out = thisx->ptr_node->attribute;
                 incx_node->ptr_node->attribute += b;
                 incy_node->ptr_node->attribute = incx_node->ptr_node->attribute;
             }else if(addx){
                 carryx_out = x->ptr_node->attribute;
                 carryy_out = incy_node->ptr_node->attribute;
-                // carryy_out = y->ptr_node->attribute;
-                // carryy_out = thisy->ptr_node->attribute;
                 incy_node->ptr_node->attribute += b;
                 incx_node->ptr_node->attribute = incy_node->ptr_node->attribute;
             }else{
@@ -1154,8 +1146,7 @@ boundary_tree *boundary_tree::get_copy(bool deep_copy){
     return copy;
 }
 
-//ver o por que o get_border_node devolve um no que a árvore não é a mesma que chamou o merge.
-
+// merge this boundary_tree with t in a new boundary_tree, delete t, and return the new boundary_tree
 boundary_tree *boundary_tree::merge(boundary_tree *t, enum merge_directions d, uint8_t connection){
     if(connection != 4){
         std::cerr << "connection != 4 not implemented yet\n";
@@ -1243,6 +1234,7 @@ boundary_tree *boundary_tree::merge(boundary_tree *t, enum merge_directions d, u
 
 
     //delete merge_tree;
+    t->delete_boundary_tree();
     if(verbose){
         std::cout << "ret_tree:" << ret_tree->lroot_to_string() << "\n";
         std::cout << "gval:" << ret_tree->lroot_to_string(BOUNDARY_GVAL) << "\n";

@@ -367,7 +367,7 @@ merge_btrees_task::merge_btrees_task(){
 
 void merge_btrees_task::free_trees(){
     this->bt1->delete_boundary_tree();
-    this->bt2->delete_boundary_tree();
+    // bt2 already clean at merge method called by bt1.
     this->bt1 = this->bt2 = nullptr;
 }
 
