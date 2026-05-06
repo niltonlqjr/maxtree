@@ -90,7 +90,7 @@ class worker{
         /* request one task to server. if sock is nullptr, then
         this->sock is used, otherwise, use sock passed as arg */
         message request_work();
-        bool send_answer(message &m);
+        void finish_worker();
 
         void connect(zmq::context_t &context);
         void disconnect();

@@ -474,7 +474,11 @@ void manager_recv(zmq::socket_t &sock_recv){
         rec_msg = request.to_string();
         message recv_msg = hps::from_string<message>(rec_msg);
         
-        _m = "worker: " + idx.to_string() + " requested " + NamesMessageType[recv_msg.type] + "\n";
+        _m = "worker: " + idx.to_string() + " requested " + NamesMessageType[recv_msg.type];
+        if(recv_msg.type == MSG_COMMAND){
+            _m += " " + recv_msg.content;
+        }
+        _m += "\n";
         std::cout << _m;
         
         if(recv_msg.type == MSG_REGISTRY){
@@ -491,8 +495,13 @@ void manager_recv(zmq::socket_t &sock_recv){
             }
         }else if(recv_msg.type == MSG_GET_TASK){
             process_task_request(recv_msg);
+        }else if(recv_msg.type == MSG_COMMAND){
+            if(recv_msg.content == "FINISH"){
+                G_workers_finished.fetch_add(1);
+            }
         }
-    }while(G_updates_sent.load() < G_total_workers.load());
+    }while(G_updates_sent.load() < G_total_workers.load() 
+        || G_workers_finished.load() < G_total_workers.load());
     std::cout << "manager_recv reached last line (" << __LINE__ << ")<==========\n";
     
 }
@@ -516,18 +525,6 @@ void message_sender(zmq::socket_t &sock_send){
 
     while(G_updates_sent.load() < G_total_workers.load()){
         string_idx = "";
-        
-        //  if(!G_registry_queue.empty()){
-        //     G_registry_queue.get_task(registry_queue_element);
-        //     string_idx = registry_queue_element.first;
-        //     reply.content = std::to_string(registry_queue_element.second->get_index());
-        //     reply.size = reply.content.size();
-        //     reply.type = MSG_NEW_IDX;
-        //     reply_s = hps::to_string(reply);
-        //     G_busy_workers.insert_worker(registry_queue_element.second->get_index(), registry_queue_element.second);
-        //     _m = "Registring: " + string_idx + " as "+ reply.content +"\n";
-        //     std::cout << _m;
-        // }else  
         if((G_input_tiles.is_running() || !G_input_tiles.empty())
                  && G_waiting_workers.size() > 0){
             prepare_tile(reply);

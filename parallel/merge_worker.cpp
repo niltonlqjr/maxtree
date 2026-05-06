@@ -311,7 +311,7 @@ void update_filter_and_save(maxtree_task *t, worker *w){
         t->filter_tree(G_lambda);
         t->mt->save(output_name);
         
-        std:: string sout = "file save:" + output_name + " by worker " + std::to_string(w->get_index()) +" \n";
+        std::string sout = "file save:" + output_name + " by worker " + std::to_string(w->get_index()) +" \n";
         std::cout << sout;
 }
 
@@ -324,7 +324,7 @@ bool do_work(vips::VImage *img_in, worker *w){
     std::string sout, _m;
     bool ret=true;
     _m =  "received " + NamesMessageType[msg_work.type] + " <----------" + std::to_string(w->get_index()) + " \n";
-    std::cout << _m;
+    // std::cout << _m;
 
     
     if(msg_work.type == MSG_TILE_IDX){
@@ -345,9 +345,12 @@ bool do_work(vips::VImage *img_in, worker *w){
 }
 
 void loop_worker(vips::VImage *img, zmq::context_t &context){
+
     worker *w=G_local_workers.get_worker();
+    zmq::context_t c;
     
-    w->connect(context);
+    // w->connect(context);
+    w->connect(c);
     while(do_work(img,  w)); // std::cout << it++ << "\n";
 
     maxtree_task *update_task=nullptr;
@@ -356,6 +359,7 @@ void loop_worker(vips::VImage *img, zmq::context_t &context){
         G_maxtrees.get_task(update_task);
         update_filter_and_save(update_task, w);
     }
+    w->finish_worker();
     std::string sout = "worker " + std::to_string(w->get_index()) + " finished \n";
     // std::cout << sout;
     w->disconnect();/*  */
@@ -401,7 +405,7 @@ int main(int argc, char *argv[]){
         std::cout << "input file not defined, please, define it in config file or in command line.\n";
         exit(EX_NOINPUT);
     }
-    zmq::context_t context;
+    zmq::context_t context_main;
 
     if(argc >= 4){
         G_out_name = argv[3];
@@ -424,14 +428,14 @@ int main(int argc, char *argv[]){
     std::string server_recv_addr = G_protocol + "://" + G_server_ip + ":" + G_server_recv_port;
     std::string server_send_addr = G_protocol + "://" + G_server_ip + ":" + G_server_send_port;
 
-    registry_threads(G_num_threads, server_send_addr, server_recv_addr, context);
+    registry_threads(G_num_threads, server_send_addr, server_recv_addr, context_main);
     // calc_tile_boundary_tree(G_num_threads, server_addr, self_addr);
     // calc_tile_boundary_tree(in, server_addr);
     // test_send_bound_tree(in, server_addr);
     // std::cout << "threads registered\n";
     has_tasks=true;
     
-    make_worker_threads(G_num_threads, in, context);
+    make_worker_threads(G_num_threads, in, context_main);
 
     // apos registrar as threads, o fluxo será o seguinte:
     // pedir tile, calcular maxtree e boundary tree responder boundary tree
@@ -447,8 +451,8 @@ int main(int argc, char *argv[]){
     // }
     std::cout << "calling vips shutdown\n";
     vips_shutdown();
-    std::cout << "shutdown done!\n";
-
+    std::cout << "shutdown done! closing context\n";
+    std::cout << "closed!!\n\n";
     return 0;
     
 }

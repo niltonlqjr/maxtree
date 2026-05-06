@@ -342,8 +342,13 @@ message worker::request_work(){
     return hps::from_string<message>(reply_str);
 }
 
-bool worker::send_answer(message &m){
-    return false;
+void worker::finish_worker(){
+    message m;
+    std::string content= "FINISH";
+    message finish(content, content.size(), MSG_COMMAND, this->get_index());
+    std::string s_finish = hps::to_string(finish);
+    zmq::message_t msg(s_finish);
+    this->server_sock_recv.send(msg, zmq::send_flags::none);
 }
 
 void worker::connect(zmq::context_t &context){
@@ -355,9 +360,12 @@ void worker::connect(zmq::context_t &context){
         }else{
             this->server_sock_send.set(zmq::sockopt::routing_id, std::to_string(this->id));
             this->server_sock_recv.set(zmq::sockopt::routing_id, std::to_string(this->id));
+
             
             std::cout << "set routing id to:" << std::to_string(this->id) << "\n";
         }
+        this->server_sock_send.set(zmq::sockopt::linger, 0);
+        this->server_sock_recv.set(zmq::sockopt::linger, 0);
         this->server_sock_recv.connect(this->manager_recv);
         std::cout << "connected server_sock_recv at: " << this->manager_recv << "\n";
         this->server_sock_send.connect(this->manager_send);
@@ -368,11 +376,11 @@ void worker::connect(zmq::context_t &context){
 
 void worker::disconnect(){
     if(this->connected){
-        std::string str_cmd("DISCONNECT");
-        message msg_disconnect(str_cmd, 10, MSG_COMMAND, this->id);
-        std::string str_msg = hps::to_string<message>(msg_disconnect);
-        zmq::message_t zmq_msg(str_msg);
-        this->server_sock_recv.send(zmq_msg, zmq::send_flags::none);
+        // std::string str_cmd("DISCONNECT");
+        // message msg_disconnect(str_cmd, 10, MSG_COMMAND, this->id);
+        // std::string str_msg = hps::to_string<message>(msg_disconnect);
+        // zmq::message_t zmq_msg(str_msg);
+        // this->server_sock_recv.send(zmq_msg, zmq::send_flags::none);
         this->server_sock_recv.disconnect(this->manager_recv);
         this->server_sock_send.disconnect(this->manager_send);
         std::cout << this->id << " disconnected from "<< this->manager_send << " and " << manager_send <<  "\n";
@@ -382,7 +390,7 @@ void worker::disconnect(){
 
 void worker::close_sockets(){
     this->server_sock_recv.close();
-    this->server_sock_recv.close();
+    this->server_sock_send.close();
     std::cout << "worker " << this->id << " sockets closed\n";
 }
 
