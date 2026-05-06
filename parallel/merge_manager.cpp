@@ -297,7 +297,7 @@ void process_task_request(message &recv_msg){
 }
 
 
-void search_pair_naive(){
+/* void search_pair_naive(){
     boundary_tree_task *btt, *n, *aux;
     std::pair<uint32_t, uint32_t> idx_nb;
     enum neighbor_direction nb_direction;
@@ -363,9 +363,8 @@ void search_pair_naive(){
     // if(verbose) std::cout << "end worker search pair\n";
     // std::cout << "end worker search pair\n";
 }
-
+ */
 void search_pair(){
-
     boundary_tree_task *btt, *n, *aux;
     std::pair<uint32_t, uint32_t> idx_nb;
     enum neighbor_direction nb_direction;
@@ -378,7 +377,13 @@ void search_pair(){
     
     while(G_merge_bag.is_running()){
         bool got = G_bound_trees.get_task(btt); /* <========= thread 6 */
-        _m = "task tile: " + btt->bt->index_to_string() + "\n";
+        if(!G_merge_bag.is_running()){
+            if(got){
+                G_bound_trees.insert_task(btt);
+            }
+            break;
+        }
+        // _m = "task tile: " + btt->bt->index_to_string() + "\n";
         self_int_idx = index_of(btt->index, GRID_DIMS);
         merge_dir = btt->define_merge_direction();
         nb_direction = btt->define_nb_direction(merge_dir);
@@ -389,27 +394,30 @@ void search_pair(){
             if(waiting_pair.find(nb_linear_idx) != waiting_pair.end()){
                 got_n = true;
                 n = waiting_pair[nb_linear_idx];
-                _m = "remove from waiting " + n->bt->index_to_string() + " distance: " + int_pair_to_string(n->nb_distance) 
-                    + "linear: " + std::to_string(nb_linear_idx)+ "\n";
+                _m = "---------------- remove from waiting " + n->bt->index_to_string() + " distance: " + int_pair_to_string(n->nb_distance) 
+                   + "linear: " + std::to_string(nb_linear_idx)+ " ------------------\n";
+                // std::cout << _m;
             }else{
                 got_n = G_bound_trees.get_task_by_function<std::pair<uint32_t,uint32_t>>(n, idx_nb, get_task_index);
             }
             if(got_n){
-                if(n->nb_distance.first == btt->nb_distance.first && n->nb_distance.second == btt->nb_distance.second){
+                // if(n->nb_distance.first == btt->nb_distance.first && n->nb_distance.second == btt->nb_distance.second){
+                if(btt->can_merge_with(n)){
                     auto new_merge_task = new merge_btrees_task(btt->bt, n->bt, merge_dir, btt->nb_distance);
                     G_merge_bag.insert_task(new_merge_task);
 
-                    //merges que nao deveriam ser colocados na bag estao sendo colocados, por exemplo: 
-                    // _m = "new merge " + new_merge_task->bt1->index_to_string() + new_merge_task->bt2->index_to_string() + 
-                    // "    \tdistance:" + int_pair_to_string(new_merge_task->distance)+"\n";
-                    // std::cout << _m;
+
+                    _m = "new merge " + btt->bt->index_to_string() + n->bt->index_to_string()
+                       + "    \tdistance:" + int_pair_to_string(btt->nb_distance)+"\n";
+                    std::cout << _m;
                 }else{
-                    aux = btt;
                     if(btt->nb_distance.first < n->nb_distance.first){
+                        aux = btt;
                         btt = n;
                         n = aux;
                         std::cout << "swap\n";
                     }else if(btt->nb_distance.first == n->nb_distance.first && btt->nb_distance.second < n->nb_distance.second){
+                        aux = btt;
                         btt = n;
                         n = aux;
                         std::cout << "swap\n";
@@ -418,16 +426,16 @@ void search_pair(){
                     G_bound_trees.insert_task(n);
                     btt_linear_idx = index_of(btt->index, GRID_DIMS);
                     waiting_pair[btt_linear_idx] = btt;
-                    // _m = "going to waiting " + btt->bt->index_to_string() + " distance: " + int_pair_to_string(btt->nb_distance) 
-                    // + "linear: " + std::to_string(btt_linear_idx) + "\n";
+                    _m = "++++++++++++ going to waiting " + btt->bt->index_to_string() + " distance: " + int_pair_to_string(btt->nb_distance) 
+                    + "linear: " + std::to_string(btt_linear_idx) + " +++++++++++++++++\n";
                     // std::cout << _m;
                 }
             }else{
                 btt_linear_idx = index_of(btt->index, GRID_DIMS);
-                // waiting_pair[btt_linear_idx] = btt;
-                G_bound_trees.insert_task(btt);
-                _m = "going to waiting " + btt->bt->index_to_string() + " distance: " + int_pair_to_string(btt->nb_distance) 
-                    + "linear: " + std::to_string(btt_linear_idx) + "\n";
+                waiting_pair[btt_linear_idx] = btt;
+                // G_bound_trees.insert_task(btt);
+                _m = "============ going to waiting " + btt->bt->index_to_string() + " distance: " + int_pair_to_string(btt->nb_distance) 
+                    + "linear: " + std::to_string(btt_linear_idx) + " ============\n";
                 // std::cout << _m;
             }
         }else if (inside_rectangle(btt->index, GRID_DIMS)){
@@ -474,11 +482,11 @@ void manager_recv(zmq::socket_t &sock_recv){
         rec_msg = request.to_string();
         message recv_msg = hps::from_string<message>(rec_msg);
         
-        _m = "worker: " + idx.to_string() + " requested " + NamesMessageType[recv_msg.type];
-        if(recv_msg.type == MSG_COMMAND){
-            _m += " " + recv_msg.content;
-        }
-        _m += "\n";
+        // _m = "worker: " + idx.to_string() + " requested " + NamesMessageType[recv_msg.type];
+        // if(recv_msg.type == MSG_COMMAND){
+        //     _m += " " + recv_msg.content;
+        // }
+        // _m += "\n";
         std::cout << _m;
         
         if(recv_msg.type == MSG_REGISTRY){
@@ -559,8 +567,8 @@ void message_sender(zmq::socket_t &sock_send){
             auto __ret0 = sock_send.send(msg_id, zmq::send_flags::sndmore);
             auto reply_return = sock_send.send(msg_reply, zmq::send_flags::none);
             // G_sock_lock.unlock();
-            _m = "message " +  NamesMessageType[reply.type] + " sent to index: " + string_idx + "\n";
-            std::cout << _m;
+            // _m = "message " +  NamesMessageType[reply.type] + " sent to index: " + string_idx + "\n";
+            // std::cout << _m;
         }
     }
     std::cout << "message_sender end<===========\n";

@@ -244,9 +244,20 @@ bool boundary_tree_task::can_merge_with(boundary_tree_task &btt2){
     auto d = this->nb_distance;
     auto t1 = this->index;
     auto t2 = btt2.index;
-    return (this->nb_distance == btt2.nb_distance) && 
-           (t1.first +  d.first  == t2.first  || t2.first  + d.first  == t1.first) && 
-           (t1.second + d.second == t2.second || t2.second + d.second == t1.second);
+    if (this->nb_distance == btt2.nb_distance){
+        if(d.first != 0){
+            if((t1.first % (2*d.first) != t2.first % (2*d.first)) && (t1.first + d.first == t2.first || t2.first + d.first == t1.first)){
+                return true;
+            }
+        }else if(d.second != 0){
+            if((t1.second % (2*d.second) != t2.second % (2*d.second)) && (t1.second + d.second == t2.second || t2.second + d.second == t1.second)){
+                return true;
+            }
+        }
+        
+    }
+    return false;
+
 }
 
 

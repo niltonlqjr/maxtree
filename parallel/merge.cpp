@@ -291,7 +291,7 @@ void read_sequential_file(bag_of_tasks<input_tile_task*> &bag, vips::VImage *in,
 
 }
 /* check if pair of coordinates c is inside the rectangle r (starting at origin (0,0) and 
-    ending in position (r.first-1, r.second-1) */
+    ending in position (r.first-1, r.second-1) (c >= 0 and c <= r)*/
 bool inside_rectangle(std::pair<uint32_t, uint32_t> c, std::pair<uint32_t, uint32_t> r){
     if(c.first >= r.first || c.first < 0 || c.second >= r.second || c.second < 0){
         return false;
