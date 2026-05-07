@@ -207,7 +207,7 @@ inline std::string create_end_command_msg(){
 
 
 
-void prepare_tile(message &reply){
+void prepare_tile(message &reply, std::string widx){
     input_tile_task *task;
     std::pair<uint32_t,uint32_t> idx_reply;
     if(G_input_tiles.get_task(task)){
@@ -216,10 +216,13 @@ void prepare_tile(message &reply){
     }else{
         idx_reply = GRID_DIMS;
     }
-    /* 
-    std::cout << "tile: " << int_pair_to_string(idx_reply) << " sent to " << reply.content
-              << " remaining " << G_input_tiles.size() << "\n";
-     */
+     
+    std::string _m;
+    _m = "tile: " + int_pair_to_string(idx_reply) + " sent to " + widx
+       + " remaining " + std::to_string(G_input_tiles.size()) + "\n";
+    
+    std::cout << _m;
+    
     reply.type = MSG_TILE_IDX;
     reply.content = hps::to_string<std::pair<uint32_t,uint32_t>>(idx_reply);
 }
@@ -405,7 +408,7 @@ void search_pair(){
 
                     _m = "new merge " + btt->bt->index_to_string() + n->bt->index_to_string()
                        + "    \tdistance:" + int_pair_to_string(btt->nb_distance)+"\n";
-                    std::cout << _m;
+                    // std::cout << _m;
                 }else{
                     if(btt->nb_distance.first < n->nb_distance.first){
                         aux = btt;
@@ -530,11 +533,11 @@ void message_sender(zmq::socket_t &sock_send){
     while(G_updates_sent.load() < G_total_workers.load()){
         string_idx = "NO_WORKER";
         if((G_input_tiles.is_running() || !G_input_tiles.empty())){
-            prepare_tile(reply);
             w = G_waiting_workers.get_worker();
             worker_idx = w->get_index();
-            G_busy_workers.insert_worker(worker_idx, w);
             string_idx = std::to_string(worker_idx);
+            prepare_tile(reply, string_idx);
+            G_busy_workers.insert_worker(worker_idx, w);
             reply_s = hps::to_string(reply);
         }else if(G_merge_bag.is_running() && !G_merge_bag.empty()
                  && G_waiting_workers.size() > 0){

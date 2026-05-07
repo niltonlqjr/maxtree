@@ -268,7 +268,7 @@ void merge_tiles(message &msg_work, worker *w){
     // if(verbose){
         s = "merge tiles end " + mbtt.bt1->index_to_string() + " " + mbtt.bt2->index_to_string();
         s+= " merge distance " + int_pair_to_string(mbtt.distance) + "\n";
-        std::cout << s;
+        // std::cout << s;
     // }
     boundary_tree_task btt = boundary_tree_task(merged_tree, nb_dist);
     if(verbose){
@@ -323,13 +323,13 @@ bool do_work(vips::VImage *img_in, worker *w){
     // std::cout << "request task\n";
     std::string sout, _m;
     bool ret=true;
-    _m = " received " + NamesMessageType[msg_work.type] + " <----------" + std::to_string(w->get_index());
     if(msg_work.type == MSG_TILE_IDX){
-         auto tile = hps::from_string<std::pair<uint32_t,uint32_t>>(msg_work.content);
+        _m = " received " + NamesMessageType[msg_work.type] + " <----------" + std::to_string(w->get_index());
+        auto tile = hps::from_string<std::pair<uint32_t,uint32_t>>(msg_work.content);
         _m += + " tile: " + int_pair_to_string(tile);
+        _m += " \n";
+        std::cout << _m;
     }
-    _m += " \n";
-    std::cout << _m;
 
     
     if(msg_work.type == MSG_TILE_IDX){
@@ -375,13 +375,16 @@ void loop_worker(vips::VImage *img, zmq::context_t &context){
 
 void make_worker_threads(uint32_t numth, VImage *in, zmq::context_t &context){
     std::vector<std::thread> workers_threads;
+    std::string _m;
+    _m = "total threads:"+std::to_string(numth)+"\n";
+    std::cout << _m;
     for(uint32_t i=0; i<numth; i++){
         workers_threads.push_back(std::thread(loop_worker, in, std::ref(context)));
     }
-
+    _m = "created threads:"+std::to_string(workers_threads.size())+"\n";
+    std::cout << _m;
     for(size_t i=0; i<workers_threads.size(); i++){
         workers_threads[i].join();
-        std::string _m;
         _m = "worker: "+ std::to_string(i+1) +  " of " + std::to_string(workers_threads.size()) +" join\n";
         std::cout << _m;
     }

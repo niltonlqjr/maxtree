@@ -403,9 +403,12 @@ void worker::send_btree_task(boundary_tree_task *btt, enum message_type type){
     message m = message(msg_content, msg_content.size(), type, this->id);
     std::string _m;
     std::string s_msg = hps::to_string(m);
-    _m = std::to_string(this->id) + " -------> sending: " + NamesMessageType[type] + btt->bt->index_to_string() 
-        + " distance: " + int_pair_to_string(btt->nb_distance) + "\n";
-    std::cout << _m;
+    
+    if(verbose){
+        _m = std::to_string(this->id) + " -------> sending: " + NamesMessageType[type] + btt->bt->index_to_string() 
+           + " distance: " + int_pair_to_string(btt->nb_distance) + "\n";
+        std::cout << _m;
+    }
     zmq::message_t message_0mq(s_msg);
 
     // std::cout << "sending tree: " << btt->bt->index_to_string() << " with distance " << int_pair_to_string(btt->nb_distance) <<"\n" ;
