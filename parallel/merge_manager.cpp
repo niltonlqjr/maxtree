@@ -65,17 +65,13 @@ bag_of_tasks< std::pair<std::string, worker *> > G_registry_queue(true);
 
 
 // given that unordered_map needs a hash function for pair and there are few grids, a map is enought
-std::map <std::pair<uint32_t,uint32_t>, worker *> G_grid_id_worker;  
+std::map <std::pair<uint32_t,uint32_t>, worker *> G_grid_id_worker;
 
 std::unordered_map<std::string, bool> G_got_full_btree;
 
 std::mutex G_sock_lock, G_scheduler_lock, G_sender_lock;
 
 std::condition_variable_any G_sender_cv;
-
-
-
-
 
 
 void read_config(char conf_name[], std::string &port_recv, std::string &port_send,  std::string &protocol){
@@ -533,8 +529,7 @@ void message_sender(zmq::socket_t &sock_send){
 
     while(G_updates_sent.load() < G_total_workers.load()){
         string_idx = "";
-        if((G_input_tiles.is_running() || !G_input_tiles.empty())
-                 && G_waiting_workers.size() > 0){
+        if((G_input_tiles.is_running() || !G_input_tiles.empty())){
             prepare_tile(reply);
             w = G_waiting_workers.get_worker();
             worker_idx = w->get_index();
