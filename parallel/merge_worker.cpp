@@ -323,8 +323,13 @@ bool do_work(vips::VImage *img_in, worker *w){
     // std::cout << "request task\n";
     std::string sout, _m;
     bool ret=true;
-    _m =  "received " + NamesMessageType[msg_work.type] + " <----------" + std::to_string(w->get_index()) + " \n";
-    // std::cout << _m;
+    _m = " received " + NamesMessageType[msg_work.type] + " <----------" + std::to_string(w->get_index());
+    if(msg_work.type == MSG_TILE_IDX){
+         auto tile = hps::from_string<std::pair<uint32_t,uint32_t>>(msg_work.content);
+        _m += + " tile: " + int_pair_to_string(tile);
+    }
+    _m += " \n";
+    std::cout << _m;
 
     
     if(msg_work.type == MSG_TILE_IDX){

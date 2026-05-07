@@ -528,7 +528,7 @@ void message_sender(zmq::socket_t &sock_send){
     }
 
     while(G_updates_sent.load() < G_total_workers.load()){
-        string_idx = "";
+        string_idx = "NO_WORKER";
         if((G_input_tiles.is_running() || !G_input_tiles.empty())){
             prepare_tile(reply);
             w = G_waiting_workers.get_worker();
@@ -555,7 +555,7 @@ void message_sender(zmq::socket_t &sock_send){
             G_updates_sent.fetch_add(1);
         }
 
-        if(string_idx != ""){
+        if(string_idx != "NO_WORKER"){
             zmq::message_t msg_id(string_idx);
             zmq::message_t msg_reply(reply_s);
             // G_sock_lock.lock();
@@ -568,6 +568,8 @@ void message_sender(zmq::socket_t &sock_send){
     }
     std::cout << "message_sender end<===========\n";
 }
+
+
 
 void fill_input_bag(){
     std::pair<uint32_t, uint32_t> current_tile(0,0);
@@ -667,14 +669,15 @@ int main(int argc, char *argv[]){
     G_merge_bag.start();
 
  
-    std::thread fill(fill_input_bag);
+    // std::thread fill(fill_input_bag);
+    fill_input_bag();
     std::thread receiver(manager_recv, std::ref(sock_recv));
     // std::thread pair_maker(search_pair_naive);
     std::thread pair_maker(search_pair);
     std::thread merge_task_sender(message_sender, std::ref(sock_send));
     // std::thread pair_maker(search_pair);
 
-    fill.join();
+    // fill.join();
     std::cout << "fill\n";
     receiver.join();
     std::cout << "receiver\n";
