@@ -312,6 +312,10 @@ void worker::registry_at(std::string server_addr_send, std::string server_addr_r
 
 message worker::request_work(){
     // std::cout << "request_work\n";
+    zmq::message_t reply_zmq;
+    std::string reply_str;
+    zmq::message_t idx;
+    std::string _m, s_msg;
     if(!this->connected){
         std::cerr << "worker " << this->id << "not connected!\n";
         std::string s("");
@@ -319,15 +323,10 @@ message worker::request_work(){
     }
     message request(this->name, this->name.size(), MSG_GET_TASK, this->get_index());
     
-    std::string s_msg = hps::to_string<message>(request);
+    s_msg = hps::to_string<message>(request);
     zmq::message_t msg_0mq(s_msg);
-    std::string _m;
     
     this->server_sock_recv.send(msg_0mq, zmq::send_flags::none);
-    
-    zmq::message_t reply_zmq;
-    std::string reply_str;
-    zmq::message_t idx;
     
     if(verbose) {
         _m = "request work waiting response for worker "+ std::to_string(this->get_index()) +"\n";
@@ -335,10 +334,10 @@ message worker::request_work(){
     }
     auto _r = this->server_sock_send.recv(reply_zmq, zmq::recv_flags::none);
     reply_str = reply_zmq.to_string();
-    if(verbose){ 
+    //if(verbose){ 
         _m = "worker "+ std::to_string(this->get_index()) +" get response\n";
         std::cout << _m;
-    }
+    //}
     return hps::from_string<message>(reply_str);
 }
 

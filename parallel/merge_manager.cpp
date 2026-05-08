@@ -237,8 +237,7 @@ void registry_worker(message &recv_msg, std::string worker_zmq_id, zmq::socket_t
     message reply;
 
     w_at_manager->update_index(current_idx);
-    // G_waiting_workers.insert_worker(w_at_manager);
-    
+
     // _m = "worker " + std::to_string(w_at_manager->get_index()) + " going to waiting queue\n";
     // std::cout << _m;
     if(G_merge_bag.is_running()){
