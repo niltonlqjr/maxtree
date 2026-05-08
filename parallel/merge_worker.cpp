@@ -186,6 +186,7 @@ void registry_new_worker(uint32_t local_id, std::string server_send_addr, std::s
     // std::cout << "registring id: " << local_id << " of total " << num_th << " threads\n";
     // workers_threads.push_back(new std::thread(w->registry_at, server_addr));
     // workers_threads.push_back(std::thread(&worker::registry,w));
+    // w->connect(context);
     w->registry(context);
     G_local_workers.insert_worker(w);
     // sleep(1);
@@ -351,13 +352,9 @@ bool do_work(vips::VImage *img_in, worker *w){
     return ret;
 }
 
-void loop_worker(vips::VImage *img, zmq::context_t &context){
-
-    worker *w=G_local_workers.get_worker();
-    // zmq::context_t c;
-    
+// void loop_worker(vips::VImage *img, zmq::context_t &context){
+void loop_worker(vips::VImage *img, worker *w, zmq::context_t &context){
     w->connect(context);
-    // w->connect(c);
     while(do_work(img,  w)); // std::cout << it++ << "\n";
 
     maxtree_task *update_task=nullptr;
@@ -380,9 +377,18 @@ void make_worker_threads(uint32_t numth, VImage *in, zmq::context_t &context){
     std::string _m;
     _m = "total threads:"+std::to_string(numth)+"\n";
     std::cout << _m;
-    for(uint32_t i=0; i<numth; i++){
-        workers_threads.push_back(std::thread(loop_worker, in, std::ref(context)));
+    
+    // for(uint32_t i=0; i<numth; i++){
+    //     workers_threads.push_back(std::thread(loop_worker, in, std::ref(context)));
+    // }
+
+    while(!G_local_workers.empty()){
+        worker *w=G_local_workers.get_worker();
+        workers_threads.push_back(std::thread(
+            loop_worker, in, w, std::ref(context)
+        ));
     }
+
     _m = "created threads:"+std::to_string(workers_threads.size())+"\n";
     std::cout << _m;
     for(size_t i=0; i<workers_threads.size(); i++){
@@ -415,7 +421,7 @@ int main(int argc, char *argv[]){
         std::cout << "input file not defined, please, define it in config file or in command line.\n";
         exit(EX_NOINPUT);
     }
-    zmq::context_t context_main;
+    zmq::context_t context_main(G_num_threads);
 
     if(argc >= 4){
         G_out_name = argv[3];

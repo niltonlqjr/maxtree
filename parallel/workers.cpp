@@ -257,14 +257,17 @@ void worker::registry(zmq::context_t &context){
     zmq::message_t message_0mq(s_msg);
     zmq::message_t reply_0mq;
     
-    if(!this->connected){
-        this->connect(context);
-    }
+    // if(!this->connected){
+    //     this->connect(context);
+    // }
+    this->server_sock_send = zmq::socket_t(context, zmq::socket_type::dealer);
+    this->server_sock_recv = zmq::socket_t(context, zmq::socket_type::dealer);
+    this->server_sock_recv.connect(this->manager_recv);
     this->server_sock_recv.send(message_0mq, zmq::send_flags::none);
     std::string _m = "send " + std::to_string(this->id) + "\n";
     std::cout << _m;
     auto resp_val = this->server_sock_recv.recv(reply_0mq, zmq::recv_flags::none);
-    _m = "recv " + std::to_string(this->id) + "\n";
+    _m = "recv " + std::to_string(this->id) + " - registration successful\n";
     std::cout << _m;
     message reply; 
     reply = hps::from_string<message>(reply_0mq.to_string());
@@ -273,7 +276,8 @@ void worker::registry(zmq::context_t &context){
     str+="new id: " +std::to_string(this->get_index());
     std::cout << str + "\n";
     this->registered = true;
-    this->disconnect();
+    this->server_sock_recv.disconnect(this->manager_recv);
+    // this->disconnect();
 }
 
 void worker::registry_at(std::string server_addr_send, std::string server_addr_recv, zmq::context_t &context){
@@ -351,24 +355,29 @@ void worker::finish_worker(){
 }
 
 void worker::connect(zmq::context_t &context){
+    std::string _m;
     if(!this->connected){
-        if(!this->registered){
-            this->server_sock_send = zmq::socket_t(context, zmq::socket_type::dealer);
-            this->server_sock_recv = zmq::socket_t(context, zmq::socket_type::dealer);
-            std::cout << "creating socket\n";
-        }else{
+        // if(!this->registered){
+            // this->server_sock_send = zmq::socket_t(context, zmq::socket_type::dealer);
+            // this->server_sock_recv = zmq::socket_t(context, zmq::socket_type::dealer);
+            // std::cout << "creating socket\n";
+        // }else{
+        if(this->registered){
             this->server_sock_send.set(zmq::sockopt::routing_id, std::to_string(this->id));
             this->server_sock_recv.set(zmq::sockopt::routing_id, std::to_string(this->id));
-
-            
             std::cout << "set routing id to:" << std::to_string(this->id) << "\n";
+        }else{
+            std::cerr << "worker: " << this->id << " not registered at server " << this->manager_recv << " \n";
         }
-        this->server_sock_send.set(zmq::sockopt::linger, 0);
+        // }
         this->server_sock_recv.set(zmq::sockopt::linger, 0);
         this->server_sock_recv.connect(this->manager_recv);
-        std::cout << "connected server_sock_recv at: " << this->manager_recv << "\n";
+        _m = std::to_string(this->get_index()) + "connected server_sock_recv at: " + this->manager_recv + "\n";
+        std::cout << _m;
+        this->server_sock_send.set(zmq::sockopt::linger, 0);
         this->server_sock_send.connect(this->manager_send);
-        std::cout << "connected server_sock_send at: " << this->manager_send << "\n";
+        _m = std::to_string(this->get_index()) + "connected server_sock_send at: " + this->manager_send + "\n";
+        std::cout << _m;
     }
     this->connected = true;
 }

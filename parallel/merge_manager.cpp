@@ -647,12 +647,11 @@ int main(int argc, char *argv[]){
     G_finished_workers.store(0);
     G_workers_finished.store(0);
     
-    zmq::context_t context_send(nth);
-    zmq::context_t context_recv(nth);
+    zmq::context_t context(nth);
     
     // zmq::socket_t  sock(context_reg, zmq::socket_type::rep);
-    zmq::socket_t sock_send(context_send, zmq::socket_type::router);
-    zmq::socket_t sock_recv(context_recv, zmq::socket_type::router);
+    zmq::socket_t sock_send(context, zmq::socket_type::router);
+    zmq::socket_t sock_recv(context, zmq::socket_type::router);
     
     self_address_recv = protocol+"://*:"+port_recv;
     sock_recv.bind(self_address_recv);
