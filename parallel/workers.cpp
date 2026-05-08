@@ -375,6 +375,7 @@ void worker::connect(zmq::context_t &context){
 }
 
 void worker::disconnect(){
+    std::string _m;
     if(this->connected){
         // std::string str_cmd("DISCONNECT");
         // message msg_disconnect(str_cmd, 10, MSG_COMMAND, this->id);
@@ -383,7 +384,8 @@ void worker::disconnect(){
         // this->server_sock_recv.send(zmq_msg, zmq::send_flags::none);
         this->server_sock_recv.disconnect(this->manager_recv);
         this->server_sock_send.disconnect(this->manager_send);
-        std::cout << this->id << " disconnected from "<< this->manager_send << " and " << manager_send <<  "\n";
+        _m = std::to_string(this->id) + " disconnected from " + this->manager_send + " and " + this->manager_recv +  "\n";
+        std::cout << _m;
     }
     this->connected = false;
 }

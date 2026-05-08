@@ -195,13 +195,15 @@ void registry_new_worker(uint32_t local_id, std::string server_send_addr, std::s
 
 void registry_threads(uint32_t num_th, std::string server_send_addr, std::string server_recv_addr, zmq::context_t &context){
     // std::cout << "number of threads "<< num_th << "\n";  
+    std::string _m;
     std::cout << "start registration\n";
     std::vector<std::thread> workers_threads;
     auto workers_conf = parse_hw_config(G_hardware_specs_filename);
     size_t wcs = workers_conf->size();
     //workers register phase
     for(uint32_t local_id=0; local_id < num_th; local_id++){
-        std::cout << "registrando worker " << local_id<< "\n";
+        _m = "registrando worker " + std::to_string(local_id) + "\n";
+        std::cout << _m;
         workers_threads.push_back(std::thread(
             registry_new_worker, local_id, server_send_addr, server_recv_addr, std::ref(workers_conf->at(local_id % wcs)), std::ref(context) 
         ));
@@ -352,10 +354,10 @@ bool do_work(vips::VImage *img_in, worker *w){
 void loop_worker(vips::VImage *img, zmq::context_t &context){
 
     worker *w=G_local_workers.get_worker();
-    zmq::context_t c;
+    // zmq::context_t c;
     
-    // w->connect(context);
-    w->connect(c);
+    w->connect(context);
+    // w->connect(c);
     while(do_work(img,  w)); // std::cout << it++ << "\n";
 
     maxtree_task *update_task=nullptr;

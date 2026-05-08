@@ -535,9 +535,9 @@ void message_sender(zmq::socket_t &sock_send){
         if((G_input_tiles.is_running() || !G_input_tiles.empty())){
             w = G_waiting_workers.get_worker();
             worker_idx = w->get_index();
+            G_busy_workers.insert_worker(worker_idx, w);
             string_idx = std::to_string(worker_idx);
             prepare_tile(reply, string_idx);
-            G_busy_workers.insert_worker(worker_idx, w);
             reply_s = hps::to_string(reply);
         }else if(G_merge_bag.is_running() && !G_merge_bag.empty()
                  && G_waiting_workers.size() > 0){
@@ -552,6 +552,8 @@ void message_sender(zmq::socket_t &sock_send){
             reply_s = hps::to_string(reply);
         }else if(!G_merge_bag.is_running()){
             w = G_waiting_workers.get_worker();
+            worker_idx = w->get_index();
+            G_busy_workers.insert_worker(worker_idx, w);
             prepare_final_tree(reply, w->get_name());
             string_idx = std::to_string(w->get_index());
             reply_s = hps::to_string(reply);
@@ -561,10 +563,8 @@ void message_sender(zmq::socket_t &sock_send){
         if(string_idx != "NO_WORKER"){
             zmq::message_t msg_id(string_idx);
             zmq::message_t msg_reply(reply_s);
-            // G_sock_lock.lock();
             auto __ret0 = sock_send.send(msg_id, zmq::send_flags::sndmore);
             auto reply_return = sock_send.send(msg_reply, zmq::send_flags::none);
-            // G_sock_lock.unlock();
             // _m = "message " +  NamesMessageType[reply.type] + " sent to index: " + string_idx + "\n";
             // std::cout << _m;
         }
