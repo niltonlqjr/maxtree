@@ -1,6 +1,8 @@
 #include <unordered_map>
 #include <string>
 #include <iostream>
+#include <condition_variable>
+#include <thread>
 
 #include "src/hps.h"
 #include "zmq.hpp"
@@ -18,6 +20,29 @@ extern std::pair<uint32_t, uint32_t> GRID_DIMS;
 
 bool inside_rectangle(std::pair<uint32_t, uint32_t> c, std::pair<uint32_t, uint32_t> r);
 std::pair<uint32_t, uint32_t> get_task_index(boundary_tree_task *t);
+
+
+class handshake_monitor: public zmq::monitor_t{
+private:
+    std::condition_variable cv;
+    std::mutex lock;
+    bool handshake_done;
+public:
+    handshake_monitor(){
+        this->handshake_done = false;
+    }
+    void on_event_handshake_succeeded(const zmq_event_t &event, const char* addr) override {
+        std::unique_lock<std::mutex> l(this->lock);
+        this->handshake_done = true;
+        this->cv.notify_all();
+    }
+    void wait_handshake(){
+        std::unique_lock<std::mutex> l(this->lock);
+        if(!handshake_done){
+            this->cv.wait(l);
+        }
+    }
+};
 
 
 class worker{
@@ -85,7 +110,7 @@ class worker{
         void registry(zmq::context_t &context);
 
         /* sign up for server address server_addr*/
-        void registry_at(std::string server_addr_send, std::string server_addr_recv, zmq::context_t &context);
+        // void registry_at(std::string server_addr_send, std::string server_addr_recv, zmq::context_t &context);
 
         /* request one task to server. if sock is nullptr, then
         this->sock is used, otherwise, use sock passed as arg */

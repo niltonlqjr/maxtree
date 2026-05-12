@@ -28,6 +28,7 @@ worker::worker(TWorkerIdx id, std::string manager_send, std::string manager_recv
     this->name = name;
     this->connected = false;
     this->registered = false;
+
 }
 
 worker::worker(){
@@ -38,6 +39,7 @@ worker::worker(){
     this->name = "";
     this->connected = false;
     this->registered = false;
+
 }
 
 // worker::~worker(){
@@ -280,40 +282,6 @@ void worker::registry(zmq::context_t &context){
     // this->disconnect();
 }
 
-void worker::registry_at(std::string server_addr_send, std::string server_addr_recv, zmq::context_t &context){
-    
-/*     zmq::socket_t connect_manager(context,zmq::socket_type::dealer);
-    connect_manager.connect(server_addr_send);
-    connect_manager.connect(server_addr_recv);
-
-    std::string msg_content = hps::to_string(*this);
-    message requirement(msg_content, msg_content.size(), MSG_REGISTRY, this->id);
-    std::string s_msg = hps::to_string(requirement);
-
-    // zmq::message_t message_0mq(s_msg.size());
-    // memcpy(message_0mq.data(), s_msg.data(), s_msg.size());
-    zmq::message_t message_0mq(s_msg);
-    zmq::message_t idx;
-    std::string global_id="";
-
-    connect_manager.send(message_0mq, zmq::send_flags::none);
-    zmq::message_t reply_0mq;
-    // auto resp_idx = connect_manager.recv(idx, zmq::recv_flags::none);
-    if(verbose){
-        std::cout << "recv "<< __LINE__ <<"\n";
-        std::cout << "recv "<< __LINE__ <<"\n";
-    }
-    auto resp_val = connect_manager.recv(reply_0mq, zmq::recv_flags::none);
-    TWorkerIdx reply; // = hps::from_string<TWorkerIdx>(reply_0mq);
-    memcpy(&reply, reply_0mq.data(), sizeof(TWorkerIdx));
-    this->update_index(reply);
-    this->manager_send = server_addr_send;
-    this->manager_recv = server_addr_recv;
-    connect_manager.disconnect(server_addr_send);
-    connect_manager.disconnect(server_addr_recv);
-    this->registered = true; */
-}
-
 message worker::request_work(){
     // std::cout << "request_work\n";
     zmq::message_t reply_zmq;
@@ -354,6 +322,10 @@ void worker::finish_worker(){
     this->server_sock_recv.send(msg, zmq::send_flags::none);
 }
 
+void thread_check_event(handshake_monitor &hsmonitor){
+    hsmonitor.check_event(-1);
+}
+
 void worker::connect(zmq::context_t &context){
     std::string _m;
     if(!this->connected){
@@ -370,14 +342,32 @@ void worker::connect(zmq::context_t &context){
             std::cerr << "worker: " << this->id << " not registered at server " << this->manager_recv << " \n";
         }
         // }
-        this->server_sock_recv.set(zmq::sockopt::linger, 0);
-        this->server_sock_recv.connect(this->manager_recv);
-        _m = std::to_string(this->get_index()) + "connected server_sock_recv at: " + this->manager_recv + "\n";
-        std::cout << _m;
+        handshake_monitor monitor_send, monitor_recv;
+
+        std::string monitor_send_name = "inproc://monitor_send" + std::to_string(this->id);
+        monitor_send.init(this->server_sock_send, monitor_send_name, ZMQ_EVENT_HANDSHAKE_SUCCEEDED);
         this->server_sock_send.set(zmq::sockopt::linger, 0);
+        std::thread monitor_thread_send(thread_check_event, std::ref(monitor_send));
         this->server_sock_send.connect(this->manager_send);
+        monitor_thread_send.join();
         _m = std::to_string(this->get_index()) + "connected server_sock_send at: " + this->manager_send + "\n";
         std::cout << _m;
+
+
+        std::string monitor_recv_name = "inproc://monitor_recv" + std::to_string(this->id);
+        monitor_recv.init(this->server_sock_recv, monitor_recv_name, ZMQ_EVENT_HANDSHAKE_SUCCEEDED);
+        this->server_sock_recv.set(zmq::sockopt::linger, 0);
+        std::thread monitor_thread_recv(thread_check_event, std::ref(monitor_recv));
+        this->server_sock_recv.connect(this->manager_recv);
+        monitor_thread_recv.join();
+        
+        // std::thread monitor_thread_recv([&monitor_recv]() {
+        //                             while (monitor_recv.check_event(-1)){}
+        // });
+        
+        _m = std::to_string(this->get_index()) + "connected server_sock_recv at: " + this->manager_recv + "\n";
+        std::cout << _m;
+        
     }
     this->connected = true;
 }

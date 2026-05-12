@@ -85,6 +85,8 @@ void make_worker_threads(uint32_t numth, VImage *in, zmq::context_t &context); *
 // zmq::context_t *context;
 
 
+
+
 void verify_args(int argc, char *argv[]){
     std::cout << "argc: " << argc << " argv:" ;
     for(int i=0;i<argc;i++){
@@ -370,7 +372,6 @@ void loop_worker(vips::VImage *img, worker *w, zmq::context_t &context){
     w->close_sockets();
     
 }
-
 
 void make_worker_threads(uint32_t numth, VImage *in, zmq::context_t &context){
     std::vector<std::thread> workers_threads;
