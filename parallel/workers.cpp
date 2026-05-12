@@ -101,12 +101,6 @@ std::string worker::to_string(){
 }
 
 void worker::print(){
-    /* std::cout << "local id:" << this->id << " -- ";
-    std::cout << "attributes:\n";
-    for(auto elem: *this->attr){
-        std::cout << "(" << elem.first << "," << elem.second << ") ";
-    }
-    std::cout << "\n"; */
     std::cout << this->to_string();
 }
 
@@ -117,19 +111,19 @@ void worker::get_boundary_tree(bag_of_tasks<maxtree_task *> &maxtrees,
     maxtree_task *mtt;
     boundary_tree_task *btt;
     bag_of_tasks<maxtree_task *> maxtree_aux;
-    // while(maxtrees.is_running()){
-        got_task = maxtrees.get_task(mtt);
-        if(got_task){
-            this->busy = true;
-            // std::string stmt = std::to_string(mtt->mt->grid_i) + "," + std::to_string(mtt->mt->grid_j) +"\n";
-            // stmt += mtt->mt->to_string(GLOBAL_IDX,false) + "\n";
-            // std::cout << stmt;
-            btt = new boundary_tree_task(mtt, std::make_pair<uint32_t,uint32_t>(0,1));
-            boundary_trees.insert_task(btt);
-            maxtree_dest.insert_task(mtt);
-            this->busy = false;
+    got_task = maxtrees.get_task(mtt);
+    if(got_task){
+        this->busy = true;
+        if(verbose){
+            std::string stmt = std::to_string(mtt->mt->grid_i) + "," + std::to_string(mtt->mt->grid_j) +"\n";
+            stmt += mtt->mt->to_string(GLOBAL_IDX,false) + "\n";
+            std::cout << stmt;
         }
-    // }
+        btt = new boundary_tree_task(mtt, std::make_pair<uint32_t,uint32_t>(0,1));
+        boundary_trees.insert_task(btt);
+        maxtree_dest.insert_task(mtt);
+        this->busy = false;
+    }
 
 }
 
@@ -137,33 +131,33 @@ void worker::maxtree_calc(bag_of_tasks<input_tile_task *> &bag_tiles, bag_of_tas
     bool got_task;
     input_tile_task *t;
     maxtree_task *mt;
-    // while(bag_tiles.is_running()){
+    
+    if(verbose){
+        std::ostringstream os("");
+        os << "thread " << this->id << " trying to get task\n";
+        std::string s = os.str();
+        std::cout << s;
+    }
+    got_task=bag_tiles.get_task(t);
+    if(got_task){
+        this->busy = true;
         if(verbose){
             std::ostringstream os("");
-            os << "thread " << this->id << " trying to get task\n";
+            os << "worker " <<  this->id << " got task " << t->i << ", " << t->j << " to calculate maxtree\n";
             std::string s = os.str();
             std::cout << s;
         }
-        got_task=bag_tiles.get_task(t);
-        if(got_task){
-            this->busy = true;
-            if(verbose){
-                std::ostringstream os("");
-                os << "worker " <<  this->id << " got task " << t->i << ", " << t->j << " to calculate maxtree\n";
-                std::string s = os.str();
-                std::cout << s;
-            }
-            mt = new maxtree_task(t);
-            max_trees.insert_task(mt);
-            this->busy = false;
-        }
-        if(verbose){
-            std::ostringstream os("");
-            os << "thread " << this->id << " couldnt get task\n";
-            std::string s = os.str();
-            std::cout << s; 
-        }
-    // }
+        mt = new maxtree_task(t);
+        max_trees.insert_task(mt);
+        this->busy = false;
+    }
+    if(verbose){
+        std::ostringstream os("");
+        os << "thread " << this->id << " couldnt get task\n";
+        std::string s = os.str();
+        std::cout << s; 
+    }
+    
 }
 
 
@@ -188,7 +182,6 @@ void worker::merge_local(bag_of_tasks<merge_btrees_task *> &merge_bag, bag_of_ta
                 s+=mbt->bt2->border_to_string();
                 s+=mbt->bt2->lroot_to_string();
                 s+="\n-----------------------------------------------\n";
-                // std::cout << s;
                 std::cout << s;
                 s = "task will merge: " + std::to_string(mbt->bt1->grid_i) + ", " + std::to_string(mbt->bt1->grid_j) ;
                 s += " with " + std::to_string(mbt->bt2->grid_i) + ", " + std::to_string(mbt->bt2->grid_j) + " \n";
@@ -222,7 +215,7 @@ void worker::merge_local(bag_of_tasks<merge_btrees_task *> &merge_bag, bag_of_ta
             btrees_bag.insert_task(btt);
         }
     }
-    if(verbose)std::cout << "end worker local merge\n";
+    if(verbose) std::cout << "end worker local merge\n";
 }
 
 void worker::update_filter(bag_of_tasks<maxtree_task *> &src, bag_of_tasks<maxtree_task *> &dest, boundary_tree *global_bt, Tattribute lambda){
@@ -230,24 +223,23 @@ void worker::update_filter(bag_of_tasks<maxtree_task *> &src, bag_of_tasks<maxtr
     maxtree_task *mtt;
     std::string s;
     if(verbose) std::cout << "worker update\n";
-    // while(src.is_running()){
-        got_task = src.get_task(mtt);
-        if(verbose){
-            s = "updating (" + std::to_string(mtt->mt->grid_i) + "," + std::to_string(mtt->mt->grid_j) + ") \n";
-            std::cout << s;
-        }
-        if(got_task){
-            this->busy = true;
-            mtt->mt->update_from_boundary_tree(global_bt);
-            dest.insert_task(mtt);
-            mtt->mt->filter(lambda, global_bt);
-            this->busy = false;
-        }
-        if(verbose) {
-            s = "task of grid (" + std::to_string(mtt->mt->grid_i) + "," + std::to_string(mtt->mt->grid_j) + ") update\n";
-            std::cout << s;
-        }
-    // }
+    got_task = src.get_task(mtt);
+    if(verbose){
+        s = "updating (" + std::to_string(mtt->mt->grid_i) + "," + std::to_string(mtt->mt->grid_j) + ") \n";
+        std::cout << s;
+    }
+    if(got_task){
+        this->busy = true;
+        mtt->mt->update_from_boundary_tree(global_bt);
+        dest.insert_task(mtt);
+        mtt->mt->filter(lambda, global_bt);
+        this->busy = false;
+    }
+    if(verbose) {
+        s = "task of grid (" + std::to_string(mtt->mt->grid_i) + "," + std::to_string(mtt->mt->grid_j) + ") update\n";
+        std::cout << s;
+    }
+    
 }
 
 
@@ -255,31 +247,35 @@ void worker::registry(zmq::context_t &context){
     std::string msg_content = hps::to_string(*this);
     message requirement(msg_content, msg_content.size(), MSG_REGISTRY, this->id);
     std::string s_msg = hps::to_string(requirement);
-    std::string str;
+    std::string str, _m;
     zmq::message_t message_0mq(s_msg);
     zmq::message_t reply_0mq;
     
-    // if(!this->connected){
-    //     this->connect(context);
-    // }
     this->server_sock_send = zmq::socket_t(context, zmq::socket_type::dealer);
     this->server_sock_recv = zmq::socket_t(context, zmq::socket_type::dealer);
     this->server_sock_recv.connect(this->manager_recv);
     this->server_sock_recv.send(message_0mq, zmq::send_flags::none);
-    std::string _m = "send " + std::to_string(this->id) + "\n";
-    std::cout << _m;
+    if(verbose){
+        _m = "send " + std::to_string(this->id) + "\n";
+        std::cout << _m;
+    }
     auto resp_val = this->server_sock_recv.recv(reply_0mq, zmq::recv_flags::none);
-    _m = "recv " + std::to_string(this->id) + " - registration successful\n";
-    std::cout << _m;
+    
+    if(verbose){
+        _m = "recv " + std::to_string(this->id) + " - registration successful\n";
+        std::cout << _m;
+    }
+
     message reply; 
     reply = hps::from_string<message>(reply_0mq.to_string());
     TWorkerIdx new_idx = std::stoi(reply.content);
     this->update_index(new_idx);
-    str+="new id: " +std::to_string(this->get_index());
-    std::cout << str + "\n";
+    if(verbose){
+        str+="new id: " +std::to_string(this->get_index());
+        std::cout << str + "\n";
+    }
     this->registered = true;
     this->server_sock_recv.disconnect(this->manager_recv);
-    // this->disconnect();
 }
 
 message worker::request_work(){
@@ -306,10 +302,10 @@ message worker::request_work(){
     }
     auto _r = this->server_sock_send.recv(reply_zmq, zmq::recv_flags::none);
     reply_str = reply_zmq.to_string();
-    //if(verbose){ 
+    if(verbose){ 
         _m = "worker "+ std::to_string(this->get_index()) +" get response\n";
         std::cout << _m;
-    //}
+    }
     return hps::from_string<message>(reply_str);
 }
 
@@ -329,30 +325,30 @@ void thread_check_event(handshake_monitor &hsmonitor){
 void worker::connect(zmq::context_t &context){
     std::string _m;
     if(!this->connected){
-        // if(!this->registered){
-            // this->server_sock_send = zmq::socket_t(context, zmq::socket_type::dealer);
-            // this->server_sock_recv = zmq::socket_t(context, zmq::socket_type::dealer);
-            // std::cout << "creating socket\n";
-        // }else{
         if(this->registered){
             this->server_sock_send.set(zmq::sockopt::routing_id, std::to_string(this->id));
             this->server_sock_recv.set(zmq::sockopt::routing_id, std::to_string(this->id));
-            std::cout << "set routing id to:" << std::to_string(this->id) << "\n";
+            if(verbose){
+                _m = "set routing id to:" + std::to_string(this->id) + "\n";
+                std::cout << _m;
+            }
         }else{
-            std::cerr << "worker: " << this->id << " not registered at server " << this->manager_recv << " \n";
+            _m = "worker: " + std::to_string(this->id) + " not registered at server " + this->manager_recv + " \n";
+            std::cerr << _m;
         }
-        // }
         handshake_monitor monitor_send, monitor_recv;
-
+        
         std::string monitor_send_name = "inproc://monitor_send" + std::to_string(this->id);
         monitor_send.init(this->server_sock_send, monitor_send_name, ZMQ_EVENT_HANDSHAKE_SUCCEEDED);
         this->server_sock_send.set(zmq::sockopt::linger, 0);
         std::thread monitor_thread_send(thread_check_event, std::ref(monitor_send));
         this->server_sock_send.connect(this->manager_send);
         monitor_thread_send.join();
-        _m = std::to_string(this->get_index()) + "connected server_sock_send at: " + this->manager_send + "\n";
-        std::cout << _m;
 
+        if(verbose){
+            _m = std::to_string(this->get_index()) + "connected server_sock_send at: " + this->manager_send + "\n";
+            std::cout << _m;
+        }
 
         std::string monitor_recv_name = "inproc://monitor_recv" + std::to_string(this->id);
         monitor_recv.init(this->server_sock_recv, monitor_recv_name, ZMQ_EVENT_HANDSHAKE_SUCCEEDED);
@@ -361,13 +357,10 @@ void worker::connect(zmq::context_t &context){
         this->server_sock_recv.connect(this->manager_recv);
         monitor_thread_recv.join();
         
-        // std::thread monitor_thread_recv([&monitor_recv]() {
-        //                             while (monitor_recv.check_event(-1)){}
-        // });
-        
-        _m = std::to_string(this->get_index()) + "connected server_sock_recv at: " + this->manager_recv + "\n";
-        std::cout << _m;
-        
+        if(verbose){
+            _m = std::to_string(this->get_index()) + "connected server_sock_recv at: " + this->manager_recv + "\n";
+            std::cout << _m;
+        }
     }
     this->connected = true;
 }
@@ -375,15 +368,12 @@ void worker::connect(zmq::context_t &context){
 void worker::disconnect(){
     std::string _m;
     if(this->connected){
-        // std::string str_cmd("DISCONNECT");
-        // message msg_disconnect(str_cmd, 10, MSG_COMMAND, this->id);
-        // std::string str_msg = hps::to_string<message>(msg_disconnect);
-        // zmq::message_t zmq_msg(str_msg);
-        // this->server_sock_recv.send(zmq_msg, zmq::send_flags::none);
         this->server_sock_recv.disconnect(this->manager_recv);
         this->server_sock_send.disconnect(this->manager_send);
-        _m = std::to_string(this->id) + " disconnected from " + this->manager_send + " and " + this->manager_recv +  "\n";
-        std::cout << _m;
+        if(verbose){
+            _m = std::to_string(this->id) + " disconnected from " + this->manager_send + " and " + this->manager_recv +  "\n";
+            std::cout << _m;
+        }
     }
     this->connected = false;
 }
@@ -391,12 +381,16 @@ void worker::disconnect(){
 void worker::close_sockets(){
     this->server_sock_recv.close();
     this->server_sock_send.close();
-    std::cout << "worker " << this->id << " sockets closed\n";
+    if(verbose){
+        std::string _m = "worker " + std::to_string(this->id) + " sockets closed\n";
+        std::cout << _m;
+    }
 }
 
 void worker::send_btree_task(boundary_tree_task *btt, enum message_type type){
     if(!this->connected){
-        std::cerr << "worker " << this->id << "not connected!\n";
+        std::string _m = "worker " + std::to_string(this->id) + " not connected\n";
+        std::cerr << _m;
         return;
     }
     std::string msg_content = hps::to_string(*btt);
@@ -411,7 +405,6 @@ void worker::send_btree_task(boundary_tree_task *btt, enum message_type type){
     }
     zmq::message_t message_0mq(s_msg);
 
-    // std::cout << "sending tree: " << btt->bt->index_to_string() << " with distance " << int_pair_to_string(btt->nb_distance) <<"\n" ;
     this->server_sock_recv.send(message_0mq, zmq::send_flags::none);
     if(verbose){
         _m = "worker " + std::to_string(this->get_index()) + " sent message \n";
