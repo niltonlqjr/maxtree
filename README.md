@@ -66,18 +66,24 @@ The variables TYPE and OPT can be used in those buildings.
 - To run you must pass the the configuration file (optional arguments are input file and output prefix name):
 
     - Run parallel
+        - You can run the manager and a multithread process with workers as follow
         ```console
         $ cd parallel
-        $ ./exec/merge example_config.txt
+        $ ./scripts/run_merge.sh [OPTIONS] 
+            OPTIONS:
+                -m <manager configuration file> 
+                -w <worker configuration file> 
         ```
+        - You can run only a manager process as follow
         ```console
         $ cd parallel
-        $ ./exec/merge example_config.txt ../testes/dos_wp_bw.png 
+        $ ./scripts/run_manager.sh [-m <manager configuration file> ] 
         ```
+        - You also can run only a worker process as follow
         ```console
         $ cd parallel
-        $ ././exec/merge example_config.txt ../testes/dos_wp_bw.png output_prefix
-
+        $ ./scripts/run_worker.sh [-w <worker configuration file>] 
+        ```
     - Run sequential 
         ```console
         $ cd sequential/flood
