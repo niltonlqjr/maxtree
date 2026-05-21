@@ -355,22 +355,9 @@ void maxtree::compute_sequential_recursive(int gl){
     for(auto p: S){
         if(p->idx !=this->root->idx){
             auto q = this->get_parent(p->idx);
-            //q->compute_attribute(p->attribute);
             q->attribute = q->attribute + p->attribute;
         }
     }
-/*     std::vector<Tattribute> attrs(this->get_size(), 0); // = new std::vector<Tattribute>(this->get_size(), Tattr_NULL);
-    for(auto p: *this->data){
-        auto lr = this->get_levelroot(p);
-        if(p->idx != lr->idx){
-            //attrs[p->idx] = p->attribute;
-            attrs[lr->idx] += p->attribute;   
-        }
-    }
-    for(auto p: *this->data){
-        p->compute_attribute(attrs[p->idx]);
-    }
-         */
     delete levelroot;
     delete hqueue;
 

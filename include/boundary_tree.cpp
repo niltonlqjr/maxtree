@@ -63,12 +63,11 @@ void boundary_node::accumulate_attr(Tattribute value){
 boundary_tree::boundary_tree(): boundary_tree(0,0,0,0){}
 
 
-boundary_tree::boundary_tree(uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j, bool dn){
+boundary_tree::boundary_tree(uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j){
     this->h = h;
     this->w = w;
     this->grid_i = grid_i;
     this->grid_j = grid_j;
-    this->delete_nodes = dn;
     //this->border_elements = new std::vector<std::unordered_map<uint64_t, boundary_node *>*>();
     // this->border_elements = new std::vector<std::vector<boundary_node *>*>();
     this->border_elements = new std::vector<std::vector<uint64_t>*>();
@@ -88,7 +87,7 @@ boundary_tree::boundary_tree(uint32_t h, uint32_t w, uint32_t grid_i, uint32_t g
 boundary_tree::~boundary_tree(){
 }
 
-void boundary_tree::delete_boundary_tree(){
+void boundary_tree::delete_boundary_tree(bool delete_boundary_nodes, bool delete_maxtree_nodes){
     // delete borders
 
     for(uint32_t i=0;i < this->border_elements->size(); i++){
@@ -99,7 +98,10 @@ void boundary_tree::delete_boundary_tree(){
 
     // delete tree 
     for(auto n: *this->boundary_tree_lroot){
-        if(this->delete_nodes){
+        if(delete_maxtree_nodes){
+            delete n.second->ptr_node;
+        }
+        if(delete_boundary_nodes){
             // std::cout << ">>>>delete_node" + n.second->to_string() + "!!!!!!<<<<<<<\n";
             delete n.second;
         }
@@ -1233,8 +1235,8 @@ boundary_tree *boundary_tree::merge(boundary_tree *t, enum merge_directions d, u
 
 
 
-    //delete merge_tree;
-    t->delete_boundary_tree();
+    
+    
     if(verbose){
         std::cout << "ret_tree:" << ret_tree->lroot_to_string() << "\n";
         std::cout << "gval:" << ret_tree->lroot_to_string(BOUNDARY_GVAL) << "\n";

@@ -214,8 +214,8 @@ boundary_tree_task::boundary_tree_task(){
     this->nb_distance = std::make_pair<uint32_t, uint32_t>(0, 0);
 }
 
-void boundary_tree_task::free_tree(){
-    this->bt->delete_boundary_tree();
+void boundary_tree_task::free_tree(bool del_mt_nodes, bool del_bt_nodes){
+    this->bt->delete_boundary_tree(del_mt_nodes, del_bt_nodes);
     this->bt = nullptr;
 }
 
@@ -378,7 +378,7 @@ merge_btrees_task::merge_btrees_task(){
 
 void merge_btrees_task::free_trees(){
     this->bt1->delete_boundary_tree();
-    // bt2 already clean at merge method called by bt1.
+    this->bt2->delete_boundary_tree();
     this->bt1 = this->bt2 = nullptr;
 }
 

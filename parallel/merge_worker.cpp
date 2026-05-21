@@ -255,7 +255,7 @@ void request_process_tile(vips::VImage *img_in, message &msg_work, worker *w){
 
     w->send_btree_task(&btt,MSG_BOUNDARY_TREE);
     if(verbose) std::cout << "sending tree: ()" << btt.bt->grid_i << ", " << btt.bt->grid_j << ")\n";
-    btt.free_tree();
+    btt.free_tree(false, false);
 }
 
 void merge_tiles(message &msg_work, worker *w){
@@ -294,7 +294,7 @@ void merge_tiles(message &msg_work, worker *w){
     // s += " {" + mbtt.bt1->index_to_string() + " " + mbtt.bt2->index_to_string() + "}\n";
     // std::cout << s;
     mbtt.free_trees();
-    btt.free_tree();
+    btt.free_tree(true,true);
 }
 
 void receive_global_boundary_tree(message &m){
@@ -435,6 +435,21 @@ int main(int argc, char *argv[]){
             VImage::option()->set("access",  G_vips_access)
         )
     );
+    uint64_t size_bytes = sizeof(maxtree_node) * in->width() * in->height(); 
+    std::cout << "\n========\n";
+    std::cout << "size per maxtree node:" << sizeof(maxtree_node) << " Bytes \n";
+    std::cout << "maxtree total size (estimated) " << size_bytes << " Bytes \n";
+    std::cout << "maxtree total size (estimated) " << (size_bytes >> 20) << "MB \n";
+    std::cout<< "\n========\n\n";
+
+
+    size_bytes = sizeof(boundary_node) * in->width() * in->height(); 
+    std::cout << "\n========\n";
+    std::cout << "size per boudary tree node:" << sizeof(boundary_node) << " Bytes \n";
+    std::cout << "maxtree total size (estimated) " << size_bytes << " Bytes \n";
+    std::cout << "maxtree total size (estimated) " << (size_bytes >> 20) << "MB \n";
+    std::cout<< "\n========\n\n";
+    
 
     std::string server_recv_addr = G_protocol + "://" + G_server_ip + ":" + G_server_recv_port;
     std::string server_send_addr = G_protocol + "://" + G_server_ip + ":" + G_server_send_port;

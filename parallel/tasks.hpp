@@ -54,7 +54,7 @@ class boundary_tree_task: public comparable_task{
         boundary_tree_task(maxtree_task *t, std::pair<uint32_t, uint32_t> nb_distance);
         boundary_tree_task(boundary_tree *t, std::pair<uint32_t, uint32_t> nb_distance);
         boundary_tree_task();
-        void free_tree();
+        void free_tree(bool del_mt_nodes, bool del_bt_nodes);
 
         uint64_t size();
         std::pair<uint32_t, uint32_t> neighbor_idx(enum neighbor_direction direction);
