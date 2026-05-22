@@ -32,8 +32,6 @@ using namespace vips;
 
 bool print_only_trees, verbose;
 
-// bool has_tiles, has_merges;
-bool has_tasks;
 
 extern std::pair<uint32_t, uint32_t> GRID_DIMS;
 
@@ -449,6 +447,7 @@ int main(int argc, char *argv[]){
     G_glines = GRID_DIMS.first;
     G_gcolumns = GRID_DIMS.second;
     std::cout << G_glines<<","<<G_gcolumns<<"\n";
+    
     if (VIPS_INIT(argv[0])) { 
         vips_error_exit (NULL);
     } 
@@ -459,39 +458,28 @@ int main(int argc, char *argv[]){
             VImage::option()->set("access",  G_vips_access)
         )
     );
-    uint64_t size_bytes = sizeof(maxtree_node) * in->width() * in->height(); 
-    std::cout << "\n========\n";
-    std::cout << "size per maxtree node:" << sizeof(maxtree_node) << " Bytes \n";
-    std::cout << "maxtree total size (estimated) " << size_bytes << " Bytes \n";
-    std::cout << "maxtree total size (estimated) " << (size_bytes >> 20) << "MB \n";
-    std::cout<< "\n========\n\n";
 
+    // uint64_t size_bytes = sizeof(maxtree_node) * in->width() * in->height(); 
+    // std::cout << "\n========\n";
+    // std::cout << "size per maxtree node:" << sizeof(maxtree_node) << " Bytes \n";
+    // std::cout << "maxtree total size (estimated) " << size_bytes << " Bytes \n";
+    // std::cout << "maxtree total size (estimated) " << (size_bytes >> 20) << "MB \n";
+    // std::cout<< "\n========\n\n";
 
-    size_bytes = sizeof(boundary_node) * in->width() * in->height(); 
-    std::cout << "\n========\n";
-    std::cout << "size per boudary tree node:" << sizeof(boundary_node) << " Bytes \n";
-    std::cout << "maxtree total size (estimated) " << size_bytes << " Bytes \n";
-    std::cout << "maxtree total size (estimated) " << (size_bytes >> 20) << "MB \n";
-    std::cout<< "\n========\n\n";
-    
-
-    
+    // size_bytes = sizeof(boundary_node) * in->width() * in->height(); 
+    // std::cout << "\n========\n";
+    // std::cout << "size per boudary tree node:" << sizeof(boundary_node) << " Bytes \n";
+    // std::cout << "maxtree total size (estimated) " << size_bytes << " Bytes \n";
+    // std::cout << "maxtree total size (estimated) " << (size_bytes >> 20) << "MB \n";
+    // std::cout<< "\n========\n\n";
 
     registry_threads(G_num_threads, server_send_addr, server_recv_addr, context_main);
     // calc_tile_boundary_tree(G_num_threads, server_addr, self_addr);
     // calc_tile_boundary_tree(in, server_addr);
     // test_send_bound_tree(in, server_addr);
     // std::cout << "threads registered\n";
-    has_tasks=true;
     
     make_worker_threads(G_num_threads, in, context_main);
-
-    // apos registrar as threads, o fluxo será o seguinte:
-    // pedir tile, calcular maxtree e boundary tree responder boundary tree
-
-    // com todas boundary trees calculadas, agora o fluxo será
-    // pedir tarefa de merge, realizar merge;
-
 
     // for(size_t i=0; i < G_local_workers.size(); i++){
     //     worker *w = G_local_workers.at(i);
