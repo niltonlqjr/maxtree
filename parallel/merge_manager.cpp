@@ -407,14 +407,14 @@ void manager_recv(zmq::socket_t &sock_recv){
         rec_msg = request.to_string();
         message recv_msg = hps::from_string<message>(rec_msg);
                 
-        // if(verbose){
+        if(verbose){
             _m = "worker: " + idx.to_string() + " requested " + NamesMessageType[recv_msg.type];
             if(recv_msg.type == MSG_COMMAND){
                 _m += " " + recv_msg.content;
             }
             _m += "\n";
             std::cout << _m;
-        // }
+        }
 
         if(recv_msg.type == MSG_GET_GRID_DIMS){
             auto reply_msg = zmq::message_t(hps::to_string(GRID_DIMS));
