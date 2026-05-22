@@ -5,7 +5,7 @@
 
 
 # grid lines
-glines=6
+glines=3
 # grid columns
 gcolumns=4
 
