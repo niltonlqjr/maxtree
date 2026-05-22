@@ -106,15 +106,15 @@ void read_config(char conf_name[]){
     
     auto configs = parse_config(conf_name);
 
-    if(configs->find("glines") == configs->end() || configs->find("gcolumns") == configs->end()){
-        std::cout << "you must specify the the image division on config file:" << conf_name <<"\n";
-        std::cout << "example:\n";
-        std::cout << "glines=8 #divide image in 8 vertical tiles\n";
-        std::cout << "gcolumns=6 #divide image in 6 vertical tiles\n";
-        exit(EX_CONFIG);
-    }
-    G_glines = std::stoi(configs->at("glines"));
-    G_gcolumns = std::stoi(configs->at("gcolumns"));
+    // if(configs->find("glines") == configs->end() || configs->find("gcolumns") == configs->end()){
+    //     std::cout << "you must specify the the image division on config file:" << conf_name <<"\n";
+    //     std::cout << "example:\n";
+    //     std::cout << "glines=8 #divide image in 8 vertical tiles\n";
+    //     std::cout << "gcolumns=6 #divide image in 6 vertical tiles\n";
+    //     exit(EX_CONFIG);
+    // }
+    // G_glines = std::stoi(configs->at("glines"));
+    // G_gcolumns = std::stoi(configs->at("gcolumns"));
 
     G_input_name = get_field(configs, "input", "");
     
@@ -255,7 +255,7 @@ void request_process_tile(vips::VImage *img_in, message &msg_work, worker *w){
 
     w->send_btree_task(&btt,MSG_BOUNDARY_TREE);
     if(verbose) std::cout << "sending tree: ()" << btt.bt->grid_i << ", " << btt.bt->grid_j << ")\n";
-    btt.free_tree(false, false);
+    btt.free_tree(false, true);
 }
 
 void merge_tiles(message &msg_work, worker *w){
@@ -394,6 +394,26 @@ void make_worker_threads(uint32_t numth, VImage *in, zmq::context_t &context){
     std::cout << "\n\n==================\nall threads finished!\n\n";
 }
 
+std::pair<uint32_t, uint32_t> get_grid_dims(std::string server_recv_addr, zmq::context_t &ctx){
+    message m;
+    m.type = MSG_GET_GRID_DIMS;
+    std::string str_msg = hps::to_string<message>(m);
+    zmq::message_t msg(str_msg);
+    zmq::message_t r_msg;
+    zmq::socket_t s = zmq::socket_t(ctx, zmq::socket_type::dealer);
+
+    s.connect(server_recv_addr);
+    
+    s.send(msg, zmq::send_flags::none);
+    auto _rpl = s.recv(r_msg, zmq::recv_flags::none);
+    str_msg = r_msg.to_string();
+    auto d = hps::from_string<std::pair<uint32_t,uint32_t> >(str_msg);
+
+    s.disconnect(server_recv_addr);
+
+    return d;
+}
+
 int main(int argc, char *argv[]){
     vips::VImage *in;
     enum save_type out_save_type;
@@ -422,8 +442,12 @@ int main(int argc, char *argv[]){
         G_out_name = argv[3];
     }
 
-    
-    GRID_DIMS = std::make_pair(G_glines,G_gcolumns);
+    std::string server_recv_addr = G_protocol + "://" + G_server_ip + ":" + G_server_recv_port;
+    std::string server_send_addr = G_protocol + "://" + G_server_ip + ":" + G_server_send_port;
+
+    GRID_DIMS = get_grid_dims(server_recv_addr, context_main);
+    G_glines = GRID_DIMS.first;
+    G_gcolumns = GRID_DIMS.second;
     std::cout << G_glines<<","<<G_gcolumns<<"\n";
     if (VIPS_INIT(argv[0])) { 
         vips_error_exit (NULL);
@@ -451,8 +475,7 @@ int main(int argc, char *argv[]){
     std::cout<< "\n========\n\n";
     
 
-    std::string server_recv_addr = G_protocol + "://" + G_server_ip + ":" + G_server_recv_port;
-    std::string server_send_addr = G_protocol + "://" + G_server_ip + ":" + G_server_send_port;
+    
 
     registry_threads(G_num_threads, server_send_addr, server_recv_addr, context_main);
     // calc_tile_boundary_tree(G_num_threads, server_addr, self_addr);

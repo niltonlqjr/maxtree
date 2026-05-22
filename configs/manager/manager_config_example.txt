@@ -5,9 +5,9 @@
 
 
 # grid lines
-glines=40
+glines=6
 # grid columns
-gcolumns=40
+gcolumns=4
 
 # server receive port (to registry workers and receive messages)
 port_recv = 7233

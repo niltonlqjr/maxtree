@@ -294,74 +294,6 @@ void process_task_request(message &recv_msg){
     G_waiting_workers.insert_worker(w);
 }
 
-
-/* void search_pair_naive(){
-    boundary_tree_task *btt, *n, *aux;
-    std::pair<uint32_t, uint32_t> idx_nb;
-    enum neighbor_direction nb_direction;
-    enum merge_directions merge_dir;
-    uint32_t new_distance;
-    bool change_dir;
-    std::string s, _m;
-    uint64_t self_int_idx, nb_int_idx;
-    while(G_merge_bag.is_running()){ // || G_bound_trees.size() > 1){
-        
-        bool got = G_bound_trees.get_task(btt);
-        _m = "G_merge_bag size:" + std::to_string(G_merge_bag.size()) + " G_bound_trees size:" + std::to_string(G_bound_trees.size()) +"\n" ;
-        _m += "Got btree:" + btt->bt->index_to_string() + " distance:" + int_pair_to_string(btt->nb_distance) + "\n";
-        std::cout << _m;
-        
-        if(got){
-            self_int_idx = index_of(btt->index, GRID_DIMS);
-            merge_dir = btt->define_merge_direction();
-            nb_direction = btt->define_nb_direction(merge_dir);
-            idx_nb = btt->neighbor_idx(nb_direction);
-            if(inside_rectangle(idx_nb, GRID_DIMS) && inside_rectangle(btt->index, GRID_DIMS)){
-
-                auto got_n = G_bound_trees.get_task_by_function<std::pair<uint32_t,uint32_t>>(n, idx_nb, get_task_index);
-                if(!got_n){
-                    _m = "tree "+ btt->bt->index_to_string() + " has no neighbor on bag\n";
-                    std::cout << _m;
-                    G_bound_trees.insert_task(btt);
-
-                }else if (n->nb_distance.first == btt->nb_distance.first && n->nb_distance.second == btt->nb_distance.second){
-                    auto new_merge_task = new merge_btrees_task(btt->bt, n->bt, merge_dir, btt->nb_distance);
-                    G_merge_bag.insert_task(new_merge_task);
-                }else{
-                    G_bound_trees.insert_task(n);
-                    G_bound_trees.insert_task(btt);
-                    _m = "tree btt: "+ btt->bt->index_to_string() + " and n:" + n->bt->index_to_string() + " are waiting for different distances\n"
-                        + "btt:" + int_pair_to_string(btt->nb_distance) + " n:" + int_pair_to_string(n->nb_distance) + "\n";
-                    std::cout << _m;
-                }
-
-            }else if (inside_rectangle(btt->index, GRID_DIMS)){ // the neighbor of btt is not inside the grid (it does not exist, so go to next merge)
-                if(btt->nb_distance.first == 0){
-                    if(btt->nb_distance.second < GRID_DIMS.second){ //this tile doesn't need to merge, just try to found a neighbor further than the actual
-                        // if(verbose){
-                            std::string s = int_pair_to_string(btt->index) + " line distance * 2 = "+ int_pair_to_string(btt->nb_distance) + "\n";
-                        // }
-                        btt->nb_distance.second *= 2;
-                    }else{ // there is no more neighbor on this line to merge, so this line must be merged with the other lines
-                        btt->nb_distance.first = 1; 
-                        btt->nb_distance.second = 0;
-                    }
-                }else if(btt->nb_distance.second == 0){
-                    if(btt->nb_distance.first < GRID_DIMS.first){
-                        btt->nb_distance.first *= 2;
-                    }
-                }
-                G_bound_trees.insert_task(btt);   
-            }
-            else{
-                std::cout << "------------------->nao deveria entrar aqui!\n";
-            }
-        }
-    }
-    // if(verbose) std::cout << "end worker search pair\n";
-    // std::cout << "end worker search pair\n";
-}
- */
 void search_pair(){
     boundary_tree_task *btt, *n, *aux;
     std::pair<uint32_t, uint32_t> idx_nb;
@@ -469,25 +401,26 @@ void manager_recv(zmq::socket_t &sock_recv){
     std::string rec_msg;
     // TWorkerIdx current_idx;
     do{
-        // std::cout << "before recv in inside manager_recv\n";
-        // G_sock_lock.lock();
-        // std::cout << "manager recv waiting message\n";
         auto idx_recv = sock_recv.recv(idx, zmq::recv_flags::none);/* <======== thread 5*/
-        auto res_recv = sock_recv.recv(request,zmq::recv_flags::none);
-        // std::cout << "message received\n";
-        // G_sock_lock.unlock();
-        
+        auto res_recv = sock_recv.recv(request, zmq::recv_flags::none);
+
         rec_msg = request.to_string();
         message recv_msg = hps::from_string<message>(rec_msg);
-        
-        // _m = "worker: " + idx.to_string() + " requested " + NamesMessageType[recv_msg.type];
-        // if(recv_msg.type == MSG_COMMAND){
-        //     _m += " " + recv_msg.content;
+                
+        // if(verbose){
+            _m = "worker: " + idx.to_string() + " requested " + NamesMessageType[recv_msg.type];
+            if(recv_msg.type == MSG_COMMAND){
+                _m += " " + recv_msg.content;
+            }
+            _m += "\n";
+            std::cout << _m;
         // }
-        // _m += "\n";
-        std::cout << _m;
-        
-        if(recv_msg.type == MSG_REGISTRY){
+
+        if(recv_msg.type == MSG_GET_GRID_DIMS){
+            auto reply_msg = zmq::message_t(hps::to_string(GRID_DIMS));
+            auto _r1 = sock_recv.send(idx, zmq::send_flags::sndmore);
+            auto _r2 = sock_recv.send(reply_msg, zmq::send_flags::none);
+        }else if(recv_msg.type == MSG_REGISTRY){
             registry_worker(recv_msg, idx.to_string(), sock_recv);
         }else if(recv_msg.type == MSG_BOUNDARY_TREE){
             recv_boundary_tree(recv_msg);
@@ -506,8 +439,9 @@ void manager_recv(zmq::socket_t &sock_recv){
                 G_workers_finished.fetch_add(1);
             }
         }
-    }while(G_updates_sent.load() < G_total_workers.load() 
-        || G_workers_finished.load() < G_total_workers.load());
+    }while(G_total_workers.load() <= 0
+           || G_updates_sent.load() < G_total_workers.load() 
+           || G_workers_finished.load() < G_total_workers.load());
     std::cout << "manager_recv reached last line (" << __LINE__ << ")<==========\n";
     
 }

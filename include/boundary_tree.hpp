@@ -147,7 +147,7 @@ class boundary_tree{
         ~boundary_tree();
         /*boundary_tree(std::vector<std::unordered_map<uint64_t, boundary_node *>*> *border_elements, 
              uint32_t h, uint32_t w, uint32_t grid_i, uint32_t grid_j);*/
-        void delete_boundary_tree(bool delete_bnodes=true, bool delete_maxtree_nodes=true);
+        void delete_boundary_tree(bool delete_maxtree_nodes=true, bool delete_boundary_nodes=true);
         
         /* create a copy of n and insert it at border structure (border_elements). Return the pointer of the created copy */
         // boundary_node *insert_border_element(boundary_node &n, enum borders b);
