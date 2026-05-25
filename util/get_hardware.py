@@ -95,7 +95,7 @@ def get_memory_info():
             s_ram_freq = re.search('[0-9]+',s_ram_freq).group()
             ram_freq = int(s_ram_freq)
     except Exception:
-        pass
+        ram_freq = 1
     
     
     
