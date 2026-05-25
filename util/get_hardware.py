@@ -74,7 +74,7 @@ def get_cpu_cache(cache_dir):
 
 def get_memory_info():
     ram_size = 0
-    ram_freq = 0
+    ram_freq = 1 
     # Quantidade total
     try:
         with open(mem_info_filename, 'r') as f:
@@ -95,7 +95,7 @@ def get_memory_info():
             s_ram_freq = re.search('[0-9]+',s_ram_freq).group()
             ram_freq = int(s_ram_freq)
     except Exception:
-        ram_freq = 1
+        pass
     
     
     
