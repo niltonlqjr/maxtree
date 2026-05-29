@@ -12,17 +12,17 @@ extern bool verbose;
 
 class maxtree_node{
     public:
-        int64_t parent;
+        int32_t parent;
         int64_t global_parent;
         Tpixel_value label; // greylevel at output
-        uint64_t idx;//local index
+        uint32_t idx;//local index
         uint64_t global_idx;// global index
         Tpixel_value gval; // input greylevel
         bool attr_final;
         bool labeled; // already get its output label? (its greylevel in filtered image)
         Tattribute attribute;
 
-        maxtree_node(Tpixel_value g=Tattr_default, uint64_t i=0, uint64_t global_idx = 0, Tattribute attr = Tattr_default, int64_t global_parent = NO_PARENT);
+        maxtree_node(Tpixel_value g=Tattr_default, uint32_t i=0, uint64_t global_idx = 0, Tattribute attr = Tattr_default, int64_t global_parent = NO_PARENT);
         // void compute_attribute(Tattribute);
         
         // set the label of node and mark its field "labeled" as true

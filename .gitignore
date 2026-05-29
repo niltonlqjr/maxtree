@@ -4,8 +4,10 @@
 **/**/saidas/*
 parallel/logs/**
 parallel/test_scripts/**
+parallel/*.png
 outros/*
 output/*
 util/*.txt
 util/*.pdf
 util/*.png
+util/*.yaml

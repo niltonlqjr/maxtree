@@ -94,26 +94,6 @@ void maxtree::set_pixel(maxtree_node *p, int64_t idx){
         this->data->at(idx) = p;
     }
 }
-// void maxtree::set_pixel(maxtree_node &p, int64_t idx){
-//     maxtree_node *new_pix;
-//     if(idx < this->data->size()){
-//         if(this->data->at(idx) == NULL){
-//             new_pix = new maxtree_node(p.gval, idx, p.global_idx, p.attribute, p.global_parent);
-//         }else{
-//             new_pix = this->data->at(idx);
-//             new_pix->gval = p.gval;
-//             new_pix->idx = idx;
-//             new_pix->global_idx = p.global_idx;
-//             new_pix->attribute = p.attribute;
-//             new_pix->global_parent = p.global_parent;
-//         }
-//         new_pix->attr_final = p.attr_final;
-//         new_pix->label = p.label;
-//         new_pix->labeled = p.labeled;
-//         new_pix->parent = p.parent;
-//     }
-
-// }
 
 maxtree_node *maxtree::get_parent(uint64_t node_idx){
     if(node_idx < 0){
@@ -166,6 +146,7 @@ void maxtree::fill_from_VImage(vips::VImage &img_in){
             this->data->push_back(new maxtree_node((*vpel), x));
         }
     }
+    this->data->shrink_to_fit();
 }
 
 
@@ -200,6 +181,7 @@ void maxtree::fill_from_VRegion(vips::VRegion &reg_in, uint32_t base_h, uint32_t
             this->data->push_back(new maxtree_node((*vpel), x, global_idx, attr_ini));
         }
     }
+    this->data->shrink_to_fit();
 } 
 
 void maxtree::compute_sequential_iterative(){
