@@ -21,16 +21,17 @@
 ```console
 $ make
 ```
+- The simplest build (`make`) is done with debug flag (`-g`) and no optimization flag
 
-You can also build with your optimization set and remove -g
+You can also build with your optimization sequence and remove -g
 
 #### Build Release version
-- Build with O2 and no debug flag
+- The release build is done with -O2 flag and no debug flag
 ```console
 $ make TYPE=R
 ```
 
-#### Build with optimization
+#### Build with your optimization
 
 - Build with custom flags (e.g. -O3 optimization sequence) and degug flag (-g)
 ```console
