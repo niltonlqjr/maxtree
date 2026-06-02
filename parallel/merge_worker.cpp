@@ -97,6 +97,20 @@ void verify_args(int argc, char *argv[]){
     }
 }
 
+void print_worker_config(){
+    std::cout << "server ip" << G_server_ip << "\n";
+    std::cout << "server send port" << G_server_send_port << "\n";
+    std::cout << "server receive port" << G_server_recv_port << "\n";
+    std::cout << "self ip:" << G_self_ip << "\n";
+    std::cout << "protocol:" << G_protocol << "\n";
+    std::cout << "input name:" << G_input_name << "\n";
+    std::cout << "output name:" << G_out_name << "\n";
+    std::cout << "output ext:" << G_out_ext << "\n";
+    std::cout << "lambda:" << G_lambda << "\n";
+    std::cout << "hardware configuration file:" << G_hardware_specs_filename << "\n";
+    std::cout << "number of threads:" << G_num_threads << "\n";
+    std::cout << "vips access:" << G_vips_access << "\n";
+}
 /* Read configuration file to global variables */    
 void read_config(char conf_name[]){
     verbose=false;
@@ -133,7 +147,18 @@ void read_config(char conf_name[]){
 
     G_hardware_specs_filename = get_field(configs, "hw_specs", "hardware.yaml");
 
-    G_self_ip = get_field(configs, "self_ip", "localhost");
+    std::string self_ip_interface = get_field(configs, "self_ip_interface", "");
+    if(self_ip_interface == ""){
+        const std::vector<std::string> prefix_list({"en","eth","wl"});
+        for(std::string interface: prefix_list){
+            G_self_ip = get_self_ip(interface);
+            if(G_self_ip != ""){
+                break;
+            }
+        }
+    }else{
+        G_self_ip = get_self_ip(self_ip_interface);
+    }
 
     auto str_G_num_threads = get_field(configs, "threads", "1");
     G_num_threads = std::stoi(str_G_num_threads);
@@ -162,10 +187,6 @@ void read_config(char conf_name[]){
         std::cerr << "Access type " << str_vips_access << "not defined or not supported.\nUsing VIPS_ACCESS_RANDOM.\n";
     }
     
-
-    std::cout << "configurations:\n";
-    print_unordered_map(configs);
-    std::cout << "====================\n";
     
     delete configs;
     
@@ -178,7 +199,8 @@ void worker_read_attributes(worker *w, std::string conf_workers_file){
 void registry_new_worker(uint32_t local_id, std::string server_send_addr, std::string server_recv_addr,
                          std::unordered_map<std::string, TWorkerAttr> &worker_attr, zmq::context_t &context){
 
-    worker *w = new worker(local_id, server_send_addr, server_recv_addr, G_self_ip + " | pid= " +std::to_string(getpid()));
+    // worker *w = new worker(local_id, server_send_addr, server_recv_addr, G_self_ip + " | pid= " +std::to_string(getpid()));
+    worker *w = new worker(local_id, server_send_addr, server_recv_addr, G_self_ip, nullptr);
     
     for(auto k_v: worker_attr){
         w->set_attr(k_v.first, k_v.second);
@@ -442,6 +464,13 @@ int main(int argc, char *argv[]){
 
     std::string server_recv_addr = G_protocol + "://" + G_server_ip + ":" + G_server_recv_port;
     std::string server_send_addr = G_protocol + "://" + G_server_ip + ":" + G_server_send_port;
+
+
+
+    std::cout << "configurations:\n";
+    print_worker_config();
+    std::cout << "====================\n";
+    
 
     GRID_DIMS = get_grid_dims(server_recv_addr, context_main);
     G_glines = GRID_DIMS.first;

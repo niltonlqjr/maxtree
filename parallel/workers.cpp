@@ -289,6 +289,7 @@ message worker::request_work(){
         std::string s("");
         return message(s,0,MSG_NULL,this->id);
     }
+    
     message request(this->name, this->name.size(), MSG_GET_TASK, this->get_index());
     
     s_msg = hps::to_string<message>(request);

@@ -11,6 +11,11 @@
 #include <cinttypes>
 #include <cmath>
 
+
+#include <ifaddrs.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include <ryml_std.hpp>
 #include <ryml.hpp> // https://github.com/biojppm/rapidyaml
 
@@ -103,5 +108,9 @@ std::string get_field(std::unordered_map<std::string, std::string> *conf, std::s
 std::vector<std::unordered_map<std::string, TWorkerAttr>> *parse_hw_config(std::string file_name);
 
 void free_hw_config(std::vector<std::unordered_map<std::string, TWorkerAttr> > *conf);
+
+std::string get_self_ip(std::string interface_prefix="en");
+
+uint64_t get_system_memory(const std::string key="MemAvailable:");
 
 #endif

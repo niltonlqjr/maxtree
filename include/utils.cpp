@@ -249,3 +249,50 @@ std::string get_field(std::unordered_map<std::string, std::string> *conf, std::s
 void free_hw_config(std::vector<std::unordered_map<std::string, TWorkerAttr> > *conf){
     delete conf;
 }
+
+std::string get_self_ip(std::string interface_prefix){
+    struct ifaddrs* ifap;
+    if (getifaddrs(&ifap) == -1) 
+        return "";
+
+    for (struct ifaddrs* ifa = ifap; ifa != nullptr; ifa = ifa->ifa_next) {
+        if (ifa->ifa_addr && ifa->ifa_addr->sa_family == AF_INET) {
+            char ip[INET_ADDRSTRLEN];
+            inet_ntop(AF_INET, &((struct sockaddr_in*)ifa->ifa_addr)->sin_addr, ip, INET_ADDRSTRLEN);
+            std::string addr = ip;
+            std::string interface_name = std::string(ifa->ifa_name);
+            if(interface_prefix == interface_name.substr(0,interface_prefix.size())){
+                freeifaddrs(ifap);
+                return addr;
+            }
+                // std::cout << "Interface: " << ifa->ifa_name << " | IP: " << addr << "\n";
+        }
+    }
+    freeifaddrs(ifap);
+    return "";
+}
+
+uint64_t get_system_memory(const std::string key) {
+    std::ifstream f("/proc/meminfo");
+    std::string line;
+
+    if (!f.is_open()) {
+        std::cerr << "Could not open the file /proc/meminfo\n";
+        return -1;
+    }
+
+    while (std::getline(f, line)) {
+        // find key (ex: "MemAvailable:")
+        if (line.find(key) == 0) {
+            std::stringstream ss(line);
+            std::string key_name;
+            uint64_t val;
+            
+            // lines at /proc/meminfo has the follow style: "key:    12345678 kB"
+            ss >> key_name >> val; 
+            return val; // Retorns value in Kilobytes (KB)
+        }
+    }
+
+    return -1;
+}
