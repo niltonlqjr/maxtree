@@ -61,6 +61,7 @@ class worker{
         worker();
         // ~worker();
         void set_attr(std::string s, TWorkerAttr val);
+        void update_remote_attr(std::string s, TWorkerAttr val);
         //virtual void run() = 0;
         TWorkerAttr get_attr(std::string s);
         TWorkerIdx get_index();

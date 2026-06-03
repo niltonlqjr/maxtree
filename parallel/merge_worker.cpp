@@ -27,6 +27,7 @@
 #include "src/hps.h"
 #include "message.hpp"
 #include "scheduler_of_workers.hpp"
+#include "custom.hpp"
 
 using namespace vips;
 
@@ -178,7 +179,6 @@ void read_config(char conf_name[]){
     }else if(str_save == "no_save"){
         G_out_save_type = NO_SAVE;
     }
-
     
     auto str_vips_access = get_field(configs, "vips_access", "VIPS_ACCESS_RANDOM");
     try{
@@ -186,10 +186,7 @@ void read_config(char conf_name[]){
     }catch(...){
         std::cerr << "Access type " << str_vips_access << "not defined or not supported.\nUsing VIPS_ACCESS_RANDOM.\n";
     }
-    
-    
     delete configs;
-    
 }
 
 void worker_read_attributes(worker *w, std::string conf_workers_file){
@@ -347,10 +344,17 @@ void update_filter_and_save(maxtree_task *t, worker *w){
 
 bool do_work(vips::VImage *img_in, worker *w){
     maxtree_task *update_task=nullptr;
-    message msg_work = w->request_work();
     
+    auto new_attr_map = new_atributes();
+    for(auto new_attr: *new_attr_map){
+        w->update_remote_attr(new_attr.first, new_attr.second);
+    }
+    free(new_attr_map);
     std::string sout, _m;
     bool ret=true;
+    
+    message msg_work = w->request_work();
+
     if(verbose){
         _m = " received " + NamesMessageType[msg_work.type] + " <----------" + std::to_string(w->get_index());    
         if(msg_work.type == MSG_TILE_IDX){
@@ -361,6 +365,8 @@ bool do_work(vips::VImage *img_in, worker *w){
         std::cout << _m;
     }
     
+    
+
     if(msg_work.type == MSG_TILE_IDX){
         request_process_tile(img_in, msg_work, w);
     }else if(msg_work.type == MSG_MERGE_BOUNDARY_TREE){

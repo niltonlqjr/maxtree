@@ -104,17 +104,12 @@ boundary_tree_task *get_neighbor_bound_task(std::vector<boundary_tree_task*> &v,
     return nullptr;
 }
 
-
-
-
 std::pair<uint32_t, uint32_t> next_tile(std::pair<uint32_t, uint32_t> p){
     std::pair<uint32_t, uint32_t> newp;
     newp.second = (p.second + 1) % GRID_DIMS.second;
     newp.first = p.first + (newp.second != p.second+1);
     return newp;
 }
-
-
 
 TWorkerIdx get_worker_idx(worker *w){
     return w->get_index();
@@ -204,8 +199,6 @@ inline std::string create_end_command_msg(){
     cmd.size = cmd.content.size();
     return hps::to_string(cmd);
 }
-
-
 
 void prepare_tile(message &reply, std::string widx){
     input_tile_task *task;
@@ -389,7 +382,9 @@ void search_pair(){
     std::cout << "search_pair end<=======\n";
 }
 
+void update_workers_attr(TWorkerIdx idx, std::string attr_name, TWorkerAttr val){
 
+}
 
 void manager_recv(zmq::socket_t &sock_recv){
     zmq::message_t request,idx;
@@ -438,6 +433,12 @@ void manager_recv(zmq::socket_t &sock_recv){
             if(recv_msg.content == "FINISH"){
                 G_workers_finished.fetch_add(1);
             }
+        }else if(MSG_UPDATE_WORKER){
+            auto sender_id = recv_msg.sender;
+            auto msg_content = hps::from_string<std::pair<std::string, TWorkerAttr>>(recv_msg.content);
+            std::string attr_name = msg_content.first;
+            TWorkerAttr attr_value = msg_content.second;
+            update_workers_attr(sender_id, attr_name, attr_value);
         }
     }while(G_total_workers.load() <= 0
            || G_updates_sent.load() < G_total_workers.load() 

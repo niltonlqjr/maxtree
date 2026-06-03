@@ -72,7 +72,8 @@ enum message_type{
     MSG_NULL,       MSG_REGISTRY,   MSG_BOUNDARY_TREE,
     MSG_GET_TASK,   MSG_TILE_IDX,   MSG_MERGE_BOUNDARY_TREE,
     MSG_SEND_MERGED_TREE,           MSG_UPDATE_BOUNDARY_TREE,
-    MSG_COMMAND,    MSG_NEW_IDX,    MSG_GET_GRID_DIMS
+    MSG_COMMAND,    MSG_NEW_IDX,    MSG_GET_GRID_DIMS,
+    MSG_UPDATE_WORKER
 };
 
 static std::vector<std::string> NamesMessageType({

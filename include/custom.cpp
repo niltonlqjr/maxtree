@@ -94,3 +94,11 @@ Tprocess_power calculate_process_power(std::unordered_map<std::string, TWorkerAt
 
     return proccessor_power + ram_power + cache_power;
  }
+
+std::unordered_map<std::string, TWorkerAttr> *new_atributes(){
+    std::unordered_map<std::string, TWorkerAttr> *ret;
+    ret = new std::unordered_map<std::string, TWorkerAttr>();
+    ret->emplace("RAMSIZE", TWorkerAttr_NULL);
+    ret->at("RAMSIZE") = get_system_memory() / (1024 * 1024);
+    return ret;
+}

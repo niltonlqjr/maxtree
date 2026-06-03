@@ -50,6 +50,17 @@ void worker::set_attr(std::string attr_name, TWorkerAttr attr_val){
     (*this->attr)[attr_name] = attr_val;
 }
 
+void worker::update_remote_attr(std::string attr_name, TWorkerAttr attr_val){
+    (*this->attr)[attr_name] = attr_val;
+    std::pair<std::string, TWorkerAttr> send_attr = std::make_pair(attr_name, attr_val);
+    std::string content = hps::to_string(send_attr);
+    message m(content, content.size(), MSG_UPDATE_WORKER, this->id);
+    std::string s_msg = hps::to_string<message>(m);
+    zmq::message_t msg_0mq(s_msg);
+    this->server_sock_recv.send(msg_0mq, zmq::send_flags::none);
+
+}
+
 TWorkerAttr worker::get_attr(std::string s){
     if(this->attr->find(s) != this->attr->end()){
         return this->attr->at(s);
