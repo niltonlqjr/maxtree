@@ -383,7 +383,12 @@ void search_pair(){
 }
 
 void update_workers_attr(TWorkerIdx idx, std::string attr_name, TWorkerAttr val){
-
+    if(G_busy_workers.has_worker_key(idx)){
+        worker *w = G_busy_workers.get_worker(idx);
+        w->set_attr(attr_name, val);
+        G_busy_workers.insert_worker(idx, w);
+        if(verbose) std::cout << "updating working: " << idx << " -> attribute: "<< attr_name << " value: " << val << "\n";
+    }
 }
 
 void manager_recv(zmq::socket_t &sock_recv){

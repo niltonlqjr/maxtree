@@ -204,3 +204,8 @@ inline bool hash_scheduler_of_worker<Type_idx, Worker>::empty(){
     std::unique_lock<std::mutex> l(this->lock);
     return this->workers.size() == 0;
 }
+
+template <class Type_idx, class Worker>
+inline bool hash_scheduler_of_worker<Type_idx, Worker>::has_worker_key(Type_idx idx){
+    return this->workers.find(idx) != this->workers.end();
+}

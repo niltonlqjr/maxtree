@@ -99,6 +99,6 @@ std::unordered_map<std::string, TWorkerAttr> *new_atributes(){
     std::unordered_map<std::string, TWorkerAttr> *ret;
     ret = new std::unordered_map<std::string, TWorkerAttr>();
     ret->emplace("RAMSIZE", TWorkerAttr_NULL);
-    ret->at("RAMSIZE") = get_system_memory() / (1024 * 1024);
+    ret->at("RAMSIZE") = get_system_memory() / (1024.0 * 1024.0);
     return ret;
 }

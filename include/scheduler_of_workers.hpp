@@ -55,6 +55,7 @@ class hash_scheduler_of_worker{
         Worker get_worker(Type_idx idx);
         size_t size();
         bool empty();
+        bool has_worker_key(Type_idx idx);
 
         
 
