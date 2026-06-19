@@ -5,9 +5,11 @@
 #include <queue>
 #include <cmath>
 #include <condition_variable>
-#include <zmq.hpp>
 #include <atomic>
 #include <unordered_map>
+#include <vector>
+
+#include <zmq.hpp>
 
 #include "bag_of_task.hpp"
 #include "utils.hpp"
@@ -72,6 +74,8 @@ std::unordered_map<std::string, bool> G_got_full_btree;
 std::mutex G_sock_lock, G_scheduler_lock, G_sender_lock;
 
 std::condition_variable_any G_sender_cv;
+
+std::unordered_map <std::string, std::vector<worker *> > G_workers_host; 
 
 
 void read_config(char conf_name[], std::string &port_recv, std::string &port_send,  std::string &protocol){
@@ -222,6 +226,13 @@ void prepare_tile(message &reply, std::string widx){
 
 
 
+void update_workers_attr(std::string hostname, std::string attr_name, TWorkerAttr new_attr){
+    for(auto w: G_workers_host[hostname]){
+        w->set_attr(attr_name, new_attr);
+    }
+}
+
+
 void registry_worker(message &recv_msg, std::string worker_zmq_id, zmq::socket_t &sock){
     worker w_rec = hps::from_string<worker>(recv_msg.content);
     TWorkerIdx current_idx=G_idx_at_manager++;
@@ -230,14 +241,17 @@ void registry_worker(message &recv_msg, std::string worker_zmq_id, zmq::socket_t
     message reply;
 
     w_at_manager->update_index(current_idx);
-
+    std::string w_name = w_at_manager->get_name();
     // _m = "worker " + std::to_string(w_at_manager->get_index()) + " going to waiting queue\n";
     // std::cout << _m;
     if(G_merge_bag.is_running()){
-        G_got_full_btree[w_at_manager->get_name()] = false;
+        G_got_full_btree[w_name] = false;
     }
 
-   
+    update_workers_attr(w_name, MEMORY_SIZE_ATTR, w_at_manager->get_attr(MEMORY_SIZE_ATTR));
+    G_workers_host[w_name].push_back(w_at_manager);
+
+
     string_idx = worker_zmq_id;
     reply.content = std::to_string(w_at_manager->get_index());
     reply.size = reply.content.size();
@@ -260,8 +274,10 @@ void registry_worker(message &recv_msg, std::string worker_zmq_id, zmq::socket_t
         G_total_workers.fetch_add(1);
         G_sender_cv.notify_one();
     }
-    // _m = "response enqued: " + worker_zmq_id + "," + std::to_string(current_idx) + " source line: " + std::to_string( __LINE__ ) +"\n";
-    // std::cout << _m;
+    if(verbose){
+        _m = "response enqued: " + worker_zmq_id + "," + std::to_string(current_idx) + " source line: " + std::to_string( __LINE__ ) +"\n";
+        std::cout << _m;
+    }
 }
 
 void recv_boundary_tree(message &recv_msg){
@@ -382,14 +398,6 @@ void search_pair(){
     std::cout << "search_pair end<=======\n";
 }
 
-void update_workers_attr(TWorkerIdx idx, std::string attr_name, TWorkerAttr val){
-    if(G_busy_workers.has_worker_key(idx)){
-        worker *w = G_busy_workers.get_worker(idx);
-        w->set_attr(attr_name, val);
-        G_busy_workers.insert_worker(idx, w);
-        if(verbose) std::cout << "updating working: " << idx << " -> attribute: "<< attr_name << " value: " << val << "\n";
-    }
-}
 
 void manager_recv(zmq::socket_t &sock_recv){
     zmq::message_t request,idx;
@@ -443,7 +451,10 @@ void manager_recv(zmq::socket_t &sock_recv){
             auto msg_content = hps::from_string<std::pair<std::string, TWorkerAttr>>(recv_msg.content);
             std::string attr_name = msg_content.first;
             TWorkerAttr attr_value = msg_content.second;
-            update_workers_attr(sender_id, attr_name, attr_value);
+            worker *sender_w = G_busy_workers.search_worker_by_idx(sender_id);
+            std::string host = sender_w->get_name();
+            update_workers_attr(host, attr_name, attr_value);
+            
         }
     }while(G_total_workers.load() <= 0
            || G_updates_sent.load() < G_total_workers.load() 

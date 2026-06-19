@@ -364,8 +364,6 @@ bool do_work(vips::VImage *img_in, worker *w){
         _m += " \n";
         std::cout << _m;
     }
-    
-    
 
     if(msg_work.type == MSG_TILE_IDX){
         request_process_tile(img_in, msg_work, w);
