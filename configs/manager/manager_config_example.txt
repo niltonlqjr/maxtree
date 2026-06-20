@@ -17,3 +17,6 @@ port_send = 7234
 
 # comunication protocol
 protocol = tcp
+
+# input image
+input=../testes/dos_wp_bw.png 

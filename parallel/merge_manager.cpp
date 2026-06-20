@@ -33,7 +33,10 @@ merge_btrees_task *get_task_naive(TWorkerIdx idx);
 merge_btrees_task *get_task_balanced(TWorkerIdx idx);
 
 
-uint32_t G_glines, G_gcolumns;
+VipsAccess G_vips_access;
+
+uint32_t G_glines, G_gcolumns, G_tile_lines, G_tile_columns;
+TWorkerAttr G_tile_size;
 std::atomic<uint64_t> G_updates_sent, G_finished_workers, G_num_merges, G_workers_finished;
 std::atomic<uint64_t> G_total_merges,  G_total_tiles, G_total_workers;
 
@@ -41,7 +44,7 @@ bool print_only_trees;
 bool verbose;
 
 bool G_sender_running;
-
+std::string G_input_name;
 
 static const int nth = 1;
 
@@ -52,8 +55,8 @@ boundary_tree_task *G_reply_btt=nullptr;
 
 
 hash_scheduler_of_worker<TWorkerIdx, worker*> G_busy_workers;
-scheduler_of_workers<worker*> G_waiting_workers;
-// ordered_scheduler_of_workers <worker*, worker_lesser_than> G_waiting_workers;
+scheduler_of_workers<worker*> G_waiting_workers, G_no_memory_workers;
+// ordered_scheduler_of_workers <worker*, worker_lesser_than> G_waiting_workers, G_no_memory_workers;
 
 
 bag_of_tasks<input_tile_task* > G_input_tiles;
@@ -92,9 +95,20 @@ void read_config(char conf_name[], std::string &port_recv, std::string &port_sen
     G_glines = std::stoi(configs->at("glines"));
     G_gcolumns = std::stoi(configs->at("gcolumns"));
 
+
+    G_input_name = get_field(configs, "input", "");
+
     port_recv = get_field(configs, "port_recv", DEFAULT_RECV_PORT);
     port_send = get_field(configs, "port_send", DEFAULT_SEND_PORT);
     protocol = get_field(configs, "protocol", "tcp");
+
+    auto str_vips_access = get_field(configs, "vips_access", "VIPS_ACCESS_RANDOM");
+    try{
+        G_vips_access = VipsAccesTypeVector[str_vips_access];
+    }catch(...){
+        std::cerr << "Access type " << str_vips_access << "not defined or not supported.\nUsing VIPS_ACCESS_RANDOM.\n";
+    }
+
 }
 
 boundary_tree_task *get_neighbor_bound_task(std::vector<boundary_tree_task*> &v, boundary_tree_task* t){
@@ -204,7 +218,7 @@ inline std::string create_end_command_msg(){
     return hps::to_string(cmd);
 }
 
-void prepare_tile(message &reply, std::string widx){
+std::pair<uint32_t,uint32_t> prepare_tile(message &reply){
     input_tile_task *task;
     std::pair<uint32_t,uint32_t> idx_reply;
     if(G_input_tiles.get_task(task)){
@@ -214,14 +228,14 @@ void prepare_tile(message &reply, std::string widx){
         idx_reply = GRID_DIMS;
     }
      
-    std::string _m;
-    _m = "tile: " + int_pair_to_string(idx_reply) + " sent to " + widx
-       + " remaining " + std::to_string(G_input_tiles.size()) + "\n";
-    
-    std::cout << _m;
+    // std::string _m;
+    // _m = "tile: " + int_pair_to_string(idx_reply) + " sent to " + widx
+    //    + " remaining " + std::to_string(G_input_tiles.size()) + "\n";
+    // std::cout << _m;
     
     reply.type = MSG_TILE_IDX;
     reply.content = hps::to_string<std::pair<uint32_t,uint32_t>>(idx_reply);
+    return idx_reply;
 }
 
 
@@ -483,11 +497,26 @@ void message_sender(zmq::socket_t &sock_send){
     while(G_updates_sent.load() < G_total_workers.load()){
         string_idx = "NO_WORKER";
         if((G_input_tiles.is_running() || !G_input_tiles.empty())){
+            auto idx_reply = prepare_tile(reply);
             w = G_waiting_workers.get_worker();
+            TWorkerAttr w_mem_free = w->get_attr(MEMORY_SIZE_ATTR);
+            while(w_mem_free < G_tile_size && G_waiting_workers.size() > 0){
+                G_no_memory_workers.insert_worker(w);
+                w = G_waiting_workers.get_worker();
+                w_mem_free = w->get_attr(MEMORY_SIZE_ATTR);
+            }
+            if(G_waiting_workers.size() <= 0 && w_mem_free < G_tile_size){
+                std::cout << "no worker with memory available\n";
+                for(size_t i=0;  G_no_memory_workers.size(); i++){
+                    std::cout << "worker: " << w->get_index() << " memory: " << w->get_attr(MEMORY_SIZE_ATTR) << "\n";
+                }
+            }
+
             worker_idx = w->get_index();
+            w->set_attr(MEMORY_SIZE_ATTR, w_mem_free - G_tile_size);
             G_busy_workers.insert_worker(worker_idx, w);
             string_idx = std::to_string(worker_idx);
-            prepare_tile(reply, string_idx);
+            // prepare_tile(reply, string_idx);
             reply_s = hps::to_string(reply);
         }else if(G_merge_bag.is_running() && !G_merge_bag.empty()
                  && G_waiting_workers.size() > 0){
@@ -583,13 +612,36 @@ void finish_workers(zmq::socket_t &sock){
 
 
 int main(int argc, char *argv[]){
-    
+    vips::VImage *in;
     std::string port_recv, port_send, self_address_recv, self_address_send ,protocol;
 
     read_config(argv[1], port_recv, port_send, protocol);
+    
     GRID_DIMS = std::make_pair(G_glines,G_gcolumns);
     //  Prepare contexts and sockets
     
+    if(G_glines == 0 || G_gcolumns == 0){
+        std::cout << "glines and gcolumns must be greater than zero\n";
+        exit(EX_CONFIG);
+    }else if(G_input_name == ""){
+        std::cout << "input file name must be specified in config file\n";
+        exit(EX_NOINPUT);
+    }
+    if (VIPS_INIT(argv[0])) { 
+        vips_error_exit (NULL);
+    } 
+    in = new vips::VImage(
+            vips::VImage::new_from_file(G_input_name.c_str(),
+            VImage::option()->set("access",  G_vips_access)
+        )
+    );
+    
+    G_tile_lines = std::ceil((double)in->height() / G_glines);
+    G_tile_columns = std::ceil((double)in->width() / G_gcolumns);
+    delete in;
+    
+    G_tile_size = sizeof(maxtree_node) * G_tile_lines * G_tile_columns;
+    G_tile_size /= 1024*1024*1024; // convert to GB
     
     G_total_merges.store(G_glines * (G_gcolumns - 1) + G_glines - 1);
     G_total_tiles.store(G_glines * G_gcolumns);
@@ -609,18 +661,18 @@ int main(int argc, char *argv[]){
     
     self_address_send = protocol+"://*:"+port_send;
     sock_send.bind(self_address_send);
-
+    
     std::cout << "receiver socket running at port " << port_recv << "\n";
     std::cout << "sender socket running at port " << port_send << "\n";
-
-
+    
+    
     
     G_sender_running=false;
     G_input_tiles.start();
     G_bound_trees.start();
     G_merge_bag.start();
-
- 
+    
+    
     // std::thread fill(fill_input_bag);
     fill_input_bag();
     std::thread receiver(manager_recv, std::ref(sock_recv));
@@ -628,7 +680,7 @@ int main(int argc, char *argv[]){
     std::thread pair_maker(search_pair);
     std::thread merge_task_sender(message_sender, std::ref(sock_send));
     // std::thread pair_maker(search_pair);
-
+    
     // fill.join();
     std::cout << "fill\n";
     receiver.join();
@@ -637,7 +689,8 @@ int main(int argc, char *argv[]){
     std::cout << "task sender\n";
     pair_maker.join();
     std::cout << "pair maker\n";
-
+    
+    vips_shutdown();
     // finish_workers(sock);
     sock_recv.close();
     sock_send.close();
