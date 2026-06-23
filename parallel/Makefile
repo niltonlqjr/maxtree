@@ -171,6 +171,7 @@ workers.o: ${workers_dir}/workers.cpp ${workers_dir}/workers.hpp
 
 base: 
 	export TYPE=${TYPE}
+	export OPT=${OPT}
 	@make -C ${maxtree_node_dir} 
 	@make -C ${maxtree_dir} 
 	@make -C ${boundary_tree_dir} 

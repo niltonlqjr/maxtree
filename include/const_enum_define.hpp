@@ -16,7 +16,6 @@
 #define Tpixel_value uint8_t
 #define Tpixel_NULL 0
 #define Tboundary_tree_lroot std::unordered_map<uint64_t, boundary_node*>
-#define Tnode_attributes double
 #define Tprocess_power double
 #define TWorkerIdx unsigned int
 #define TWorkerAttr double

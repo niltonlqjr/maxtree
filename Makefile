@@ -1,6 +1,7 @@
 parallel_dir = ./parallel
 flood_dir = ./sequential/flood
 union_find_dir = ./sequential/union-find
+info_dir = ./info
 
 MAKE_SUBPROJECTS_ARGS=
 
@@ -12,7 +13,7 @@ ifdef OPT
 	MAKE_SUBPROJECTS_ARGS:=${MAKE_SUBPROJECTS_ARGS} OPT=${OPT}
 endif
 
-all: parallel_execs flood_execs
+all: parallel_execs flood_execs info
 
 parallel_execs:
 	$(MAKE) -C ${parallel_dir} ${MAKE_SUBPROJECTS_ARGS}
@@ -23,7 +24,11 @@ flood_execs:
 union:
 	$(MAKE) -C ${union_find_dir} ${MAKE_SUBPROJECTS_ARGS}
 
+info:
+	$(MAKE) -C ${info_dir}
+
 clean:
 	$(MAKE) -C ${parallel_dir} clean
 	$(MAKE) -C ${flood_dir} clean
 	$(MAKE) -C ${union_find_dir} clean
+	$(MAKE) -C ${info_dir} clean

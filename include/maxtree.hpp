@@ -1,3 +1,4 @@
+#include <vips/vips8>
 #include <unordered_map>
 #include <string>
 #include <tuple>

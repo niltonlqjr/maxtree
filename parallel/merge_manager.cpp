@@ -347,6 +347,7 @@ void search_pair(){
             if(waiting_pair.find(nb_linear_idx) != waiting_pair.end()){
                 got_n = true;
                 n = waiting_pair[nb_linear_idx];
+                waiting_pair.erase(nb_linear_idx);
                 _m = "---------------- remove from waiting " + n->bt->index_to_string() + " distance: " + int_pair_to_string(n->nb_distance) 
                    + "linear: " + std::to_string(nb_linear_idx)+ " ------------------\n";
                 // std::cout << _m;
@@ -358,10 +359,11 @@ void search_pair(){
                 if(btt->can_merge_with(n)){
                     auto new_merge_task = new merge_btrees_task(btt->bt, n->bt, merge_dir, btt->nb_distance);
                     G_merge_bag.insert_task(new_merge_task);
-
-
-                    _m = "new merge " + btt->bt->index_to_string() + n->bt->index_to_string()
-                       + "    \tdistance:" + int_pair_to_string(btt->nb_distance)+"\n";
+                    delete n;
+                    delete btt;
+                    // _m = "new merge " + btt->bt->index_to_string() + n->bt->index_to_string()
+                    //    + "    \tdistance:" + int_pair_to_string(btt->nb_distance)+"\n";
+                    
                     // std::cout << _m;
                 }else{
                     if(btt->nb_distance.first < n->nb_distance.first){
@@ -531,6 +533,8 @@ void message_sender(zmq::socket_t &sock_send){
             reply.size = reply.content.size();
             string_idx = std::to_string(worker_idx);
             reply_s = hps::to_string(reply);
+            mbt->free_trees();
+            delete mbt;
         }else if(!G_merge_bag.is_running()){
             w = G_waiting_workers.get_worker();
             worker_idx = w->get_index();
