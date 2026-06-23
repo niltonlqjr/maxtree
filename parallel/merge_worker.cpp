@@ -46,7 +46,7 @@ VipsAccess G_vips_access;
 std::string G_server_ip, G_self_ip;
 std::string G_server_recv_port, G_server_send_port;
 std::string G_protocol;
-
+std::string G_hostname;
 std::string G_hardware_specs_filename;
 
 enum save_type G_out_save_type;
@@ -55,6 +55,8 @@ bool G_colored;
 std::string G_input_name;
 std::string G_out_name;
 std::string G_out_ext;
+
+
 Tattribute G_lambda;
 uint32_t G_glines, G_gcolumns;
 uint32_t G_num_threads;
@@ -99,10 +101,11 @@ void verify_args(int argc, char *argv[]){
 }
 
 void print_worker_config(){
-    std::cout << "server ip" << G_server_ip << "\n";
-    std::cout << "server send port" << G_server_send_port << "\n";
-    std::cout << "server receive port" << G_server_recv_port << "\n";
-    std::cout << "self ip:" << G_self_ip << "\n";
+    std::cout << "server ip:" << G_server_ip << "\n";
+    std::cout << "server send port:" << G_server_send_port << "\n";
+    std::cout << "server receive port:" << G_server_recv_port << "\n";
+    // std::cout << "self ip:" << G_self_ip << "\n";
+    std::cout << "hostname:" << G_hostname << "\n";
     std::cout << "protocol:" << G_protocol << "\n";
     std::cout << "input name:" << G_input_name << "\n";
     std::cout << "output name:" << G_out_name << "\n";
@@ -148,18 +151,20 @@ void read_config(char conf_name[]){
 
     G_hardware_specs_filename = get_field(configs, "hw_specs", "hardware.yaml");
 
-    std::string self_ip_interface = get_field(configs, "self_ip_interface", "");
-    if(self_ip_interface == ""){
-        const std::vector<std::string> prefix_list({"en","eth","wl"});
-        for(std::string interface: prefix_list){
-            G_self_ip = get_self_ip(interface);
-            if(G_self_ip != ""){
-                break;
-            }
-        }
-    }else{
-        G_self_ip = get_self_ip(self_ip_interface);
-    }
+    // std::string self_ip_interface = get_field(configs, "self_ip_interface", "");
+    // if(self_ip_interface == ""){
+    //     const std::vector<std::string> prefix_list({"en","eth","wl"});
+    //     for(std::string interface: prefix_list){
+    //         G_self_ip = get_self_ip(interface);
+    //         if(G_self_ip != ""){
+    //             break;
+    //         }
+    //     }
+    // }else{
+    //     G_self_ip = get_self_ip(self_ip_interface);
+    // }
+
+    G_hostname = get_field(configs, "hostname", "localhost");
 
     auto str_G_num_threads = get_field(configs, "threads", "1");
     G_num_threads = std::stoi(str_G_num_threads);
@@ -197,7 +202,7 @@ void registry_new_worker(uint32_t local_id, std::string server_send_addr, std::s
                          std::unordered_map<std::string, TWorkerAttr> &worker_attr, zmq::context_t &context){
 
     // worker *w = new worker(local_id, server_send_addr, server_recv_addr, G_self_ip + " | pid= " +std::to_string(getpid()));
-    worker *w = new worker(local_id, server_send_addr, server_recv_addr, G_self_ip, nullptr);
+    worker *w = new worker(local_id, server_send_addr, server_recv_addr, G_hostname+"|pid="+std::to_string(getpid()), nullptr);
     
     for(auto k_v: worker_attr){
         w->set_attr(k_v.first, k_v.second);
@@ -292,11 +297,11 @@ void merge_tiles(message &msg_work, worker *w){
         nb_dist.first = 1;
         nb_dist.second = 0;
     }
-    // if(verbose){
+    if(verbose){
         s = "merge tiles end " + mbtt.bt1->index_to_string() + " " + mbtt.bt2->index_to_string();
         s+= " merge distance " + int_pair_to_string(mbtt.distance) + "\n";
         // std::cout << s;
-    // }
+    }
     boundary_tree_task btt = boundary_tree_task(merged_tree, nb_dist);
     if(verbose){
         _m = "sending merged tree of worker " + std::to_string(w->get_index()) + "\n";
@@ -370,7 +375,11 @@ bool do_work(vips::VImage *img_in, worker *w){
     }else if(msg_work.type == MSG_MERGE_BOUNDARY_TREE){
         merge_tiles(msg_work, w);
     }else if(msg_work.type == MSG_UPDATE_BOUNDARY_TREE){
+        _m = "worker " + std::to_string(w->get_index()) + " waiting global tree\n";
+        std::cout << _m;
         receive_global_boundary_tree(msg_work);
+        _m = "worker " + std::to_string(w->get_index()) + " got global tree\n";
+        std::cout << _m;
         if(G_maxtrees.get_task(update_task)){
             update_filter_and_save(update_task, w);
         }

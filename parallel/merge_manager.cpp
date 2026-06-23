@@ -459,6 +459,8 @@ void manager_recv(zmq::socket_t &sock_recv){
         }else if(recv_msg.type == MSG_COMMAND){
             if(recv_msg.content == "FINISH"){
                 G_workers_finished.fetch_add(1);
+                _m = "finishing worker " + std::to_string(recv_msg.sender) + "\n";
+                std::cout << _m;
             }
         }else if(MSG_UPDATE_WORKER){
             auto sender_id = recv_msg.sender;
@@ -537,6 +539,8 @@ void message_sender(zmq::socket_t &sock_send){
             string_idx = std::to_string(w->get_index());
             reply_s = hps::to_string(reply);
             G_updates_sent.fetch_add(1);
+            _m = "final tree sent to " + std::to_string(w->get_index()) + " at host: " + w->get_name() +"\n";
+            std::cout << _m;
         }
 
         if(string_idx != "NO_WORKER"){

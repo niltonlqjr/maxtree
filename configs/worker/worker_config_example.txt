@@ -15,29 +15,33 @@ colored = false
 # main server (IP address)
 server_ip = 127.0.0.1
 
-# server receive port (to registry at server and send messages )
+#server_recv_port: port that manager uses to receive from workers (to registry at server and send messages)
 server_recv_port = 7233
 
-#server send port (to receive messages from server)
+#server_send_port: port that manager uses to send message to workers (to receive messages from server)
 server_send_port = 7234
 
-#atribute value to filter
+#lambda: atribute value to filter
 lambda=100000
 
-#input filename
+#input: input filename filename
 input=../testes/dos_wp_bw.png 
 #input = ../testes/example_gotz.png
 
-#output filename
+#output: output filename prefix
 output=../output/parallel/example/example_out
 
-#output extension (only the libvips extensions)
+#output_ext: output extension format (only the libvips extensions)
 output_ext=png
 
-#generate the full image joining the tiles
+#join_image: generate the full image joining the tiles
 #join_image=true
 join_image=false
 
-
-#hardware specification filename
+#hw_specs: filename that store hardware specifications
 hw_specs = ../hardware.yaml
+
+
+#hostname: a string that will be stored on manager to comunication ends
+#this hostname will be complemented with pid 
+hostname = test_host
