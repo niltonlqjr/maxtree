@@ -96,3 +96,14 @@ The variables TYPE and OPT can be used in those buildings.
 - Some configuration examples are available in [configs](configs/).
     - [worker configurations](configs/worker/)
     - [manager configurations](configs/manager/)
+
+
+
+## Third-Party Media & Credits
+
+The images used for testing purposes in this repository [dos_wp_bw_4k.jpg](tests/dos_wp_bw_4k.jpg) and [dos_wp_bw.jpg](tests/dos_wp_bw.png) are an official promotional artwork for the video game **Divinity: Original Sin 2** and is the sole intellectual property of **Larian Studios**. 
+
+Its inclusion in this project is strictly for **academic, non-commercial, and educational purposes** (image processing evaluation). This usage complies with the [Larian Studios' Fan Content Policy](https://larian.com).
+
+Please note that while the source code of this application is distributed under the project's open-source license, this license **does not extend** to any third-party copyrighted assets, which remain under their respective owners' copyright.
+
