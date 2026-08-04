@@ -25,8 +25,8 @@ server_send_port = 7234
 lambda=100000
 
 #input: input filename filename
-input=../testes/dos_wp_bw.png 
-#input = ../testes/example_gotz.png
+input=../tests/dos_wp_bw.png
+#input = ../tests/example_gotz.png
 
 #output: output filename prefix
 output=../output/parallel/example/example_out
