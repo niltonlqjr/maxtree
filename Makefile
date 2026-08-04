@@ -18,7 +18,7 @@ else
 endif
 
 
-all: parallel_execs flood_execs info
+all: parallel_execs flood_execs
 
 parallel_execs:
 	$(MAKE) -C ${parallel_dir} ${MAKE_SUBPROJECTS_ARGS}
@@ -36,4 +36,3 @@ clean:
 	$(MAKE) -C ${parallel_dir} clean
 	$(MAKE) -C ${flood_dir} clean
 	$(MAKE) -C ${union_find_dir} clean
-	$(MAKE) -C ${info_dir} clean
