@@ -23,7 +23,7 @@ CPP_libs = -pthread -lryml
 ifeq (${TYPE},R)
 	OBJ_CPP_FLAGS=-c 
 	EXE_CPP_FLAGS=
-	OPT ?= -O2
+	OPT ?= -O3
 else 
 	OBJ_CPP_FLAGS=-g -c
 	EXE_CPP_FLAGS=-g
