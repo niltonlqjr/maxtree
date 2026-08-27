@@ -1,0 +1,3 @@
+verbose = false
+output = output.jpg
+lambda = 100000

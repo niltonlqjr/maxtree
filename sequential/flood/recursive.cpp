@@ -59,7 +59,7 @@ int main(int argc, char *argv[]){
         if (configs->find("lambda") != configs->end()){
             lambda = std::atoi(configs->at("lambda").c_str());
         }else{
-            lambda = 2;
+            lambda = 1;
         }
     }
 
