@@ -69,9 +69,6 @@ std::condition_variable G_cv;
 scheduler_of_workers<worker *> G_local_workers;
 
 // std::vector<std::thread *> workers_threads;
-
-
-
 /* ======================= signatures ================================= */
 /* void verify_args(int argc, char *argv[]);
 void read_config(char conf_name[]);
@@ -82,11 +79,7 @@ bool do_work(vips::VImage *img_in, worker *w);
 void loop_worker(vips::VImage *img, zmq::context_t &context);
 void make_worker_threads(uint32_t numth, VImage *in, zmq::context_t &context); */
 /* ======================= implementations ================================= */
-
 // zmq::context_t *context;
-
-
-
 
 void verify_args(int argc, char *argv[]){
     std::cout << "argc: " << argc << " argv:" ;
@@ -496,8 +489,9 @@ int main(int argc, char *argv[]){
     // SEE VIPS_CONCURRENCY
     // check https://github.com/libvips/libvips/discussions/4063 for improvements on read
     in = new vips::VImage(
-            vips::VImage::new_from_file(G_input_name.c_str(),
-            VImage::option()->set("access",  G_vips_access)
+            vips::VImage::new_from_file(
+                G_input_name.c_str(),
+                VImage::option()->set("access",  G_vips_access)
         )
     );
 

@@ -110,8 +110,9 @@ int main(int argc, char *argv[]){
     }
 
     in = new vips::VImage(
-                vips::VImage::new_from_file(argv[1],
-                VImage::option ()->set ("access", VIPS_ACCESS_SEQUENTIAL)
+                vips::VImage::new_from_file(
+                    argv[1],
+                    VImage::option ()->set ("access", VIPS_ACCESS_SEQUENTIAL)
             )
         );
 

@@ -90,6 +90,7 @@ class boundary_tree_task: public comparable_task{
 class merge_btrees_task: public comparable_task{
     public:
         boundary_tree *bt1,*bt2;
+        std::pair<uint32_t, uint32_t> new_index;
         enum merge_directions direction;
         std::pair<uint32_t, uint32_t> distance;
         //int32_t distance;

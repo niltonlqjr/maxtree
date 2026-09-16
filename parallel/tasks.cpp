@@ -230,6 +230,10 @@ std::pair<uint32_t, uint32_t> boundary_tree_task::neighbor_idx(enum neighbor_dir
     return std::make_pair(this->bt->grid_i + i_desloc, this->bt->grid_j + j_desloc); 
 }
 
+std::pair<uint32_t, uint32_t> boundary_tree_task::next_distance(std::pair<uint32_t, uint32_t> grid_dim){
+    return std::pair<uint32_t, uint32_t>();
+}
+
 bool boundary_tree_task::can_merge_with(boundary_tree_task *btt2){
     /* auto d = this->nb_distance;
     auto t1 = this->index;
@@ -321,6 +325,7 @@ merge_btrees_task::merge_btrees_task(boundary_tree *t1, boundary_tree *t2, enum 
     this->bt2 = t2;
     this->distance = distance;
     this->direction = direction;
+    this->new_index = std::make_pair(this->bt1->grid_i, this->bt1->grid_j);
 }
 
 merge_btrees_task::merge_btrees_task(boundary_tree_task *btt1, boundary_tree_task *btt2){
@@ -367,6 +372,7 @@ merge_btrees_task::merge_btrees_task(boundary_tree_task *btt1, boundary_tree_tas
     }
     this->distance = distance;
     this->direction = direction;
+    this->new_index = std::make_pair(this->bt1->grid_i, this->bt1->grid_j);
 }
 
 merge_btrees_task::merge_btrees_task(){
@@ -374,6 +380,7 @@ merge_btrees_task::merge_btrees_task(){
     this->bt2 = nullptr;
     this->distance = std::make_pair<uint32_t,uint32_t>(0,0);
     this->direction = MERGE_VERTICAL_BORDER;
+    this->new_index = std::make_pair(0,0);
 }
 
 void merge_btrees_task::free_trees(){

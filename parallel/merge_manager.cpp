@@ -69,8 +69,11 @@ bag_of_tasks< std::pair<std::string, worker *> > G_registry_queue(true);
 
 
 
+
 // given that unordered_map needs a hash function for pair and there are few grids, a map is enought
 std::map <std::pair<uint32_t,uint32_t>, worker *> G_grid_id_worker;
+
+std::map <std::pair<uint32_t,uint32_t>, std::string> G_grid_location;
 
 std::unordered_map<std::string, bool> G_got_full_btree;
 
@@ -253,7 +256,6 @@ void registry_worker(message &recv_msg, std::string worker_zmq_id, zmq::socket_t
     worker *w_at_manager = new worker(w_rec);
     std::string _m, string_idx, reply_s;
     message reply;
-
     w_at_manager->update_index(current_idx);
     std::string w_name = w_at_manager->get_name();
     // _m = "worker " + std::to_string(w_at_manager->get_index()) + " going to waiting queue\n";
@@ -261,7 +263,7 @@ void registry_worker(message &recv_msg, std::string worker_zmq_id, zmq::socket_t
     if(G_merge_bag.is_running()){
         G_got_full_btree[w_name] = false;
     }
-
+    
     update_workers_attr(w_name, MEMORY_SIZE_ATTR, w_at_manager->get_attr(MEMORY_SIZE_ATTR));
     G_workers_host[w_name].push_back(w_at_manager);
 
@@ -529,6 +531,9 @@ void message_sender(zmq::socket_t &sock_send){
             G_busy_workers.insert_worker(worker_idx, w);
             reply.type = MSG_MERGE_BOUNDARY_TREE;
             G_merge_bag.get_task(mbt);
+            G_grid_location[mbt->new_index] = w->get_name();
+            // std::cout << "sending merge task: " << mbt->bt1->index_to_string() << " and " << mbt->bt2->index_to_string() 
+                    //   << " to worker: " << w->get_index() << " at host: " << w->get_name() << "\n";
             reply.content = hps::to_string(*mbt);
             reply.size = reply.content.size();
             string_idx = std::to_string(worker_idx);

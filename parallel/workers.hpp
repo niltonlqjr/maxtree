@@ -51,12 +51,13 @@ class worker{
         std::unordered_map<std::string, TWorkerAttr> *attr;
         bool busy, connected, registered;
         std::string manager_send, manager_recv; // address of manager
+        
         std::string name; // string composed of self ip address + "|pid=" + self pid
         // zmq::context_t context;
         zmq::socket_t server_sock_send, server_sock_recv;
     public:
         
-        worker(TWorkerIdx id, std::string manager_send = "", std::string manager_recv = "", std::string address = "", std::unordered_map<std::string, TWorkerAttr> *attr = nullptr);
+        worker(TWorkerIdx id, std::string manager_send = "", std::string manager_recv = "", std::string name = "",  std::unordered_map<std::string, TWorkerAttr> *attr = nullptr);
         worker(worker &w);
         worker();
         // ~worker();
