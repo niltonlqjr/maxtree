@@ -403,20 +403,32 @@ void make_worker_threads(uint32_t numth, VImage *in, zmq::context_t &context){
     _m = "total threads:"+std::to_string(numth)+"\n";
     std::cout << _m;
     
-    while(!G_local_workers.empty()){
-        worker *w=G_local_workers.get_worker();
+    // while(!G_local_workers.empty()){
+    //     worker *w=G_local_workers.get_worker();
+    //     workers_threads.push_back(std::thread(
+    //         loop_worker, in, w, std::ref(context)
+    //     ));
+    // }
+
+    for(size_t i=0; i < G_local_workers.size(); i++ ){
+        worker *w=G_local_workers.at(i);
         workers_threads.push_back(std::thread(
             loop_worker, in, w, std::ref(context)
         ));
     }
 
+
+
     _m = "created threads:"+std::to_string(workers_threads.size())+"\n";
     std::cout << _m;
     for(size_t i=0; i<workers_threads.size(); i++){
         workers_threads[i].join();
+        
         _m = "worker: "+ std::to_string(i+1) +  " of " + std::to_string(workers_threads.size()) +" join\n";
         std::cout << _m;
     }
+    G_local_workers.clear();
+    
     std::cout << "\n\n==================\nall threads finished!\n\n";
 }
 

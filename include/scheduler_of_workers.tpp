@@ -77,6 +77,12 @@ void scheduler_of_workers<Worker>::finish_worker(Worker w){
 }
 
 template <class Worker>
+inline void scheduler_of_workers<Worker>::clear(){
+    std::unique_lock<std::mutex> l(this->lock);
+    this->workers.clear();
+}
+
+template <class Worker>
 Worker scheduler_of_workers<Worker>::at(size_t i){
     std::unique_lock<std::mutex> l(this->lock);
     Worker ret;

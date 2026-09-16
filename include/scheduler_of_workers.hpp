@@ -25,6 +25,7 @@ class scheduler_of_workers{
         Worker get_worker();
         template <class T> size_t search_worker_by_function(T value, T function(Worker));
         void finish_worker(Worker w);
+        void clear();
         Worker at(size_t i);
         size_t size();
         bool empty();
