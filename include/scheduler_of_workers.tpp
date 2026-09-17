@@ -51,7 +51,6 @@ size_t scheduler_of_workers<Worker>::search_worker_by_function(T value, T functi
     throw std::out_of_range("scheduler_of_workers<Worker>::search_worker_by_function --- Worker not found");
 }
 
-
 template<class Worker>
 inline void scheduler_of_workers<Worker>::wait_worker(std::unique_lock<std::mutex>  &l){
     while(this->workers.empty()){
@@ -104,6 +103,34 @@ template <class Worker>
 bool scheduler_of_workers<Worker>::empty(){
     std::unique_lock<std::mutex> l(this->lock);
     return this->workers.size() == 0;
+}
+
+
+template <class Worker>
+template <class T_MSG>
+inline void scheduler_of_workers<Worker>::send_msg(T_MSG msg){
+    
+}
+
+template <class Worker>
+template <class T_MSG>
+inline T_MSG scheduler_of_workers<Worker>::recv_msg(){
+    return T_MSG();
+}
+
+template <class Worker>
+inline void scheduler_of_workers<Worker>::bind_sockets(zmq::context_t context){
+    
+}
+
+template <class Worker>
+inline void scheduler_of_workers<Worker>::connect(zmq::context_t context){
+
+}
+
+template <class Worker>
+inline void scheduler_of_workers<Worker>::disconnect(){
+
 }
 
 /*==============================================================================================================

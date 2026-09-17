@@ -3,6 +3,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <deque>
+#include <zmq.hpp>
 
 #include "heap.hpp"
 
@@ -18,6 +19,7 @@ class scheduler_of_workers{
         std::mutex lock;
         std::condition_variable cv;
         std::deque<Worker> workers;
+        zmq::socket_t sock_send, sock_recv;
         
     public:
         scheduler_of_workers();
@@ -29,6 +31,12 @@ class scheduler_of_workers{
         Worker at(size_t i);
         size_t size();
         bool empty();
+        void bind_sockets(zmq::context_t context);
+        void connect(zmq::context_t context);
+        void disconnect();
+        template <class T_MSG> void send_msg(T_MSG msg);
+        template <class T_MSG> T_MSG recv_msg();
+        
 };
 
 
