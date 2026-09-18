@@ -12,6 +12,7 @@
 #include "tasks.hpp"
 #include "message.hpp"
 #include "custom.hpp"
+#include "utils.hpp"
 
 #ifndef __WORKERS_HPP__
 #define __WORKERS_HPP__
@@ -21,28 +22,6 @@ extern std::pair<uint32_t, uint32_t> GRID_DIMS;
 bool inside_rectangle(std::pair<uint32_t, uint32_t> c, std::pair<uint32_t, uint32_t> r);
 std::pair<uint32_t, uint32_t> get_task_index(boundary_tree_task *t);
 
-
-class handshake_monitor: public zmq::monitor_t{
-private:
-    std::condition_variable cv;
-    std::mutex lock;
-    bool handshake_done;
-public:
-    handshake_monitor(){
-        this->handshake_done = false;
-    }
-    void on_event_handshake_succeeded(const zmq_event_t &event, const char* addr) override {
-        std::unique_lock<std::mutex> l(this->lock);
-        this->handshake_done = true;
-        this->cv.notify_all();
-    }
-    void wait_handshake(){
-        std::unique_lock<std::mutex> l(this->lock);
-        if(!handshake_done){
-            this->cv.wait(l);
-        }
-    }
-};
 
 
 class worker{

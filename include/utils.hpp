@@ -10,7 +10,10 @@
 #include <algorithm>
 #include <cinttypes>
 #include <cmath>
-
+#include <zmq.hpp>
+#include <mutex>
+#include <condition_variable>
+#include <thread>
 
 #include <ifaddrs.h>
 #include <netinet/in.h>
@@ -34,6 +37,24 @@
 #define	COLOR_CYAN    "\033[0;36m"	
 #define	COLOR_WHITE   "\033[0;37m"	
 #define COLOR_RESET   "\033[0m"
+
+
+class handshake_monitor: public zmq::monitor_t{
+private:
+    std::condition_variable cv;
+    std::mutex lock;
+    bool handshake_done;
+public:
+    handshake_monitor();
+    // void on_event_handshake_succeeded(const zmq_event_t &event, const char* addr) override {
+    //     std::unique_lock<std::mutex> l(this->lock);
+    //     this->handshake_done = true;
+    //     this->cv.notify_all();
+    // }
+    void on_event_handshake_succeeded(const zmq_event_t &event, const char* addr) override;
+    void wait_handshake();
+};
+
 
 const std::string COLORS[] = {
     COLOR_WHITE,

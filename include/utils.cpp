@@ -1,5 +1,24 @@
 #include "utils.hpp"
 
+handshake_monitor::handshake_monitor(){
+    this->handshake_done = false;
+}
+
+void handshake_monitor::on_event_handshake_succeeded(const zmq_event_t &event, const char* addr) {
+    std::unique_lock<std::mutex> l(this->lock);
+    this->handshake_done = true;
+    this->cv.notify_all();
+}
+
+void handshake_monitor::wait_handshake(){
+    std::unique_lock<std::mutex> l(this->lock);
+    if(!handshake_done){
+        this->cv.wait(l);
+    }
+}
+
+
+
 std::string terminal_color_string(int color){
     if(color == RESET)
         return COLORS[RESET];

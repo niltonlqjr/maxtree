@@ -1,4 +1,5 @@
 #include "scheduler_of_workers.hpp"
+
 template <class Worker>
 scheduler_of_workers<Worker>::scheduler_of_workers(){
     // this->workers = new max_heap<Worker>();
@@ -108,28 +109,38 @@ bool scheduler_of_workers<Worker>::empty(){
 
 template <class Worker>
 template <class T_MSG>
-inline void scheduler_of_workers<Worker>::send_msg(T_MSG msg){
+void scheduler_of_workers<Worker>::send_msg(T_MSG msg){
     
 }
 
 template <class Worker>
 template <class T_MSG>
-inline T_MSG scheduler_of_workers<Worker>::recv_msg(){
+T_MSG scheduler_of_workers<Worker>::recv_msg(){
+
     return T_MSG();
 }
 
 template <class Worker>
-inline void scheduler_of_workers<Worker>::bind_sockets(zmq::context_t context){
+void scheduler_of_workers<Worker>::bind_sockets(zmq::context_t context, std::string address_recv, std::string address_send){
+    
+    // std::string self_address_recv = protocol+"://*:"+port_recv;
+    this->sock_recv.bind(address_recv);
+    
+    // std::string self_address_send = protocol+"://*:"+port_send;
+    this->sock_send.bind(address_send);
     
 }
 
+
 template <class Worker>
-inline void scheduler_of_workers<Worker>::connect(zmq::context_t context){
+void scheduler_of_workers<Worker>::connect(zmq::context_t context, std::string address_recv, std::string address_send){
+    this->sock_recv.connect(address_recv);
+    this->sock_send.connect(address_send);
 
 }
 
 template <class Worker>
-inline void scheduler_of_workers<Worker>::disconnect(){
+void scheduler_of_workers<Worker>::disconnect(){
 
 }
 
@@ -139,7 +150,7 @@ inline void scheduler_of_workers<Worker>::disconnect(){
 
 
 template <class Worker, bool CompareLesser(Worker, Worker)>
-inline ordered_scheduler_of_workers<Worker, CompareLesser>::ordered_scheduler_of_workers(){
+ordered_scheduler_of_workers<Worker, CompareLesser>::ordered_scheduler_of_workers(){
     // this->workers = new max_heap<Worker>();
 }
 

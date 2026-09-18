@@ -3,7 +3,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <deque>
-#include <zmq.hpp>
+#include "zmq.hpp"
 
 #include "heap.hpp"
 
@@ -31,11 +31,11 @@ class scheduler_of_workers{
         Worker at(size_t i);
         size_t size();
         bool empty();
-        void bind_sockets(zmq::context_t context);
-        void connect(zmq::context_t context);
+        void bind_sockets(zmq::context_t context, std::string self_address_recv, std::string self_address_send);
+        void connect(zmq::context_t context, std::string address_recv, std::string address_send);
         void disconnect();
-        template <class T_MSG> void send_msg(T_MSG msg);
-        template <class T_MSG> T_MSG recv_msg();
+        template <class T_MSG = std::string> void send_msg(T_MSG msg);
+        template <class T_MSG = std::string> T_MSG recv_msg();
         
 };
 

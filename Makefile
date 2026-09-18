@@ -18,7 +18,8 @@ else
 endif
 
 
-all: parallel_execs flood_execs
+#all: parallel_execs flood_execs
+all: parallel_execs
 
 parallel_execs:
 	$(MAKE) -C ${parallel_dir} ${MAKE_SUBPROJECTS_ARGS}
