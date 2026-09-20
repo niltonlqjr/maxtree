@@ -13,6 +13,8 @@
 #include "message.hpp"
 #include "custom.hpp"
 #include "utils.hpp"
+#include "connection.hpp"
+
 
 #ifndef __WORKERS_HPP__
 #define __WORKERS_HPP__

@@ -1,3 +1,6 @@
+#ifndef __UTILS_HPP__
+#define __UTILS_HPP__
+
 #include <vips/vips8>
 #include <iostream>
 #include <vector>
@@ -24,10 +27,6 @@
 
 #include "maxtree_node.hpp"
 
-#ifndef __UTILS_HPP__
-#define __UTILS_HPP__
-
-
 #define COLOR_BLACK	  "\033[0;30m"
 #define	COLOR_RED     "\033[0;31m"	
 #define	COLOR_GREEN   "\033[0;32m"	
@@ -37,23 +36,6 @@
 #define	COLOR_CYAN    "\033[0;36m"	
 #define	COLOR_WHITE   "\033[0;37m"	
 #define COLOR_RESET   "\033[0m"
-
-
-class handshake_monitor: public zmq::monitor_t{
-private:
-    std::condition_variable cv;
-    std::mutex lock;
-    bool handshake_done;
-public:
-    handshake_monitor();
-    // void on_event_handshake_succeeded(const zmq_event_t &event, const char* addr) override {
-    //     std::unique_lock<std::mutex> l(this->lock);
-    //     this->handshake_done = true;
-    //     this->cv.notify_all();
-    // }
-    void on_event_handshake_succeeded(const zmq_event_t &event, const char* addr) override;
-    void wait_handshake();
-};
 
 
 const std::string COLORS[] = {
@@ -133,5 +115,6 @@ void free_hw_config(std::vector<std::unordered_map<std::string, TWorkerAttr> > *
 std::string get_self_ip(std::string interface_prefix="en");
 
 uint64_t get_system_memory(const std::string key="MemAvailable:");
+
 
 #endif

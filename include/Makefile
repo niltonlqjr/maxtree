@@ -8,6 +8,7 @@ boundary_tree_dir=.
 utils_dir=.
 heap_dir=.
 custom_dir=.
+connection_dir=.
 
 hps_dir=../hps
 
@@ -32,7 +33,7 @@ c ?= 5
 
 figures_flags ?= 
 
-all: maxtree_node.o maxtree.o utils.o boundary_tree.o custom.o
+all: maxtree_node.o maxtree.o utils.o boundary_tree.o custom.o connection.o
 
 boundary_tree.o: ${boundary_tree_dir}/boundary_tree.cpp ${boundary_tree_dir}/boundary_tree.hpp
 	g++ ${OBJ_CPP_FLAGS} ${OPT} ${boundary_tree_dir}/boundary_tree.cpp -I${boundary_tree_dir} -I${hps_dir} ${vips_args} -o ${boundary_tree_dir}/boundary_tree.o
@@ -48,6 +49,9 @@ utils.o: ${utils_dir}/utils.cpp ${utils_dir}/utils.hpp
 
 custom.o: ${custom_dir}/custom.cpp ${custom_dir}/custom.hpp
 	g++ ${OBJ_CPP_FLAGS} ${OPT} ${custom_dir}/custom.cpp ${vips_args} -I${custom_dir} -I${hps_dir} -o ${custom_dir}/custom.o
+
+connection.o: ${connection_dir}/connection.cpp ${connection_dir}/connection.hpp
+	g++ ${OBJ_CPP_FLAGS} ${OPT} ${connection_dir}/connection.cpp ${vips_args} -I${connection_dir} -I${hps_dir} -o ${connection_dir}/connection.o
 
 clean:
 	@rm ${maxtree_node_dir}/maxtree_node.o || true

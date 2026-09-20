@@ -8,6 +8,7 @@ boundary_tree_dir=../include
 utils_dir=../include
 heap_dir=../include
 custom_dir=../include
+connection_dir=../include
 hps_dir=../hps
 
 tasks_dir=.
@@ -86,6 +87,7 @@ ${dest_merge_work}:base tasks.o message.o workers.o
 		${tasks_dir}/tasks.o \
 		${message_dir}/message.o \
 		${workers_dir}/workers.o \
+		${connection_dir}/connection.o \
 		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} -I${custom_dir} \
 		-I${heap_dir} -I${hps_dir} \
 		${vips_args} ${zmq_args} -o ${dest_merge_work} \
@@ -102,6 +104,7 @@ ${merge_name_manager}:base tasks.o message.o workers.o
 		${tasks_dir}/tasks.o \
 		${message_dir}/message.o \
 		${workers_dir}/workers.o \
+		${connection_dir}/connection.o \
 		-I${maxtree_node_dir} -I${utils_dir} -I${maxtree_dir} -I${custom_dir} \
 		-I${heap_dir} -I${hps_dir} \
 		${vips_args} ${zmq_args} -o ${dest_merge_manager} \
