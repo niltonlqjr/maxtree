@@ -1,9 +1,12 @@
 #include <zmq.hpp>
 #include <condition_variable>
 #include <mutex>
+#include <thread>
+#include "const_enum_define.hpp"
 
 #ifndef __CONNECTION_HPP__
 #define __CONNECTION_HPP__  
+
 
 class handshake_monitor: public zmq::monitor_t{
 private:
@@ -19,6 +22,7 @@ public:
 
 class connection{
     public:
+        TConnectionIdx cid;    
         zmq::socket_t socket_send, socket_recv;
         
         connection(std::string addr_send, std::string addr_recv);
@@ -30,9 +34,10 @@ class connection{
         void discconect();
         
     private:
-        bool connected, registered;
+        
         std::string addr_send;
         std::string addr_recv;
+        bool connected, registered;
     
 };
 

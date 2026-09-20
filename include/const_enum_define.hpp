@@ -21,6 +21,8 @@
 #define TWorkerAttr double
 #define TWorkerAttr_NULL 0.0
 
+#define TConnectionIdx unsigned int
+
 #define MEMORY_SIZE_ATTR "RAMSIZE"
 
 
