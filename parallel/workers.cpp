@@ -330,7 +330,7 @@ void worker::finish_worker(){
     this->server_sock_recv.send(msg, zmq::send_flags::none);
 }
 
-void thread_check_event(handshake_monitor &hsmonitor){
+void thread_check_event(connection::handshake_monitor &hsmonitor){
     hsmonitor.check_event(-1);
 }
 
@@ -348,9 +348,10 @@ void worker::connect(zmq::context_t &context){
             _m = "worker: " + std::to_string(this->id) + " not registered at server " + this->manager_recv + " \n";
             std::cerr << _m;
         }
-        handshake_monitor monitor_send, monitor_recv;
+        // connection::handshake_monitor monitor_send, monitor_recv;
         
         std::string monitor_send_name = "inproc://monitor_send" + std::to_string(this->id);
+        connection::handshake_monitor monitor_send(monitor_send_name);
         monitor_send.init(this->server_sock_send, monitor_send_name, ZMQ_EVENT_HANDSHAKE_SUCCEEDED);
         this->server_sock_send.set(zmq::sockopt::linger, 0);
         std::thread monitor_thread_send(thread_check_event, std::ref(monitor_send));
@@ -363,6 +364,7 @@ void worker::connect(zmq::context_t &context){
         }
 
         std::string monitor_recv_name = "inproc://monitor_recv" + std::to_string(this->id);
+        connection::handshake_monitor monitor_recv(monitor_recv_name);
         monitor_recv.init(this->server_sock_recv, monitor_recv_name, ZMQ_EVENT_HANDSHAKE_SUCCEEDED);
         this->server_sock_recv.set(zmq::sockopt::linger, 0);
         std::thread monitor_thread_recv(thread_check_event, std::ref(monitor_recv));
