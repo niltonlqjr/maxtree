@@ -11,3 +11,4 @@ util/*.txt
 util/*.pdf
 util/*.png
 util/*.yaml
+.vscode/**
