@@ -15,16 +15,20 @@ class connection{
     public:
         TConnectionIdx cid;    
         zmq::socket_t socket_send, socket_recv;
-        
-        connection(std::string addr_send, std::string addr_recv);
-       
-        void bind();
-        void registry(zmq::context_t &ctx);
+        connection();
+        connection(zmq::context_t &ctx, std::string addr_send, std::string addr_recv,  zmq::socket_type type);
 
-        void connect(zmq::context_t &ctx);
-        void discconect();
-        
-    // private:
+        void prepare_sockets(zmq::context_t &ctx, std::string addr_send, std::string addr_recv, zmq::socket_type type);
+        void bind();
+        void registry();
+
+        void connect();
+            
+        void disconnect();
+
+        void send_message(std::string id, std::string msg);
+        std::pair<std::string, std::string> recv_message();
+    
         class handshake_monitor: public zmq::monitor_t{
             private:
                 std::condition_variable cv;
@@ -44,6 +48,7 @@ class connection{
         std::string addr_send;
         std::string addr_recv;
         bool connected, registered;
+        zmq::socket_type socket_type;
     
 };
 

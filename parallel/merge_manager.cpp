@@ -18,6 +18,7 @@
 #include "const_enum_define.hpp"
 #include "boundary_tree.hpp"
 #include "message.hpp"
+
 #include "src/hps.h"
 
 using namespace vips;

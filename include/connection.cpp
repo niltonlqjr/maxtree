@@ -38,19 +38,42 @@ void connection::handshake_monitor::join_event(){
     }
 }
 
-connection::connection(std::string addr_send, std::string addr_recv){
-    this->addr_send = addr_send;
-    this->addr_recv = addr_recv;
+connection::connection(){
+    this->addr_send = "";
+    this->addr_recv = "";
     this->connected = false;
     this->registered = false;
 }
 
-void connection::bind(){
+connection::connection(zmq::context_t &ctx, std::string addr_send, std::string addr_recv, zmq::socket_type type)
+{
+    this->addr_send = addr_send;
+    this->addr_recv = addr_recv;
+    this->connected = false;
+    this->registered = false;
+    this->socket_send = zmq::socket_t(ctx, type);
+    this->socket_recv = zmq::socket_t(ctx, type);
+    this->socket_type = type;
+}
+
+void connection::prepare_sockets(zmq::context_t &ctx, std::string addr_send, std::string addr_recv, zmq::socket_type type){
+    this->addr_send = addr_send;
+    this->addr_recv = addr_recv;
+    this->socket_send = zmq::socket_t(ctx, type);
+    this->socket_recv = zmq::socket_t(ctx, type);
+    this->socket_type = type;
+}
+
+void connection::bind()
+{
+    if(this->addr_send.empty() || this->addr_recv.empty()){
+        throw std::invalid_argument("connection::bind --- addr_send or addr_recv is empty");
+    }
     this->socket_send.bind(this->addr_send);
     this->socket_recv.bind(this->addr_recv);
 }
 
-void connection::registry(zmq::context_t &ctx){
+void connection::registry(){
     // std::string msg_content = hps::to_string(*this);
     
     // std::string s_msg = hps::to_string(requirement);
@@ -58,9 +81,6 @@ void connection::registry(zmq::context_t &ctx){
     std::string str, _m;
     zmq::message_t message_0mq(s_msg);
     zmq::message_t reply_0mq;
-    
-    this->socket_send = zmq::socket_t(ctx, zmq::socket_type::dealer);
-    this->socket_recv = zmq::socket_t(ctx, zmq::socket_type::dealer);
     
     this->socket_recv.connect(this->addr_recv);
     this->socket_recv.send(message_0mq, zmq::send_flags::none);
@@ -84,12 +104,13 @@ void connection::registry(zmq::context_t &ctx){
         std::cout << str + "\n";
     #endif
     this->registered = true;
+
     this->socket_recv.disconnect(this->addr_recv);
 }
 
 
 
-void connection::connect(zmq::context_t &ctx){
+void connection::connect(){
     std::string _m;
     if(!this->connected){
         if(this->registered){
@@ -126,7 +147,7 @@ void connection::connect(zmq::context_t &ctx){
 
 }
 
-void connection::discconect(){
+void connection::disconnect(){
     std::string _m;
     if(this->connected){
         this->socket_recv.disconnect(this->addr_recv);
@@ -137,4 +158,24 @@ void connection::discconect(){
         #endif
     }
     this->connected = false;
+}
+
+void connection::send_message(std::string id, std::string msg){
+    if(!this->connected){
+        std::string _m = "connection " + std::to_string(this->cid) + " not connected\n";
+        std::cerr << _m;
+        return;
+    }
+    if(this->socket_type != zmq::socket_type::dealer){
+        zmq::message_t msg_id(id);
+        auto msgid_return = this->socket_send.send(msg_id, zmq::send_flags::sndmore);
+    }
+    zmq::message_t msg_content(msg);
+    auto reply_return = this->socket_send.send(msg_content, zmq::send_flags::none); 
+
+}
+
+std::pair<std::string, std::string> connection::recv_message(){
+    std::string id, msg;
+    return std::make_pair(id, msg);
 }

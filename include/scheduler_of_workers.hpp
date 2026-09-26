@@ -6,6 +6,7 @@
 #include "zmq.hpp"
 
 #include "heap.hpp"
+#include "connection.hpp"
 
 #ifndef __SCHEDULER_OF_WORKERS_HPP__
 #define __SCHEDULER_OF_WORKERS_HPP__
@@ -20,9 +21,11 @@ class scheduler_of_workers{
         std::condition_variable cv;
         std::deque<Worker> workers;
         zmq::socket_t sock_send, sock_recv;
+        connection c;
         
     public:
         scheduler_of_workers();
+        scheduler_of_workers(zmq::context_t &context, std::string address_recv, std::string address_send);
         void insert_worker(Worker w);
         Worker get_worker();
         template <class T> size_t search_worker_by_function(T value, T function(Worker));
@@ -31,11 +34,14 @@ class scheduler_of_workers{
         Worker at(size_t i);
         size_t size();
         bool empty();
-        void bind_sockets(zmq::context_t context, std::string self_address_recv, std::string self_address_send);
-        void connect(zmq::context_t context, std::string address_recv, std::string address_send);
+        void bind_sockets(std::string self_address_recv, std::string self_address_send);
+        void connect();
         void disconnect();
-        template <class T_MSG = std::string> void send_msg(T_MSG msg);
-        template <class T_MSG = std::string> T_MSG recv_msg();
+        
+        /* The worker must have a method get_index that returns a value which can be argument of to_string function*/
+        void send_msg(std::string msg);
+
+        std::pair<std::string, std::string> recv_msg();
         
 };
 

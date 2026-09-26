@@ -3,7 +3,13 @@
 template <class Worker>
 scheduler_of_workers<Worker>::scheduler_of_workers(){
     // this->workers = new max_heap<Worker>();
-    
+}
+
+template <class Worker>
+scheduler_of_workers<Worker>::scheduler_of_workers(zmq::context_t &context, std::string address_recv, std::string address_send)
+{
+    // this->workers = new max_heap<Worker>();
+    this->c = connection(context, address_send, address_recv);
 }
 
 template <class Worker>
@@ -106,42 +112,43 @@ bool scheduler_of_workers<Worker>::empty(){
     return this->workers.size() == 0;
 }
 
-
 template <class Worker>
-template <class T_MSG>
-void scheduler_of_workers<Worker>::send_msg(T_MSG msg){
-    
+void scheduler_of_workers<Worker>::send_msg(std::string msg){
+    Worker w = this->get_worker();
+    using std::to_string;
+    std::string worker_id = to_string(w.get_index());
+    this->c.send_message(worker_id, msg);
 }
 
 template <class Worker>
-template <class T_MSG>
-T_MSG scheduler_of_workers<Worker>::recv_msg(){
-
-    return T_MSG();
+std::pair<std::string, std::string> scheduler_of_workers<Worker>::recv_msg(){
+    return this->c.recv_message();
+    return std::pair<std::string, std::string>();
 }
 
 template <class Worker>
-void scheduler_of_workers<Worker>::bind_sockets(zmq::context_t context, std::string address_recv, std::string address_send){
+void scheduler_of_workers<Worker>::bind_sockets(std::string address_recv, std::string address_send){
     
     // std::string self_address_recv = protocol+"://*:"+port_recv;
-    this->sock_recv.bind(address_recv);
+    // this->sock_recv.bind(address_recv);
     
     // std::string self_address_send = protocol+"://*:"+port_send;
-    this->sock_send.bind(address_send);
-    
+    // this->sock_send.bind(address_send);
+    this->c.bind();
 }
 
 
 template <class Worker>
-void scheduler_of_workers<Worker>::connect(zmq::context_t context, std::string address_recv, std::string address_send){
-    this->sock_recv.connect(address_recv);
-    this->sock_send.connect(address_send);
+void scheduler_of_workers<Worker>::connect(){
+    // this->sock_recv.connect(address_recv);
+    // this->sock_send.connect(address_send);
+    this->c.connect();
 
 }
 
 template <class Worker>
 void scheduler_of_workers<Worker>::disconnect(){
-
+    this->c.disconnect();
 }
 
 /*==============================================================================================================
