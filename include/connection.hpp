@@ -16,10 +16,13 @@ class connection{
         void set_addresses(std::string addr_send, std::string addr_recv);
         void prepare_sockets(zmq::context_t &ctx, zmq::socket_type type);
         void bind();
-        void registry();
+        TConnectionIdx registry();
 
         void connect();
         void disconnect();
+        void close_sockets();
+
+        bool is_connected();
 
         void send_message(std::string id, std::string msg);
         std::pair<std::string, std::string> recv_message();

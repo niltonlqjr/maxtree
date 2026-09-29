@@ -75,7 +75,7 @@ void connection::bind(){
     this->socket_recv.bind(this->addr_recv);
 }
 
-void connection::registry(){
+TConnectionIdx connection::registry(){
     // std::string msg_content = hps::to_string(*this);
     
     // std::string s_msg = hps::to_string(requirement);
@@ -108,6 +108,7 @@ void connection::registry(){
     this->registered = true;
 
     this->socket_recv.disconnect(this->addr_recv);
+    return new_idx;
 }
 
 
@@ -160,6 +161,19 @@ void connection::disconnect(){
         #endif
     }
     this->connected = false;
+}
+
+void connection::close_sockets(){
+    this->socket_recv.close();
+    this->socket_send.close();
+    #ifdef VERBOSE
+        std::string _m = "connection " + std::to_string(this->cid) + " sockets closed\n";
+        std::cout << _m;
+    #endif
+}
+
+bool connection::is_connected(){
+    return this->connected;
 }
 
 void connection::send_message(std::string id, std::string msg){

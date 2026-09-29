@@ -9,15 +9,18 @@ std::pair<uint32_t, uint32_t> get_task_index(boundary_tree_task *t){
 worker::worker(worker &w){
     this->attr = w.attr;
     this->id = w.id;
-    this->manager_recv = w.manager_recv;
-    this->manager_send = w.manager_send;
     this->name = w.name;
-    this->connected = false;
-    this->registered = false;
 }
 
 worker::worker(TWorkerIdx id, zmq::context_t &ctx ,std::string manager_send, std::string manager_recv, std::string name, std::unordered_map<std::string, TWorkerAttr> *attr){
-
+    if(attr == nullptr){
+        this->attr = new std::unordered_map<std::string, TWorkerAttr>();
+    }else{
+        this->attr = attr;
+    }
+    this->id = id;
+    this->name = name;
+    this->c = connection(ctx, manager_send, manager_recv, zmq::socket_type::dealer);
 }
 
 worker::worker(TWorkerIdx id, std::string manager_send, std::string manager_recv, std::string name, std::unordered_map<std::string, TWorkerAttr> *attr){
@@ -27,23 +30,16 @@ worker::worker(TWorkerIdx id, std::string manager_send, std::string manager_recv
         this->attr = attr;
     }
     this->name = name;
-    this->c = connection()
+    this->c = connection();
+    this->c.set_addresses(manager_send, manager_recv);
 }
 
 worker::worker(){
     this->attr = new std::unordered_map<std::string, TWorkerAttr>();
-    this->id = 0;
-    this->manager_send = "";
-    this->manager_recv = "";
+    this->id = "";
     this->name = "";
-    this->connected = false;
-    this->registered = false;
-
+    this->c = connection();
 }
-
-// worker::~worker(){
-//     delete this->attr;
-// }
 
 void worker::set_attr(std::string attr_name, TWorkerAttr attr_val){
     (*this->attr)[attr_name] = attr_val;
@@ -55,8 +51,9 @@ void worker::update_remote_attr(std::string attr_name, TWorkerAttr attr_val){
     std::string content = hps::to_string(send_attr);
     message m(content, content.size(), MSG_UPDATE_WORKER, this->id);
     std::string s_msg = hps::to_string<message>(m);
-    zmq::message_t msg_0mq(s_msg);
-    this->server_sock_recv.send(msg_0mq, zmq::send_flags::none);
+    this->c.send_message(this->id, s_msg);  
+    // zmq::message_t msg_0mq(s_msg);
+    // this->server_sock_recv.send(msg_0mq, zmq::send_flags::none);
 
 }
 
@@ -275,40 +272,28 @@ void worker::registry(){
     zmq::message_t reply_0mq;
     
     
-
-    // this->server_sock_send = zmq::socket_t(context, zmq::socket_type::dealer);
-    // this->server_sock_recv = zmq::socket_t(context, zmq::socket_type::dealer);
-    // this->server_sock_recv.connect(this->manager_recv);
-    // this->server_sock_recv.send(message_0mq, zmq::send_flags::none);
-    
+    TConnectionIdx new_idx = this->c.registry();
     #ifdef VERBOSE
     if(verbose){
         _m = "send " + std::to_string(this->id) + "\n";
         std::cout << _m;
     }
-    #endif
-    
-    auto resp_val = this->server_sock_recv.recv(reply_0mq, zmq::recv_flags::none);
-    
-    #ifdef VERBOSE
     if(verbose){
         _m = "recv " + std::to_string(this->id) + " - registration successful\n";
         std::cout << _m;
     }
     #endif
-
-    message reply; 
-    reply = hps::from_string<message>(reply_0mq.to_string());
-    TWorkerIdx new_idx = std::stoi(reply.content);
-    this->update_index(new_idx);
+    {   
+        using std::to_string;
+        this->update_index(to_string(new_idx));
+    }
     #ifdef VERBOSE
     if(verbose){
         str+="new id: " +std::to_string(this->get_index());
         std::cout << str + "\n";
     }
     #endif
-    this->registered = true;
-    this->server_sock_recv.disconnect(this->manager_recv);
+
 }
 
 message worker::request_work(){
@@ -317,7 +302,7 @@ message worker::request_work(){
     std::string reply_str;
     zmq::message_t idx;
     std::string _m, s_msg;
-    if(!this->connected){
+    if(!this->c.is_connected()){
         std::cerr << "worker " << this->id << "not connected!\n";
         std::string s("");
         return message(s,0,MSG_NULL,this->id);
@@ -326,21 +311,14 @@ message worker::request_work(){
     message request(this->name, this->name.size(), MSG_GET_TASK, this->get_index());
     
     s_msg = hps::to_string<message>(request);
-    zmq::message_t msg_0mq(s_msg);
     
-    this->server_sock_recv.send(msg_0mq, zmq::send_flags::none);
+    this->c.send_message(this->get_index(), s_msg);
     
     #ifdef VERBOSE
     if(verbose) {
         _m = "request work waiting response for worker "+ std::to_string(this->get_index()) +"\n";
         std::cout << _m;
     }
-    #endif
-    
-    auto _r = this->server_sock_send.recv(reply_zmq, zmq::recv_flags::none);
-    reply_str = reply_zmq.to_string();
-    
-    #ifdef VERBOSE
     if(verbose){ 
         _m = "worker "+ std::to_string(this->get_index()) +" get response\n";
         std::cout << _m;
@@ -354,87 +332,84 @@ void worker::finish_worker(){
     std::string content= "FINISH";
     message finish(content, content.size(), MSG_COMMAND, this->get_index());
     std::string s_finish = hps::to_string(finish);
-    zmq::message_t msg(s_finish);
-    this->server_sock_recv.send(msg, zmq::send_flags::none);
+    
+    this->c.send_message(this->get_index(), s_finish);
 }
 
 void thread_check_event(connection::handshake_monitor &hsmonitor){
     hsmonitor.check_event(-1);
 }
 
-void worker::connect(zmq::context_t &context){
-    std::string _m;
-    if(!this->connected){
-        if(this->registered){
-            this->server_sock_send.set(zmq::sockopt::routing_id, std::to_string(this->id));
-            this->server_sock_recv.set(zmq::sockopt::routing_id, std::to_string(this->id));
-            if(verbose){
-                _m = "set routing id to:" + std::to_string(this->id) + "\n";
-                std::cout << _m;
-            }
-        }else{
-            _m = "worker: " + std::to_string(this->id) + " not registered at server " + this->manager_recv + " \n";
-            std::cerr << _m;
-        }
-        // connection::handshake_monitor monitor_send, monitor_recv;
+void worker::connect(){
+    this->c.connect();
+    // std::string _m;
+    // if(!this->connected){
+    //     if(this->registered){
+    //         this->server_sock_send.set(zmq::sockopt::routing_id, std::to_string(this->id));
+    //         this->server_sock_recv.set(zmq::sockopt::routing_id, std::to_string(this->id));
+    //         if(verbose){
+    //             _m = "set routing id to:" + std::to_string(this->id) + "\n";
+    //             std::cout << _m;
+    //         }
+    //     }else{
+    //         _m = "worker: " + std::to_string(this->id) + " not registered at server " + this->manager_recv + " \n";
+    //         std::cerr << _m;
+    //     }
+    //     // connection::handshake_monitor monitor_send, monitor_recv;
         
-        std::string monitor_send_name = "inproc://monitor_send" + std::to_string(this->id);
-        connection::handshake_monitor monitor_send(monitor_send_name);
-        monitor_send.init(this->server_sock_send, monitor_send_name, ZMQ_EVENT_HANDSHAKE_SUCCEEDED);
-        this->server_sock_send.set(zmq::sockopt::linger, 0);
-        std::thread monitor_thread_send(thread_check_event, std::ref(monitor_send));
-        this->server_sock_send.connect(this->manager_send);
-        monitor_thread_send.join();
+    //     std::string monitor_send_name = "inproc://monitor_send" + std::to_string(this->id);
+    //     connection::handshake_monitor monitor_send(monitor_send_name);
+    //     monitor_send.init(this->server_sock_send, monitor_send_name, ZMQ_EVENT_HANDSHAKE_SUCCEEDED);
+    //     this->server_sock_send.set(zmq::sockopt::linger, 0);
+    //     std::thread monitor_thread_send(thread_check_event, std::ref(monitor_send));
+    //     this->server_sock_send.connect(this->manager_send);
+    //     monitor_thread_send.join();
 
-        #ifdef VERBOSE
-        // if(verbose){
-            _m = std::to_string(this->get_index()) + "connected server_sock_send at: " + this->manager_send + "\n";
-            std::cout << _m;
-        // }
-        #endif
+    //     #ifdef VERBOSE
+    //     // if(verbose){
+    //         _m = std::to_string(this->get_index()) + "connected server_sock_send at: " + this->manager_send + "\n";
+    //         std::cout << _m;
+    //     // }
+    //     #endif
 
-        std::string monitor_recv_name = "inproc://monitor_recv" + std::to_string(this->id);
-        connection::handshake_monitor monitor_recv(monitor_recv_name);
-        monitor_recv.init(this->server_sock_recv, monitor_recv_name, ZMQ_EVENT_HANDSHAKE_SUCCEEDED);
-        this->server_sock_recv.set(zmq::sockopt::linger, 0);
-        std::thread monitor_thread_recv(thread_check_event, std::ref(monitor_recv));
-        this->server_sock_recv.connect(this->manager_recv);
-        monitor_thread_recv.join();
-        #ifdef VERBOSE
-        if(verbose){
-            _m = std::to_string(this->get_index()) + "connected server_sock_recv at: " + this->manager_recv + "\n";
-            std::cout << _m;
-        }
-        #endif
-    }
-    this->connected = true;
+    //     std::string monitor_recv_name = "inproc://monitor_recv" + std::to_string(this->id);
+    //     connection::handshake_monitor monitor_recv(monitor_recv_name);
+    //     monitor_recv.init(this->server_sock_recv, monitor_recv_name, ZMQ_EVENT_HANDSHAKE_SUCCEEDED);
+    //     this->server_sock_recv.set(zmq::sockopt::linger, 0);
+    //     std::thread monitor_thread_recv(thread_check_event, std::ref(monitor_recv));
+    //     this->server_sock_recv.connect(this->manager_recv);
+    //     monitor_thread_recv.join();
+    //     #ifdef VERBOSE
+    //     if(verbose){
+    //         _m = std::to_string(this->get_index()) + "connected server_sock_recv at: " + this->manager_recv + "\n";
+    //         std::cout << _m;
+    //     }
+    //     #endif
+    // }
+    // this->connected = true;
 }
 
 void worker::disconnect(){
-    std::string _m;
-    if(this->connected){
-        this->server_sock_recv.disconnect(this->manager_recv);
-        this->server_sock_send.disconnect(this->manager_send);
-        if(verbose){
-            _m = std::to_string(this->id) + " disconnected from " + this->manager_send + " and " + this->manager_recv +  "\n";
-            std::cout << _m;
-        }
-    }
-    this->connected = false;
+    this->c.disconnect();
+    // std::string _m;
+    // if(this->connected){
+    //     this->server_sock_recv.disconnect(this->manager_recv);
+    //     this->server_sock_send.disconnect(this->manager_send);
+    //     if(verbose){
+    //         _m = std::to_string(this->id) + " disconnected from " + this->manager_send + " and " + this->manager_recv +  "\n";
+    //         std::cout << _m;
+    //     }
+    // }
+    // this->connected = false;
 }
 
 void worker::close_sockets(){
-    this->server_sock_recv.close();
-    this->server_sock_send.close();
-    if(verbose){
-        std::string _m = "worker " + std::to_string(this->id) + " sockets closed\n";
-        std::cout << _m;
-    }
+    this->c.close_sockets();
 }
 
 void worker::send_btree_task(boundary_tree_task *btt, enum message_type type){
-    if(!this->connected){
-        std::string _m = "worker " + std::to_string(this->id) + " not connected\n";
+    if(!this->c.is_connected()){
+        std::string _m = "worker " + this->id + " not connected\n";
         std::cerr << _m;
         return;
     }
@@ -444,49 +419,30 @@ void worker::send_btree_task(boundary_tree_task *btt, enum message_type type){
     std::string s_msg = hps::to_string(m);
     
     if(verbose){
-        _m = std::to_string(this->id) + " -------> sending: " + NamesMessageType[type] + btt->bt->index_to_string() 
+        _m = this->id + " -------> sending: " + NamesMessageType[type] + btt->bt->index_to_string() 
            + " distance: " + int_pair_to_string(btt->nb_distance) + "\n";
         std::cout << _m;
     }
-    zmq::message_t message_0mq(s_msg);
 
-    this->server_sock_recv.send(message_0mq, zmq::send_flags::none);
+    this->c.send_message(this->id, s_msg);
+
     if(verbose){
-        _m = "worker " + std::to_string(this->get_index()) + " sent message \n";
+        _m = "worker " + this->get_index() + " sent message \n";
         std::cout << _m;
     }
 }
 
 
 void worker::send_boundary_tree(boundary_tree *bt){
-    if(!this->connected){
+    if(!this->c.is_connected()){
         std::cerr << "worker " << this->id << "not connected!\n";
         return;
     }
     std::string msg_content = hps::to_string(*bt);
     message m = message(msg_content, msg_content.size(), MSG_BOUNDARY_TREE, this->id);
-
     std::string s_msg = hps::to_string(m);
-    // std::cout << "sending: -->" << s_msg << "<--\n";
-    // std::cout << "sending: -->";
-
-    // for(char c: s_msg){
-    //     std::cout << " " << (int) c;
-    // }
-
-    // std::cout << " <--\n";
-    if(verbose) std::cout << "sending tree\n";
-    zmq::message_t message_0mq(s_msg);
-
-    this->server_sock_recv.send(message_0mq, zmq::send_flags::none);
-
-    std::cout << "tree sent\n";
-    zmq::message_t reply;
-    zmq::message_t idx;
-    if(verbose){
-        std::cout << "recv "<< __LINE__ <<"\n";
-        std::cout << "recv "<< __LINE__ <<"\n";
-    }
+    this->c.send_message(this->id, s_msg);
+    std::cout << "tree sent\n";   
 }
 
 

@@ -3,6 +3,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <deque>
+#include <typeinfo>
 #include "zmq.hpp"
 
 #include "heap.hpp"

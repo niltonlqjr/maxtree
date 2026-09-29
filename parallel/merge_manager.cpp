@@ -49,7 +49,7 @@ std::string G_input_name;
 
 static const int nth = 1;
 
-TWorkerIdx G_idx_at_manager=1; //index count of workers. Index 0 is for manager
+unsigned int G_idx_at_manager=1; //index count of workers. Index 0 is for manager
 
 boundary_tree *G_reply_bt=nullptr;
 boundary_tree_task *G_reply_btt=nullptr;
@@ -253,7 +253,7 @@ void update_workers_attr(std::string hostname, std::string attr_name, TWorkerAtt
 
 void registry_worker(message &recv_msg, std::string worker_zmq_id, zmq::socket_t &sock){
     worker w_rec = hps::from_string<worker>(recv_msg.content);
-    TWorkerIdx current_idx=G_idx_at_manager++;
+    TWorkerIdx current_idx=std::to_string(G_idx_at_manager++);
     worker *w_at_manager = new worker(w_rec);
     std::string _m, string_idx, reply_s;
     message reply;
@@ -270,7 +270,7 @@ void registry_worker(message &recv_msg, std::string worker_zmq_id, zmq::socket_t
 
 
     string_idx = worker_zmq_id;
-    reply.content = std::to_string(w_at_manager->get_index());
+    reply.content = w_at_manager->get_index();
     reply.size = reply.content.size();
     reply.type = MSG_NEW_IDX;
     reply_s = hps::to_string(reply);
@@ -292,7 +292,7 @@ void registry_worker(message &recv_msg, std::string worker_zmq_id, zmq::socket_t
         G_sender_cv.notify_one();
     }
     if(verbose){
-        _m = "response enqued: " + worker_zmq_id + "," + std::to_string(current_idx) + " source line: " + std::to_string( __LINE__ ) +"\n";
+        _m = "response enqued: " + worker_zmq_id + "," + current_idx + " source line: " + std::to_string( __LINE__ ) +"\n";
         std::cout << _m;
     }
 }
@@ -464,7 +464,7 @@ void manager_recv(zmq::socket_t &sock_recv){
         }else if(recv_msg.type == MSG_COMMAND){
             if(recv_msg.content == "FINISH"){
                 G_workers_finished.fetch_add(1);
-                _m = "finishing worker " + std::to_string(recv_msg.sender) + "\n";
+                _m = "finishing worker " + recv_msg.sender + "\n";
                 std::cout << _m;
             }
         }else if(MSG_UPDATE_WORKER){
@@ -519,16 +519,16 @@ void message_sender(zmq::socket_t &sock_send){
                 }
             }
 
-            worker_idx = w->get_index();
+            string_idx = w->get_index();
             w->set_attr(MEMORY_SIZE_ATTR, w_mem_free - G_tile_size);
             G_busy_workers.insert_worker(worker_idx, w);
-            string_idx = std::to_string(worker_idx);
+
             // prepare_tile(reply, string_idx);
             reply_s = hps::to_string(reply);
         }else if(G_merge_bag.is_running() && !G_merge_bag.empty()
                  && G_waiting_workers.size() > 0){
             w = G_waiting_workers.get_worker();
-            worker_idx = w->get_index();
+            string_idx = w->get_index();
             G_busy_workers.insert_worker(worker_idx, w);
             reply.type = MSG_MERGE_BOUNDARY_TREE;
             G_merge_bag.get_task(mbt);
@@ -537,7 +537,7 @@ void message_sender(zmq::socket_t &sock_send){
                     //   << " to worker: " << w->get_index() << " at host: " << w->get_name() << "\n";
             reply.content = hps::to_string(*mbt);
             reply.size = reply.content.size();
-            string_idx = std::to_string(worker_idx);
+
             reply_s = hps::to_string(reply);
             mbt->free_trees();
             delete mbt;
@@ -546,10 +546,10 @@ void message_sender(zmq::socket_t &sock_send){
             worker_idx = w->get_index();
             G_busy_workers.insert_worker(worker_idx, w);
             prepare_final_tree(reply, w->get_name());
-            string_idx = std::to_string(w->get_index());
+            string_idx = w->get_index();
             reply_s = hps::to_string(reply);
             G_updates_sent.fetch_add(1);
-            _m = "final tree sent to " + std::to_string(w->get_index()) + " at host: " + w->get_name() +"\n";
+            _m = "final tree sent to " + w->get_index() + " at host: " + w->get_name() +"\n";
             std::cout << _m;
         }
 

@@ -195,7 +195,8 @@ void registry_new_worker(uint32_t local_id, std::string server_send_addr, std::s
                          std::unordered_map<std::string, TWorkerAttr> &worker_attr, zmq::context_t &context){
 
     // worker *w = new worker(local_id, server_send_addr, server_recv_addr, G_self_ip + " | pid= " +std::to_string(getpid()));
-    worker *w = new worker(local_id, server_send_addr, server_recv_addr, G_hostname+"|pid="+std::to_string(getpid()), nullptr);
+    worker *w = new worker(std::to_string(local_id), context, server_send_addr, 
+                           server_recv_addr, G_hostname+"|pid="+std::to_string(getpid()), nullptr);
     
     for(auto k_v: worker_attr){
         w->set_attr(k_v.first, k_v.second);
@@ -204,12 +205,12 @@ void registry_new_worker(uint32_t local_id, std::string server_send_addr, std::s
     // workers_threads.push_back(new std::thread(w->registry_at, server_addr));
     // workers_threads.push_back(std::thread(&worker::registry,w));
     // w->connect(context);
-    w->registry(context);
+    w->registry();
     G_local_workers.insert_worker(w);
     // sleep(1);
     if(verbose){
         std::string _m;
-        _m = "local worker: " + std::to_string(local_id) + " registered as " + std::to_string(w->get_index()) + "\n";
+        _m = "local worker: " + std::to_string(local_id) + " registered as " + w->get_index() + "\n";
         std::cout << _m;
     }
 }
@@ -249,7 +250,7 @@ void request_process_tile(vips::VImage *img_in, message &msg_work, worker *w){
     // }
     if(verbose){
         std::string msg = "tile received: (" + std::to_string(tile.first) + "," + std::to_string(tile.second) 
-                    + ") worker:" + std::to_string(w->get_index()) +"\n";
+                    + ") worker:" + w->get_index() +"\n";
         std::cout << msg;
     }
     input_tile_task *t = new input_tile_task(tile);
@@ -297,12 +298,12 @@ void merge_tiles(message &msg_work, worker *w){
     }
     boundary_tree_task btt = boundary_tree_task(merged_tree, nb_dist);
     if(verbose){
-        _m = "sending merged tree of worker " + std::to_string(w->get_index()) + "\n";
+        _m = "sending merged tree of worker " + w->get_index() + "\n";
         std::cout << _m;
     }
     w->send_btree_task(&btt, MSG_SEND_MERGED_TREE);
     if(verbose){
-        _m = "worker "+ std::to_string(w->get_index()) +" send merge tree finish\n";
+        _m = "worker "+ w->get_index() +" send merge tree finish\n";
         std::cout << _m;
     }
     // s = "sent: "  + btt.bt->index_to_string() ;
@@ -336,7 +337,7 @@ void update_filter_and_save(maxtree_task *t, worker *w){
         t->filter_tree(G_lambda);
         t->mt->save(output_name);
         
-        std::string sout = "file save:" + output_name + " by worker " + std::to_string(w->get_index()) +" \n";
+        std::string sout = "file save:" + output_name + " by worker " + w->get_index() +" \n";
         std::cout << sout;
 }
 
@@ -354,7 +355,7 @@ bool do_work(vips::VImage *img_in, worker *w){
     message msg_work = w->request_work();
 
     if(verbose){
-        _m = " received " + NamesMessageType[msg_work.type] + " <----------" + std::to_string(w->get_index());    
+        _m = " received " + NamesMessageType[msg_work.type] + " <----------" + w->get_index();    
         if(msg_work.type == MSG_TILE_IDX){
             auto tile = hps::from_string<std::pair<uint32_t,uint32_t>>(msg_work.content);
             _m += + " tile: " + int_pair_to_string(tile);
@@ -368,10 +369,10 @@ bool do_work(vips::VImage *img_in, worker *w){
     }else if(msg_work.type == MSG_MERGE_BOUNDARY_TREE){
         merge_tiles(msg_work, w);
     }else if(msg_work.type == MSG_UPDATE_BOUNDARY_TREE){
-        _m = "worker " + std::to_string(w->get_index()) + " waiting global tree\n";
+        _m = "worker " + w->get_index() + " waiting global tree\n";
         std::cout << _m;
         receive_global_boundary_tree(msg_work);
-        _m = "worker " + std::to_string(w->get_index()) + " got global tree\n";
+        _m = "worker " + w->get_index() + " got global tree\n";
         std::cout << _m;
         if(G_maxtrees.get_task(update_task)){
             update_filter_and_save(update_task, w);
@@ -384,7 +385,7 @@ bool do_work(vips::VImage *img_in, worker *w){
 
 
 void loop_worker(vips::VImage *img, worker *w, zmq::context_t &context){
-    w->connect(context);
+    w->connect();
     while(do_work(img,  w)); // std::cout << it++ << "\n";
     maxtree_task *update_task=nullptr;
     while(!G_maxtrees.empty()){

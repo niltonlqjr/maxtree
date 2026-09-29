@@ -5,7 +5,7 @@ message::message(){
     this->content = "";
     this->size = 0;
     this->type = MSG_NULL;
-    this->sender = 0;
+    this->sender = "0";
 } 
 
 message::message(TWorkerIdx sender){

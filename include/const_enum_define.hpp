@@ -17,11 +17,13 @@
 #define Tpixel_NULL 0
 #define Tboundary_tree_lroot std::unordered_map<uint64_t, boundary_node*>
 #define Tprocess_power double
-#define TWorkerIdx unsigned int
+
+#define TConnectionIdx unsigned int
+
+#define TWorkerIdx std::string
 #define TWorkerAttr double
 #define TWorkerAttr_NULL 0.0
 
-#define TConnectionIdx unsigned int
 
 #define MEMORY_SIZE_ATTR "RAMSIZE"
 
