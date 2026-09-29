@@ -56,16 +56,18 @@ connection::connection(zmq::context_t &ctx, std::string addr_send, std::string a
     this->socket_type = type;
 }
 
-void connection::prepare_sockets(zmq::context_t &ctx, std::string addr_send, std::string addr_recv, zmq::socket_type type){
+void connection::set_addresses(std::string addr_send, std::string addr_recv){
     this->addr_send = addr_send;
     this->addr_recv = addr_recv;
+}
+
+void connection::prepare_sockets(zmq::context_t &ctx, zmq::socket_type type){
     this->socket_send = zmq::socket_t(ctx, type);
     this->socket_recv = zmq::socket_t(ctx, type);
     this->socket_type = type;
 }
 
-void connection::bind()
-{
+void connection::bind(){
     if(this->addr_send.empty() || this->addr_recv.empty()){
         throw std::invalid_argument("connection::bind --- addr_send or addr_recv is empty");
     }

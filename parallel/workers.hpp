@@ -30,15 +30,18 @@ class worker{
     private:
         TWorkerIdx id;
         std::unordered_map<std::string, TWorkerAttr> *attr;
-        bool busy, connected, registered;
-        std::string manager_send, manager_recv; // address of manager
-        
+        bool busy;
         std::string name; // string composed of self ip address + "|pid=" + self pid
-        // zmq::context_t context;
-        zmq::socket_t server_sock_send, server_sock_recv;
+        connection c;
+        
     public:
         
-        worker(TWorkerIdx id, std::string manager_send = "", std::string manager_recv = "", std::string name = "",  std::unordered_map<std::string, TWorkerAttr> *attr = nullptr);
+        worker(TWorkerIdx id, zmq::context_t &ctx ,std::string manager_send = "", 
+               std::string manager_recv = "", std::string name = "", 
+               std::unordered_map<std::string, TWorkerAttr> *attr = nullptr);
+        worker(TWorkerIdx id, std::string manager_send = "", 
+               std::string manager_recv = "", std::string name = "", 
+               std::unordered_map<std::string, TWorkerAttr> *attr = nullptr);
         worker(worker &w);
         worker();
         // ~worker();
@@ -90,7 +93,7 @@ class worker{
                            Tattribute lambda);
         
         /* sign up for server address stored on this->manager*/
-        void registry(zmq::context_t &context);
+        void registry();
 
         /* sign up for server address server_addr*/
         // void registry_at(std::string server_addr_send, std::string server_addr_recv, zmq::context_t &context);
@@ -100,7 +103,7 @@ class worker{
         message request_work();
         void finish_worker();
 
-        void connect(zmq::context_t &context);
+        void connect();
         void disconnect();
         void close_sockets();
         
@@ -109,5 +112,5 @@ class worker{
 
 };
 
-bool worker_lesser_than(worker *l, worker*r);
+bool worker_lesser_than(worker *l, worker *r);
 #endif

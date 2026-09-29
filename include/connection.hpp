@@ -7,23 +7,18 @@
 #ifndef __CONNECTION_HPP__
 #define __CONNECTION_HPP__  
 
-
-
-
-
 class connection{
     public:
         TConnectionIdx cid;    
         zmq::socket_t socket_send, socket_recv;
         connection();
         connection(zmq::context_t &ctx, std::string addr_send, std::string addr_recv,  zmq::socket_type type);
-
-        void prepare_sockets(zmq::context_t &ctx, std::string addr_send, std::string addr_recv, zmq::socket_type type);
+        void set_addresses(std::string addr_send, std::string addr_recv);
+        void prepare_sockets(zmq::context_t &ctx, zmq::socket_type type);
         void bind();
         void registry();
 
         void connect();
-            
         void disconnect();
 
         void send_message(std::string id, std::string msg);
