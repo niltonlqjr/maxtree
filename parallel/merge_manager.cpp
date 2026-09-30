@@ -55,6 +55,7 @@ boundary_tree *G_reply_bt=nullptr;
 boundary_tree_task *G_reply_btt=nullptr;
 
 
+scheduler_of_workers<worker*> G_workers;
 hash_scheduler_of_worker<TWorkerIdx, worker*> G_busy_workers;
 scheduler_of_workers<worker*> G_waiting_workers, G_no_memory_workers;
 // ordered_scheduler_of_workers <worker*, worker_lesser_than> G_waiting_workers, G_no_memory_workers;
@@ -505,11 +506,11 @@ void message_sender(zmq::socket_t &sock_send){
         string_idx = "NO_WORKER";
         if((G_input_tiles.is_running() || !G_input_tiles.empty())){
             auto idx_reply = prepare_tile(reply);
-            w = G_waiting_workers.get_worker();
+            w = G_waiting_workers.get_free_worker();
             TWorkerAttr w_mem_free = w->get_attr(MEMORY_SIZE_ATTR);
             while(w_mem_free < G_tile_size && G_waiting_workers.size() > 0){
                 G_no_memory_workers.insert_worker(w);
-                w = G_waiting_workers.get_worker();
+                w = G_waiting_workers.get_free_worker();
                 w_mem_free = w->get_attr(MEMORY_SIZE_ATTR);
             }
             if(G_waiting_workers.size() <= 0 && w_mem_free < G_tile_size){
@@ -527,7 +528,7 @@ void message_sender(zmq::socket_t &sock_send){
             reply_s = hps::to_string(reply);
         }else if(G_merge_bag.is_running() && !G_merge_bag.empty()
                  && G_waiting_workers.size() > 0){
-            w = G_waiting_workers.get_worker();
+            w = G_waiting_workers.get_free_worker();
             string_idx = w->get_index();
             G_busy_workers.insert_worker(worker_idx, w);
             reply.type = MSG_MERGE_BOUNDARY_TREE;
@@ -542,7 +543,7 @@ void message_sender(zmq::socket_t &sock_send){
             mbt->free_trees();
             delete mbt;
         }else if(!G_merge_bag.is_running()){
-            w = G_waiting_workers.get_worker();
+            w = G_waiting_workers.get_free_worker();
             worker_idx = w->get_index();
             G_busy_workers.insert_worker(worker_idx, w);
             prepare_final_tree(reply, w->get_name());
@@ -664,7 +665,7 @@ int main(int argc, char *argv[]){
     G_finished_workers.store(0);
     G_workers_finished.store(0);
     
-    zmq::context_t context(nth);
+    zmq::context_t context(1);
     
     // zmq::socket_t  sock(context_reg, zmq::socket_type::rep);
     zmq::socket_t sock_send(context, zmq::socket_type::router);
@@ -676,6 +677,8 @@ int main(int argc, char *argv[]){
     self_address_send = protocol+"://*:"+port_send;
     sock_send.bind(self_address_send);
     
+
+
     std::cout << "receiver socket running at port " << port_recv << "\n";
     std::cout << "sender socket running at port " << port_send << "\n";
     

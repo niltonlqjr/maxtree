@@ -19,17 +19,19 @@ class scheduler_of_workers{
     protected:
         void wait_worker(std::unique_lock<std::mutex> &l);
         std::mutex lock;
+        bool bindable;
         std::condition_variable cv;
-        std::deque<Worker> workers;
-        zmq::socket_t sock_send, sock_recv;
+        std::deque<Worker> free_workers;
+        std::deque<Worker> busy_workers;
+        // zmq::socket_t sock_send, sock_recv;
         connection c;
         
     public:
         scheduler_of_workers();
         scheduler_of_workers(zmq::context_t &context, std::string address_recv, std::string address_send);
         void insert_worker(Worker w);
-        Worker get_worker();
-        template <class T> size_t search_worker_by_function(T value, T function(Worker));
+        Worker get_free_worker();
+        template <class T> size_t search_free_worker_by_function(T value, T function(Worker));
         void finish_worker(Worker w);
         void clear();
         Worker at(size_t i);
@@ -62,7 +64,7 @@ class hash_scheduler_of_worker{
     protected:
         std::mutex lock;
         std::condition_variable cv;
-        std::unordered_map<Type_idx, Worker> workers;
+        std::unordered_map<Type_idx, Worker> free_workers;
         void wait_worker(std::unique_lock<std::mutex> &l);
     public:
         hash_scheduler_of_worker();
