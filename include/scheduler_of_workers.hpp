@@ -1,3 +1,4 @@
+#include <iostream>
 #include <unordered_map>
 #include <vector>
 #include <mutex>
@@ -29,6 +30,7 @@ class scheduler_of_workers{
     public:
         scheduler_of_workers();
         scheduler_of_workers(zmq::context_t &context, std::string address_recv, std::string address_send);
+        void set_info(zmq::context_t &context, std::string address_recv, std::string address_send);
         void insert_worker(Worker w);
         Worker get_free_worker();
         template <class T> size_t search_free_worker_by_function(T value, T function(Worker));
@@ -37,7 +39,7 @@ class scheduler_of_workers{
         Worker at(size_t i);
         size_t size();
         bool empty();
-        void bind_sockets(std::string self_address_recv, std::string self_address_send);
+        void bind_sockets();
         void connect();
         void disconnect();
         
@@ -74,10 +76,6 @@ class hash_scheduler_of_worker{
         size_t size();
         bool empty();
         bool has_worker_key(Type_idx idx);
-
-        
-
-
 };
 
 

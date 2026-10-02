@@ -677,7 +677,7 @@ int main(int argc, char *argv[]){
     self_address_send = protocol+"://*:"+port_send;
     sock_send.bind(self_address_send);
     
-
+    
 
     std::cout << "receiver socket running at port " << port_recv << "\n";
     std::cout << "sender socket running at port " << port_send << "\n";

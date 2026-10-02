@@ -15,6 +15,12 @@ scheduler_of_workers<Worker>::scheduler_of_workers(zmq::context_t &context, std:
 }
 
 template <class Worker>
+void scheduler_of_workers<Worker>::set_info(zmq::context_t &context, std::string address_recv, std::string address_send){
+    this->c = connection(context, address_recv, address_send);
+    this->bindable = true;
+}
+
+template <class Worker>
 void scheduler_of_workers<Worker>::insert_worker(Worker w){
     std::unique_lock<std::mutex> l(this->lock);
     // this->free_workers.insert(w);
@@ -129,14 +135,19 @@ std::pair<std::string, std::string> scheduler_of_workers<Worker>::recv_msg(){
 }
 
 template <class Worker>
-void scheduler_of_workers<Worker>::bind_sockets(std::string address_recv, std::string address_send){
+void scheduler_of_workers<Worker>::bind_sockets(){
     
     // std::string self_address_recv = protocol+"://*:"+port_recv;
     // this->sock_recv.bind(address_recv);
     
     // std::string self_address_send = protocol+"://*:"+port_send;
     // this->sock_send.bind(address_send);
-    this->c.bind();
+    if(this->bindable){
+        this->c.bind();
+    }else{
+        std::cerr << "impossible to bind sockets of scheduler\n";
+        exit(EXIT_FAILURE);
+    }
 }
 
 
