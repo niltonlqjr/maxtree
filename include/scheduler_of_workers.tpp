@@ -16,7 +16,7 @@ scheduler_of_workers<Worker>::scheduler_of_workers(zmq::context_t &context, std:
 
 template <class Worker>
 void scheduler_of_workers<Worker>::set_info(zmq::context_t &context, std::string address_recv, std::string address_send){
-    this->c = connection(context, address_recv, address_send);
+    this->c = connection(context, address_recv, address_send, zmq::socket_type::router);
     this->bindable = true;
 }
 
@@ -122,7 +122,7 @@ bool scheduler_of_workers<Worker>::empty(){
 
 template <class Worker>
 void scheduler_of_workers<Worker>::send_msg(std::string msg){
-    Worker w = this->get_worker();
+    Worker w = this->get_free_worker();
     using std::to_string;
     std::string worker_id = to_string(w.get_index());
     this->c.send_message(worker_id, msg);
@@ -132,6 +132,13 @@ template <class Worker>
 std::pair<std::string, std::string> scheduler_of_workers<Worker>::recv_msg(){
     return this->c.recv_message();
     return std::pair<std::string, std::string>();
+}
+
+template <class Worker>
+inline void scheduler_of_workers<Worker>::run_recv(){
+    while(true){
+        this->recv_msg();
+    }
 }
 
 template <class Worker>

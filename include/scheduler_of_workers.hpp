@@ -20,7 +20,7 @@ class scheduler_of_workers{
     protected:
         void wait_worker(std::unique_lock<std::mutex> &l);
         std::mutex lock;
-        bool bindable;
+        bool bindable,running;
         std::condition_variable cv;
         std::deque<Worker> free_workers;
         std::deque<Worker> busy_workers;
@@ -42,11 +42,14 @@ class scheduler_of_workers{
         void bind_sockets();
         void connect();
         void disconnect();
+
         
         /* The worker must have a method get_index that returns a value which can be argument of to_string function*/
         void send_msg(std::string msg);
-
         std::pair<std::string, std::string> recv_msg();
+
+        void run_recv();
+
         
 };
 

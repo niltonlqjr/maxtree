@@ -672,17 +672,16 @@ int main(int argc, char *argv[]){
     zmq::socket_t sock_recv(context, zmq::socket_type::router);
     
     self_address_recv = protocol+"://*:"+port_recv;
-    sock_recv.bind(self_address_recv);
-    
     self_address_send = protocol+"://*:"+port_send;
-    sock_send.bind(self_address_send);
+
+    // sock_recv.bind(self_address_recv);
+    // sock_send.bind(self_address_send);
     
-    
+    G_workers.set_info(context, self_address_recv, self_address_send);
+    G_workers.bind_sockets();
 
     std::cout << "receiver socket running at port " << port_recv << "\n";
-    std::cout << "sender socket running at port " << port_send << "\n";
-    
-    
+    std::cout << "sender socket running at port " << port_send << "\n";    
     
     G_sender_running=false;
     G_input_tiles.start();
