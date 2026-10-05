@@ -25,9 +25,9 @@ class scheduler_of_workers{
         std::deque<Worker> free_workers;
         std::deque<Worker> busy_workers;
         // zmq::socket_t sock_send, sock_recv;
-        connection c;
         
     public:
+        connection c;
         scheduler_of_workers();
         scheduler_of_workers(zmq::context_t &context, std::string address_recv, std::string address_send);
         void set_info(zmq::context_t &context, std::string address_recv, std::string address_send);
@@ -42,13 +42,14 @@ class scheduler_of_workers{
         void bind_sockets();
         void connect();
         void disconnect();
+        void close_sockets();
 
         
         /* The worker must have a method get_index that returns a value which can be argument of to_string function*/
         void send_msg(std::string msg);
         std::pair<std::string, std::string> recv_msg();
 
-        void run_recv();
+        void run();
 
         
 };

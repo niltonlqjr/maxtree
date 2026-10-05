@@ -135,10 +135,12 @@ std::pair<std::string, std::string> scheduler_of_workers<Worker>::recv_msg(){
 }
 
 template <class Worker>
-inline void scheduler_of_workers<Worker>::run_recv(){
-    while(true){
-        this->recv_msg();
-    }
+inline void scheduler_of_workers<Worker>::run(){
+    std::cerr << "NOT IMPLEMENTED YET\n";
+    return;
+    // while(true){
+    //     this->recv_msg();
+    // }
 }
 
 template <class Worker>
@@ -169,6 +171,11 @@ void scheduler_of_workers<Worker>::connect(){
 template <class Worker>
 void scheduler_of_workers<Worker>::disconnect(){
     this->c.disconnect();
+}
+
+template <class Worker>
+inline void scheduler_of_workers<Worker>::close_sockets(){
+    this->c.close_sockets();
 }
 
 /*==============================================================================================================

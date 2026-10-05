@@ -401,7 +401,7 @@ void loop_worker(vips::VImage *img, worker *w, zmq::context_t &context){
 void make_worker_threads(uint32_t numth, VImage *in, zmq::context_t &context){
     std::vector<std::thread> workers_threads;
     std::string _m;
-    _m = "total threads:"+std::to_string(numth)+"\n";
+    _m = "\n======total threads:"+std::to_string(numth)+"\n";
     std::cout << _m;
     
     // while(!G_local_workers.empty()){
@@ -433,22 +433,23 @@ void make_worker_threads(uint32_t numth, VImage *in, zmq::context_t &context){
     std::cout << "\n\n==================\nall threads finished!\n\n";
 }
 
-std::pair<uint32_t, uint32_t> get_grid_dims(std::string server_recv_addr, zmq::context_t &ctx){
+std::pair<uint32_t, uint32_t> get_grid_dims(std::string server_recv_addr, std::string server_send_addr, zmq::context_t &ctx){
     message m;
     m.type = MSG_GET_GRID_DIMS;
     std::string str_msg = hps::to_string<message>(m);
     zmq::message_t msg(str_msg);
     zmq::message_t r_msg;
-    zmq::socket_t s = zmq::socket_t(ctx, zmq::socket_type::dealer);
-
-    s.connect(server_recv_addr);
     
-    s.send(msg, zmq::send_flags::none);
-    auto _rpl = s.recv(r_msg, zmq::recv_flags::none);
-    str_msg = r_msg.to_string();
+    connection local_conn(ctx, server_recv_addr, server_send_addr, zmq::socket_type::dealer);
+    local_conn.registry();
+    local_conn.connect();
+    local_conn.send_message(std::to_string(local_conn.cid), str_msg);
+    auto grid_dims = local_conn.recv_message();
+
+    str_msg = grid_dims.second;
     auto d = hps::from_string<std::pair<uint32_t,uint32_t> >(str_msg);
 
-    s.disconnect(server_recv_addr);
+    local_conn.disconnect();
 
     return d;
 }
@@ -489,9 +490,10 @@ int main(int argc, char *argv[]){
     std::cout << "configurations:\n";
     print_worker_config();
     std::cout << "====================\n";
+    std::cout << "get grid dims from server: " << server_recv_addr << "\n";
     
 
-    GRID_DIMS = get_grid_dims(server_recv_addr, context_main);
+    GRID_DIMS = get_grid_dims(server_recv_addr, server_send_addr, context_main);
     G_glines = GRID_DIMS.first;
     G_gcolumns = GRID_DIMS.second;
     std::cout << G_glines<<","<<G_gcolumns<<"\n";
@@ -521,7 +523,7 @@ int main(int argc, char *argv[]){
     // std::cout << "maxtree total size (estimated) " << size_bytes << " Bytes \n";
     // std::cout << "maxtree total size (estimated) " << (size_bytes >> 20) << "MB \n";
     // std::cout<< "\n========\n\n";
-
+    std::cout << "image size: " << in->width() << "x" << in->height() << "\n";
     registry_threads(G_num_threads, server_send_addr, server_recv_addr, context_main);
     // calc_tile_boundary_tree(G_num_threads, server_addr, self_addr);
     // calc_tile_boundary_tree(in, server_addr);

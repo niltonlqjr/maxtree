@@ -25,6 +25,7 @@ class connection{
         bool is_connected();
 
         void send_message(std::string id, std::string msg);
+        /*receives a pair: index, message */
         std::pair<std::string, std::string> recv_message();
     
         class handshake_monitor: public zmq::monitor_t{

@@ -39,7 +39,7 @@ VipsAccess G_vips_access;
 uint32_t G_glines, G_gcolumns, G_tile_lines, G_tile_columns;
 TWorkerAttr G_tile_size;
 std::atomic<uint64_t> G_updates_sent, G_finished_workers, G_num_merges, G_workers_finished;
-std::atomic<uint64_t> G_total_merges,  G_total_tiles, G_total_workers;
+std::atomic<uint64_t> G_total_merges,  G_total_tiles, G_total_workers, G_start_sender;
 
 bool print_only_trees;
 bool verbose;
@@ -419,7 +419,8 @@ void search_pair(){
 }
 
 
-void manager_recv(zmq::socket_t &sock_recv){
+void manager_recv_old(zmq::socket_t &sock_recv){
+    std::cout << "manager_recv started<==========\n";
     zmq::message_t request,idx;
     std::pair<uint32_t, uint32_t> current_tile(0,0);
     std::string _m;
@@ -429,25 +430,30 @@ void manager_recv(zmq::socket_t &sock_recv){
     std::string rec_msg;
     // TWorkerIdx current_idx;
     do{
+        std::cout << "manager_recv waiting for request<==========\n";
         auto idx_recv = sock_recv.recv(idx, zmq::recv_flags::none);/* <======== thread 5*/
+        std::cout << "manager_recv got request from worker: " << idx.to_string() << "\n";
         auto res_recv = sock_recv.recv(request, zmq::recv_flags::none);
+        std::cout << "manager_recv got request content from worker: " << idx.to_string() << "\n";
 
         rec_msg = request.to_string();
         message recv_msg = hps::from_string<message>(rec_msg);
                 
-        if(verbose){
+        // #ifdef VERBOSE
             _m = "worker: " + idx.to_string() + " requested " + NamesMessageType[recv_msg.type];
             if(recv_msg.type == MSG_COMMAND){
                 _m += " " + recv_msg.content;
             }
             _m += "\n";
             std::cout << _m;
-        }
+        // #endif
 
         if(recv_msg.type == MSG_GET_GRID_DIMS){
             auto reply_msg = zmq::message_t(hps::to_string(GRID_DIMS));
             auto _r1 = sock_recv.send(idx, zmq::send_flags::sndmore);
             auto _r2 = sock_recv.send(reply_msg, zmq::send_flags::none);
+            G_start_sender.store(1);
+            std::cout << "grid dims sent to worker: " << idx.to_string() << "\n";
         }else if(recv_msg.type == MSG_REGISTRY){
             registry_worker(recv_msg, idx.to_string(), sock_recv);
         }else if(recv_msg.type == MSG_BOUNDARY_TREE){
@@ -485,6 +491,62 @@ void manager_recv(zmq::socket_t &sock_recv){
     
 }
 
+void manager_recv(){
+    std::cout << "manager_recv started<==========\n";
+    zmq::message_t request,idx;
+    std::pair<uint32_t, uint32_t> current_tile(0,0);
+    std::string _m;
+    uint64_t _lc=0;
+    G_num_merges.store(0);
+    uint64_t calculated_tiles = 0;
+    std::string rec_msg;
+    // TWorkerIdx current_idx;
+    do{
+        std::cout << "manager_recv waiting for request<==========\n";
+        auto idx_msg = G_workers.c.recv_message();/* <======== thread 5*/
+        
+        auto rec_msg = idx_msg.second;
+        auto idx = idx_msg.first;
+
+
+        
+        message recv_msg = hps::from_string<message>(rec_msg);
+                
+        // #ifdef VERBOSE
+            _m = "worker: " + idx + " requested " + NamesMessageType[recv_msg.type];
+            if(recv_msg.type == MSG_COMMAND){
+                _m += " " + recv_msg.content;
+            }
+            _m += "\n";
+            std::cout << _m;
+        // #endif
+
+        if(recv_msg.type == MSG_GET_GRID_DIMS){
+            auto reply_msg = zmq::message_t(hps::to_string(GRID_DIMS));
+            G_workers.c.send_message(idx, reply_msg.to_string());
+            G_start_sender.store(1);
+            std::cout << "grid dims sent to worker: " << idx << "\n";
+        }else if(recv_msg.type == MSG_REGISTRY){
+            
+        }else if(recv_msg.type == MSG_BOUNDARY_TREE){
+            
+        }else if(recv_msg.type == MSG_SEND_MERGED_TREE){
+            
+        }else if(recv_msg.type == MSG_GET_TASK){
+            
+        }else if(recv_msg.type == MSG_COMMAND){
+            
+        }else if(MSG_UPDATE_WORKER){
+            
+        }
+    }while(G_total_workers.load() <= 0
+           || G_updates_sent.load() < G_total_workers.load() 
+           || G_workers_finished.load() < G_total_workers.load());
+    std::cout << "manager_recv reached last line (" << __LINE__ << ")<==========\n";
+    
+}
+
+
 void message_sender(zmq::socket_t &sock_send){
     TWorkerIdx worker_idx;
     worker *w;
@@ -496,12 +558,12 @@ void message_sender(zmq::socket_t &sock_send){
 
     {//unique_lock scope
         std::unique_lock<std::mutex> l(G_sender_lock);
-        if(G_total_workers.load() <= 0){
+        if(G_start_sender.load() <= 0){
             std::cout << "sender waiting for workers\n";
             G_sender_cv.wait(l);
         }
     }
-
+    std::cout << "sender start\n";
     while(G_updates_sent.load() < G_total_workers.load()){
         string_idx = "NO_WORKER";
         if((G_input_tiles.is_running() || !G_input_tiles.empty())){
@@ -664,12 +726,13 @@ int main(int argc, char *argv[]){
     G_total_workers.store(0) ;
     G_finished_workers.store(0);
     G_workers_finished.store(0);
+    G_start_sender.store(0);
     
     zmq::context_t context(1);
     
     // zmq::socket_t  sock(context_reg, zmq::socket_type::rep);
-    zmq::socket_t sock_send(context, zmq::socket_type::router);
-    zmq::socket_t sock_recv(context, zmq::socket_type::router);
+    // zmq::socket_t sock_send(context, zmq::socket_type::router);
+    // zmq::socket_t sock_recv(context, zmq::socket_type::router);
     
     self_address_recv = protocol+"://*:"+port_recv;
     self_address_send = protocol+"://*:"+port_send;
@@ -691,10 +754,10 @@ int main(int argc, char *argv[]){
     
     // std::thread fill(fill_input_bag);
     fill_input_bag();
-    std::thread receiver(manager_recv, std::ref(sock_recv));
+    std::thread receiver(manager_recv);
     // std::thread pair_maker(search_pair_naive);
     std::thread pair_maker(search_pair);
-    std::thread merge_task_sender(message_sender, std::ref(sock_send));
+    std::thread merge_task_sender(message_sender, std::ref(G_workers.c.socket_send));
     // std::thread pair_maker(search_pair);
     
     // fill.join();
@@ -708,8 +771,10 @@ int main(int argc, char *argv[]){
     
     vips_shutdown();
     // finish_workers(sock);
-    sock_recv.close();
-    sock_send.close();
+    // sock_recv.close();
+    // sock_send.close();
+    G_workers.close_sockets();
+
 }
 
 
