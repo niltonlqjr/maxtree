@@ -3,9 +3,12 @@
 #include <mutex>
 #include <thread>
 #include "const_enum_define.hpp"
+#include "src/hps.h"
 
 #ifndef __CONNECTION_HPP__
 #define __CONNECTION_HPP__  
+
+
 
 class connection{
     public:
@@ -48,7 +51,9 @@ class connection{
         std::string addr_recv;
         bool connected, registered;
         zmq::socket_type socket_type;
-    
+        enum conn_msg_type {CONN_MSG_INTERNAL, CONN_MSG_USER};
+        
+        
 };
 
 #endif

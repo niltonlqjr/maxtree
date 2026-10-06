@@ -435,7 +435,6 @@ void make_worker_threads(uint32_t numth, VImage *in, zmq::context_t &context){
 
 std::pair<uint32_t, uint32_t> get_grid_dims(std::string server_recv_addr, std::string server_send_addr, zmq::context_t &ctx){
     message m;
-    m.type = MSG_GET_GRID_DIMS;
     std::string str_msg = hps::to_string<message>(m);
     zmq::message_t msg(str_msg);
     zmq::message_t r_msg;
@@ -443,6 +442,16 @@ std::pair<uint32_t, uint32_t> get_grid_dims(std::string server_recv_addr, std::s
     connection local_conn(ctx, server_recv_addr, server_send_addr, zmq::socket_type::dealer);
     local_conn.registry();
     local_conn.connect();
+
+    std::cout << "index:" << local_conn.cid << "\n";
+    std::cout << "message (hps):'" << str_msg << "'\n";
+    
+    m.type = MSG_GET_GRID_DIMS;
+    m.content = "GET_GRID_DIMS";
+    using std::to_string;
+    m.sender = to_string(local_conn.cid);
+    m.size = m.content.size();
+    
     local_conn.send_message(std::to_string(local_conn.cid), str_msg);
     auto grid_dims = local_conn.recv_message();
 

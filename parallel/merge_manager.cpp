@@ -499,19 +499,20 @@ void manager_recv(){
     uint64_t _lc=0;
     G_num_merges.store(0);
     uint64_t calculated_tiles = 0;
-    std::string rec_msg;
+    std::string str_msg;
     // TWorkerIdx current_idx;
     do{
         std::cout << "manager_recv waiting for request<==========\n";
         auto idx_msg = G_workers.c.recv_message();/* <======== thread 5*/
         
-        auto rec_msg = idx_msg.second;
         auto idx = idx_msg.first;
+        auto rec_msg = idx_msg.second;
 
-
+        std::cout << "idx:" << std::atoi(idx.c_str()) << "\n";
+        std::cout << "msg:'" << rec_msg << "'\n";
         
-        message recv_msg = hps::from_string<message>(rec_msg);
-                
+        message recv_msg = hps::from_string<message>(str_msg);
+        
         // #ifdef VERBOSE
             _m = "worker: " + idx + " requested " + NamesMessageType[recv_msg.type];
             if(recv_msg.type == MSG_COMMAND){
@@ -536,7 +537,7 @@ void manager_recv(){
             
         }else if(recv_msg.type == MSG_COMMAND){
             
-        }else if(MSG_UPDATE_WORKER){
+        }else if(recv_msg.type == MSG_UPDATE_WORKER){
             
         }
     }while(G_total_workers.load() <= 0
