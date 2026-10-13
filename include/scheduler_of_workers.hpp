@@ -19,12 +19,17 @@ template <class Worker>
 class scheduler_of_workers{
     protected:
         void wait_worker(std::unique_lock<std::mutex> &l);
-        std::mutex lock;
+        std::mutex lock,lock_send,lock_recv;
         bool bindable,running;
-        std::condition_variable cv;
+        std::condition_variable cv, cv_send, cv_recv;
         std::deque<Worker> free_workers;
         std::deque<Worker> busy_workers;
+        std::queue<std::string> send_msg_queue;
+        std::queue<std::pair<std::string, std::string>> recv_msg_queue;
+        bool running;
         // zmq::socket_t sock_send, sock_recv;
+        void loop_recv();
+        void loop_send();
         
     public:
         connection c;
@@ -48,8 +53,10 @@ class scheduler_of_workers{
         /* The worker must have a method get_index that returns a value which can be argument of to_string function*/
         void send_msg(std::string msg);
         std::pair<std::string, std::string> recv_msg();
-
+        /* method that runs the scheduler.  this run a thread to receive messages and send messages to workers
+        and other schedulers connected and registered on it*/
         void run();
+        void stop();
 
         
 };

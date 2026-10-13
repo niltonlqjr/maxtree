@@ -433,15 +433,14 @@ void make_worker_threads(uint32_t numth, VImage *in, zmq::context_t &context){
     std::cout << "\n\n==================\nall threads finished!\n\n";
 }
 
-std::pair<uint32_t, uint32_t> get_grid_dims(std::string server_recv_addr, std::string server_send_addr, zmq::context_t &ctx){
+std::pair<uint32_t, uint32_t> get_grid_dims(connection &local_conn){
     message m;
     std::string str_msg = hps::to_string<message>(m);
     zmq::message_t msg(str_msg);
     zmq::message_t r_msg;
     
-    connection local_conn(ctx, server_recv_addr, server_send_addr, zmq::socket_type::dealer);
-    local_conn.registry();
-    local_conn.connect();
+    // local_conn.registry();
+    // local_conn.connect();
 
     std::cout << "index:" << local_conn.cid << "\n";
     std::cout << "message (hps):'" << str_msg << "'\n";
@@ -457,8 +456,8 @@ std::pair<uint32_t, uint32_t> get_grid_dims(std::string server_recv_addr, std::s
 
     str_msg = grid_dims.second;
     auto d = hps::from_string<std::pair<uint32_t,uint32_t> >(str_msg);
-
-    local_conn.disconnect();
+    std::cout << "grid dims received: (" << d.first << "," << d.second << ")\n";
+    // local_conn.disconnect();
 
     return d;
 }
@@ -502,7 +501,14 @@ int main(int argc, char *argv[]){
     std::cout << "get grid dims from server: " << server_recv_addr << "\n";
     
 
-    GRID_DIMS = get_grid_dims(server_recv_addr, server_send_addr, context_main);
+    connection G_local_conn(context_main, server_recv_addr, server_send_addr, zmq::socket_type::dealer);
+    
+    G_local_conn.registry();
+    G_local_conn.connect();
+
+    GRID_DIMS = get_grid_dims(G_local_conn);
+    
+
     G_glines = GRID_DIMS.first;
     G_gcolumns = GRID_DIMS.second;
     std::cout << G_glines<<","<<G_gcolumns<<"\n";
@@ -550,6 +556,7 @@ int main(int argc, char *argv[]){
     vips_shutdown();
     std::cout << "shutdown done! closing context\n";
     std::cout << "closed!!\n\n";
+    G_local_conn.disconnect();
     return 0;
     
 }

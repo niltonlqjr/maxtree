@@ -1,7 +1,9 @@
 #include "scheduler_of_workers.hpp"
 
+
 template <class Worker>
-scheduler_of_workers<Worker>::scheduler_of_workers(){
+scheduler_of_workers<Worker>::scheduler_of_workers()
+{
     // this->free_workers = new max_heap<Worker>();
     this->bindable = false;
 }
@@ -120,27 +122,74 @@ bool scheduler_of_workers<Worker>::empty(){
     return this->free_workers.size() == 0;
 }
 
-template <class Worker>
-void scheduler_of_workers<Worker>::send_msg(std::string msg){
-    Worker w = this->get_free_worker();
-    using std::to_string;
-    std::string worker_id = to_string(w.get_index());
-    this->c.send_message(worker_id, msg);
-}
+
 
 template <class Worker>
 std::pair<std::string, std::string> scheduler_of_workers<Worker>::recv_msg(){
-    return this->c.recv_message();
-    return std::pair<std::string, std::string>();
+    // return this->c.recv_message();
+    // return std::pair<std::string, std::string>();
+    std::unique_lock<std::mutex> l(this->lock_recv);
+    while(this->recv_msg_queue.empty()){
+        this->cv_recv.wait(l);
+    }
+    std::pair<std::string, std::string> ret = this->recv_msg_queue.front();
+    this->recv_msg_queue.pop();
+    return ret;
+}
+
+template <class Worker>
+inline void scheduler_of_workers<Worker>::loop_recv(){
+    //put messages on recv_msg_queue
+    while(this->running){
+        std::pair<std::string, std::string> msg = this->c.recv_message();
+        {
+            std::unique_lock<std::mutex> l(this->lock_recv);
+            this->recv_msg_queue.push(msg);
+            this->cv_recv.notify_all();
+        }
+    }
+}
+
+template <class Worker>
+void scheduler_of_workers<Worker>::send_msg(std::string msg){
+    // Worker w = this->get_free_worker();
+    std::unique_lock<std::mutex> l(this->lock_send);
+    
+    // this->c.send_message(worker_id, msg);
+    this->send_msg_queue.push(std::string(msg));
+    this->cv_send.notify_all();
+}
+
+template <class Worker>
+inline void scheduler_of_workers<Worker>::loop_send(){
+    while(this->running){
+        {
+            std::unique_lock<std::mutex> l(this->lock_send);
+            while(this->send_msg_queue.empty()){
+                this->cv_send.wait(l);
+            }
+            using std::to_string;
+            this->send_msg_queue.pop();
+        }
+        std::string worker_id = to_string(w.get_index());
+        std::string msg = this->send_msg_queue.front();
+
+        this->c.send_message(worker_id, msg);
+    }
 }
 
 template <class Worker>
 inline void scheduler_of_workers<Worker>::run(){
     std::cerr << "NOT IMPLEMENTED YET\n";
+    //  create a thread for loop_recv and loop_send
+    this->running = true;
     return;
-    // while(true){
-    //     this->recv_msg();
-    // }
+
+}
+
+template <class Worker>
+inline void scheduler_of_workers<Worker>::stop(){
+    this->running = false;
 }
 
 template <class Worker>

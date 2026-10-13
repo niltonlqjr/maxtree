@@ -45,12 +45,13 @@ connection::connection(){
     this->registered = false;
 }
 
-connection::connection(zmq::context_t &ctx, std::string addr_send, std::string addr_recv, zmq::socket_type type)
+connection::connection(zmq::context_t &ctx, std::string addr_send, std::string addr_recv, zmq::socket_type type, TConnectionIdx last_sent_idx)
 {
     this->addr_send = addr_send;
     this->addr_recv = addr_recv;
     this->connected = false;
     this->registered = false;
+    this->last_sent_idx = last_sent_idx;
     this->socket_send = zmq::socket_t(ctx, type);
     this->socket_recv = zmq::socket_t(ctx, type);
     this->socket_type = type;
@@ -82,42 +83,39 @@ TConnectionIdx connection::registry(){
     // std::string s_msg = hps::to_string(requirement);
     std::string s_msg;
     std::string str, _m;
-
     zmq::message_t reply_0mq;
-    
     enum conn_msg_type msg_type = CONN_MSG_INTERNAL;
-
     zmq::message_t message_0mq = zmq::message_t(&msg_type, sizeof(enum conn_msg_type));
     
+    std::cout << "connection::registry: sending registration request to server at " << this->addr_recv << "\n";
+    
     this->socket_recv.connect(this->addr_recv);
+    std::cout << "connection::registry: connected to server at " << this->addr_recv << "\n";
     // this->socket_recv.send(msg_type, zmq::send_flags::none);
     this->socket_recv.send(message_0mq, zmq::send_flags::none);
 
-    #ifdef VERBOSE
-        _m = "send " + std::to_string(this->id) + "\n";
+    // #ifdef VERBOSE
+        _m = "send " + std::to_string(this->cid) + "\n";
         std::cout << _m;
-    #endif
+    // #endif
     
     auto resp_val = this->socket_recv.recv(reply_0mq, zmq::recv_flags::none);
-    
-    #ifdef VERBOSE
-        _m = "recv " + std::to_string(this->id) + " - registration successful\n";
+    // #ifdef VERBOSE
+        _m = "recv " + std::to_string(this->cid) + " - registration successful\n";
         std::cout << _m;
-    #endif
+    // #endif
     
     TConnectionIdx new_idx = std::stoi(reply_0mq.to_string());
     this->cid = new_idx;
-    #ifdef VERBOSE
-        str+="new id: " +std::to_string(this->get_index());
+    // #ifdef VERBOSE
+        str+="new id: " +std::to_string(this->cid);
         std::cout << str + "\n";
-    #endif
+    // #endif
     this->registered = true;
 
     this->socket_recv.disconnect(this->addr_recv);
     return new_idx;
 }
-
-
 
 void connection::connect(){
     std::string _m;
@@ -199,7 +197,7 @@ void connection::send_message(std::string id, std::string msg){
 }
 
 std::pair<std::string, std::string> connection::recv_message(){
-    zmq::message_t zidx, zmsg, zmsgtype;
+    zmq::message_t zidx, zmsg, zmsgtype, zmsgidx;
     std::string idx, msg;
     if(!this->connected){
         using std::to_string;
@@ -207,17 +205,27 @@ std::pair<std::string, std::string> connection::recv_message(){
         std::cerr << _m;
         exit(EXIT_FAILURE);
     }
-    auto type_recv = this->socket_recv.recv(zmsgtype, zmq::recv_flags::none);
-    enum conn_msg_type type = *static_cast<enum conn_msg_type*>(zmsgtype.data());
-    if(type == CONN_MSG_INTERNAL){
-        
-    }else{
-        auto idx_recv  = this->socket_recv.recv(zidx, zmq::recv_flags::none);
-        auto msg_recv  = this->socket_recv.recv(zmsg, zmq::recv_flags::none);
-    }
-
-    idx = zidx.to_string();
-    msg = zmsg.to_string();
+    enum conn_msg_type type;
+    do{
+        auto type_recv_idx = this->socket_recv.recv(zmsgidx, zmq::recv_flags::none);
+        auto type_recv_type = this->socket_recv.recv(zmsgtype, zmq::recv_flags::none);
+        type = *static_cast<enum conn_msg_type*>(zmsgtype.data());
+        std::cout << "recv_message zmsgidx: " << zmsgidx.to_string() << "\n";
+        std::cout << "recv_message zmsgtype : " <<  type << "\n";
+        if(type == CONN_MSG_INTERNAL){
+            this->last_sent_idx += 1;
+            zmsg = zmq::message_t(std::to_string(this->last_sent_idx));
+            std::cout << "recv_message sending last_sent_idx: " << this->last_sent_idx << "\n";
+            this->socket_recv.send(zidx, zmq::send_flags::sndmore);
+            this->socket_recv.send(zmsg, zmq::send_flags::none);
+            std::cout << "last_sent_idx: " << this->last_sent_idx << " sent \n";
+        }else{
+            auto idx_recv  = this->socket_recv.recv(zidx, zmq::recv_flags::none);
+            auto msg_recv  = this->socket_recv.recv(zmsg, zmq::recv_flags::none);
+            idx = zidx.to_string();
+            msg = zmsg.to_string();
+        }
+    }while(type != CONN_MSG_USER);
 
     return std::make_pair(idx, msg);
 }

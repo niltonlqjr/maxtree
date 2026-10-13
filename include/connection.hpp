@@ -15,7 +15,8 @@ class connection{
         TConnectionIdx cid;    
         zmq::socket_t socket_send, socket_recv;
         connection();
-        connection(zmq::context_t &ctx, std::string addr_send, std::string addr_recv,  zmq::socket_type type);
+        connection(zmq::context_t &ctx, std::string addr_send, std::string addr_recv,
+              zmq::socket_type type, TConnectionIdx last_sent_idx = TConnectionIdxNULL);
         void set_addresses(std::string addr_send, std::string addr_recv);
         void prepare_sockets(zmq::context_t &ctx, zmq::socket_type type);
         void bind();
@@ -50,6 +51,7 @@ class connection{
         std::string addr_send;
         std::string addr_recv;
         bool connected, registered;
+        TConnectionIdx last_sent_idx;
         zmq::socket_type socket_type;
         enum conn_msg_type {CONN_MSG_INTERNAL, CONN_MSG_USER};
         

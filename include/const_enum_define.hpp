@@ -19,6 +19,7 @@
 #define Tprocess_power double
 
 #define TConnectionIdx unsigned int
+#define TConnectionIdxNULL 0
 
 #define TWorkerIdx std::string
 #define TWorkerAttr double
