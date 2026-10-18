@@ -5,6 +5,7 @@
 #include <condition_variable>
 #include <deque>
 #include <typeinfo>
+#include <thread>
 #include "zmq.hpp"
 
 #include "heap.hpp"
@@ -26,11 +27,12 @@ class scheduler_of_workers{
         std::deque<Worker> busy_workers;
         std::queue<std::string> send_msg_queue;
         std::queue<std::pair<std::string, std::string>> recv_msg_queue;
-        bool running;
+        
         // zmq::socket_t sock_send, sock_recv;
         void loop_recv();
         void loop_send();
-        
+        std::thread thread_recv, thread_send;
+
     public:
         connection c;
         scheduler_of_workers();
@@ -55,6 +57,7 @@ class scheduler_of_workers{
         std::pair<std::string, std::string> recv_msg();
         /* method that runs the scheduler.  this run a thread to receive messages and send messages to workers
         and other schedulers connected and registered on it*/
+        // void run(uint32_t n_threads_send=1, uint32_t n_threads_recv=1);
         void run();
         void stop();
 
