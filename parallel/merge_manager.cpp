@@ -49,7 +49,7 @@ std::string G_input_name;
 
 static const int nth = 1;
 
-unsigned int G_idx_at_manager=1; //index count of workers. Index 0 is for manager
+uint32_t G_idx_at_manager=1; //index count of workers. Index 0 is for manager
 
 boundary_tree *G_reply_bt=nullptr;
 boundary_tree_task *G_reply_btt=nullptr;
@@ -252,7 +252,7 @@ void update_workers_attr(std::string hostname, std::string attr_name, TWorkerAtt
 }
 
 
-void registry_worker(message &recv_msg, std::string worker_zmq_id, zmq::socket_t &sock){
+void registry_worker_old(message &recv_msg, std::string worker_zmq_id, zmq::socket_t &sock){
     worker w_rec = hps::from_string<worker>(recv_msg.content);
     TWorkerIdx current_idx=std::to_string(G_idx_at_manager++);
     worker *w_at_manager = new worker(w_rec);
@@ -297,6 +297,55 @@ void registry_worker(message &recv_msg, std::string worker_zmq_id, zmq::socket_t
         std::cout << _m;
     }
 }
+
+
+void registry_worker(message &recv_msg, std::string worker_zmq_id){
+    worker w_rec = hps::from_string<worker>(recv_msg.content);
+    TWorkerIdx current_idx=std::to_string(G_idx_at_manager++);
+    worker *w_at_manager = new worker(w_rec);
+    std::string _m, string_idx, reply_s;
+    message reply;
+    w_at_manager->update_index(current_idx);
+    std::string w_name = w_at_manager->get_name();
+    // _m = "worker " + std::to_string(w_at_manager->get_index()) + " going to waiting queue\n";
+    // std::cout << _m;
+    if(G_merge_bag.is_running()){
+        G_got_full_btree[w_name] = false;
+    }
+    
+    update_workers_attr(w_name, MEMORY_SIZE_ATTR, w_at_manager->get_attr(MEMORY_SIZE_ATTR));
+    G_workers_host[w_name].push_back(w_at_manager);
+
+
+    string_idx = worker_zmq_id;
+    reply.content = w_at_manager->get_index();
+    reply.size = reply.content.size();
+    reply.type = MSG_NEW_IDX;
+    reply_s = hps::to_string(reply);
+    G_busy_workers.insert_worker(w_at_manager->get_index(), w_at_manager);
+    
+    G_workers.insert_worker(w_at_manager);
+    _m = "Registring: " + string_idx + " as "+ reply.content +"\n";
+    std::cout << _m;
+
+    // zmq::message_t msg_id(string_idx);
+    // zmq::message_t msg_reply(reply_s);
+    // G_sock_lock.lock();
+    // auto __ret0 = sock.send(msg_id, zmq::send_flags::sndmore);
+    // auto __ret1 = sock.send(msg_reply, zmq::send_flags::none);
+    G_workers.c.send_message(string_idx, reply_s);
+
+    {//unique_lock scope
+        std::unique_lock<std::mutex>(G_sender_lock);
+        G_total_workers.fetch_add(1);
+        G_sender_cv.notify_one();
+    }
+    if(verbose){
+        _m = "response enqued: " + worker_zmq_id + "," + current_idx + " source line: " + std::to_string( __LINE__ ) +"\n";
+        std::cout << _m;
+    }
+}
+
 
 void recv_boundary_tree(message &recv_msg){
     boundary_tree_task btt = hps::from_string<boundary_tree_task>(recv_msg.content);
@@ -455,7 +504,7 @@ void manager_recv_old(zmq::socket_t &sock_recv){
             G_start_sender.store(1);
             std::cout << "grid dims sent to worker: " << idx.to_string() << "\n";
         }else if(recv_msg.type == MSG_REGISTRY){
-            registry_worker(recv_msg, idx.to_string(), sock_recv);
+            registry_worker(recv_msg, idx.to_string());
         }else if(recv_msg.type == MSG_BOUNDARY_TREE){
             recv_boundary_tree(recv_msg);
         }else if(recv_msg.type == MSG_SEND_MERGED_TREE){
@@ -528,22 +577,53 @@ void manager_recv(){
             G_start_sender.store(1);
             std::cout << "grid dims sent to worker: " << idx << "\n";
         }else if(recv_msg.type == MSG_REGISTRY){
-            
-        }else if(recv_msg.type == MSG_BOUNDARY_TREE){
-            
-        }else if(recv_msg.type == MSG_SEND_MERGED_TREE){
-            
-        }else if(recv_msg.type == MSG_GET_TASK){
-            
-        }else if(recv_msg.type == MSG_COMMAND){
-            
-        }else if(recv_msg.type == MSG_UPDATE_WORKER){
-            
+            // auto recv_worker = hps::from_string<worker>(recv_msg.content);
+            // recv_worker.update_index(recv_msg.sender);
+            // G_workers.insert_worker(recv_worker);
+            registry_worker(recv_msg, idx);
         }
+        
+        /*
+        alterar as funcoes:
+            - recv_boundary_tree
+            - process_task_request
+            - update_workers_attr
+        para usar com o scheduler G_workers
+
+
+        else if(recv_msg.type == MSG_BOUNDARY_TREE){
+            recv_boundary_tree(recv_msg); 
+        }else if(recv_msg.type == MSG_SEND_MERGED_TREE){
+            recv_boundary_tree(recv_msg);
+            G_num_merges.fetch_add(1);
+            if(G_num_merges.load() >= G_total_merges.load()){
+                G_merge_bag.notify_end();
+                G_bound_trees.notify_end();
+                std::cout << "end merges\n";
+            }
+        }else if(recv_msg.type == MSG_GET_TASK){
+            process_task_request(recv_msg);
+        }else if(recv_msg.type == MSG_COMMAND){
+            if(recv_msg.content == "FINISH"){
+                G_workers_finished.fetch_add(1);
+                _m = "finishing worker " + recv_msg.sender + "\n";
+                std::cout << _m;
+            }
+        }else if(recv_msg.type == MSG_UPDATE_WORKER){
+            auto sender_id = recv_msg.sender;
+            auto msg_content = hps::from_string<std::pair<std::string, TWorkerAttr>>(recv_msg.content);
+            std::string attr_name = msg_content.first;
+            TWorkerAttr attr_value = msg_content.second;
+            worker *sender_w = G_busy_workers.search_worker_by_idx(sender_id);
+            std::string host = sender_w->get_name();
+            update_workers_attr(host, attr_name, attr_value);
+        }
+        */
     }while(G_total_workers.load() <= 0
            || G_updates_sent.load() < G_total_workers.load() 
            || G_workers_finished.load() < G_total_workers.load());
     std::cout << "manager_recv reached last line (" << __LINE__ << ")<==========\n";
+    
     
 }
 

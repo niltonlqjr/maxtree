@@ -183,7 +183,7 @@ inline void scheduler_of_workers<Worker>::loop_send(){
 
 template <class Worker>
 void scheduler_of_workers<Worker>::run(){
-    std::cerr << "NOT IMPLEMENTED YET\n";
+    //std::cerr << "NOT IMPLEMENTED YET\n";
     // //  create a thread for loop_recv and loop_send
     // this->thread_recv = std::thread(&scheduler_of_workers<Worker>::loop_recv, this);
     // this->thread_send = std::thread(&scheduler_of_workers<Worker>::loop_send, this);
