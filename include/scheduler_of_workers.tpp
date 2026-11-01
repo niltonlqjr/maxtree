@@ -17,8 +17,8 @@ scheduler_of_workers<Worker>::scheduler_of_workers(zmq::context_t &context, std:
 }
 
 template <class Worker>
-void scheduler_of_workers<Worker>::set_info(zmq::context_t &context, std::string address_recv, std::string address_send){
-    this->c = connection(context, address_recv, address_send, zmq::socket_type::router);
+void scheduler_of_workers<Worker>::set_info(TConnectionIdx cid, zmq::context_t &context, std::string address_recv, std::string address_send){
+    this->c = connection(cid, context, address_recv, address_send, zmq::socket_type::router);
     this->bindable = true;
 }
 

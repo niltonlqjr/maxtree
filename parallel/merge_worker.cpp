@@ -159,7 +159,7 @@ void read_config(char conf_name[]){
 
     G_hostname = get_field(configs, "hostname", "localhost");
 
-    auto str_G_num_threads = get_field(configs, "threads", "1");
+    auto str_G_num_threads = get_field(configs, "threads", "2");
     G_num_threads = std::stoi(str_G_num_threads);
     
     G_pixel_connection = 4;
@@ -229,9 +229,11 @@ void registry_threads(uint32_t num_th, std::string server_send_addr, std::string
         _m = "registrando worker " + std::to_string(local_id) + "\n";
         std::cout << _m;
         workers_threads.push_back(std::thread(
-            registry_new_worker, local_id, server_send_addr, server_recv_addr, std::ref(workers_conf->at(local_id % wcs)), std::ref(context) 
+            registry_new_worker, local_id, server_send_addr, server_recv_addr, 
+            std::ref(workers_conf->at(local_id % wcs)), std::ref(context) 
         ));
     }
+
     for(size_t i=0; i<workers_threads.size(); i++){
         workers_threads[i].join();
     }
@@ -484,7 +486,7 @@ int main(int argc, char *argv[]){
         std::cout << "input file not defined, please, define it in config file or in command line.\n";
         exit(EX_NOINPUT);
     }
-    zmq::context_t context_main(G_num_threads);
+    zmq::context_t context_main(1);
 
     if(argc >= 4){
         G_out_name = argv[3];
@@ -501,7 +503,7 @@ int main(int argc, char *argv[]){
     std::cout << "get grid dims from server: " << server_recv_addr << "\n";
     
 
-    connection G_local_conn(context_main, server_recv_addr, server_send_addr, zmq::socket_type::dealer);
+    connection G_local_conn(TConnectionIdxNULL, context_main, server_recv_addr, server_send_addr, zmq::socket_type::dealer);
     
     G_local_conn.registry();
     G_local_conn.connect();
@@ -539,7 +541,7 @@ int main(int argc, char *argv[]){
     // std::cout << "maxtree total size (estimated) " << (size_bytes >> 20) << "MB \n";
     // std::cout<< "\n========\n\n";
     std::cout << "image size: " << in->width() << "x" << in->height() << "\n";
-    registry_threads(G_num_threads, server_send_addr, server_recv_addr, context_main);
+    // registry_threads(G_num_threads, server_send_addr, server_recv_addr, context_main);
     // calc_tile_boundary_tree(G_num_threads, server_addr, self_addr);
     // calc_tile_boundary_tree(in, server_addr);
     // test_send_bound_tree(in, server_addr);

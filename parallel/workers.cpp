@@ -20,7 +20,7 @@ worker::worker(TWorkerIdx id, zmq::context_t &ctx ,std::string manager_send, std
     }
     this->id = id;
     this->name = name;
-    this->c = connection(ctx, manager_send, manager_recv, zmq::socket_type::dealer);
+    this->c = connection(TConnectionIdxNULL, ctx, manager_send, manager_recv, zmq::socket_type::dealer);
 }
 
 worker::worker(TWorkerIdx id, std::string manager_send, std::string manager_recv, std::string name, std::unordered_map<std::string, TWorkerAttr> *attr){

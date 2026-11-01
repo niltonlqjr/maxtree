@@ -589,7 +589,7 @@ void manager_recv(){
             - process_task_request
             - update_workers_attr
         para usar com o scheduler G_workers
-
+        */
 
         else if(recv_msg.type == MSG_BOUNDARY_TREE){
             recv_boundary_tree(recv_msg); 
@@ -618,7 +618,7 @@ void manager_recv(){
             std::string host = sender_w->get_name();
             update_workers_attr(host, attr_name, attr_value);
         }
-        */
+        
     }while(G_total_workers.load() <= 0
            || G_updates_sent.load() < G_total_workers.load() 
            || G_workers_finished.load() < G_total_workers.load());
@@ -700,8 +700,9 @@ void message_sender(zmq::socket_t &sock_send){
         if(string_idx != "NO_WORKER"){
             zmq::message_t msg_id(string_idx);
             zmq::message_t msg_reply(reply_s);
-            auto __ret0 = sock_send.send(msg_id, zmq::send_flags::sndmore);
-            auto reply_return = sock_send.send(msg_reply, zmq::send_flags::none);
+            // auto __ret0 = sock_send.send(msg_id, zmq::send_flags::sndmore);
+            // auto reply_return = sock_send.send(msg_reply, zmq::send_flags::none);
+            G_workers.c.send_message(string_idx, reply_s);
             // _m = "message " +  NamesMessageType[reply.type] + " sent to index: " + string_idx + "\n";
             // std::cout << _m;
         }
@@ -821,7 +822,7 @@ int main(int argc, char *argv[]){
     // sock_recv.bind(self_address_recv);
     // sock_send.bind(self_address_send);
     
-    G_workers.set_info(context, self_address_recv, self_address_send);
+    G_workers.set_info(TConnectionIdxNULL, context, self_address_recv, self_address_send);
     G_workers.bind_sockets();
 
     std::cout << "receiver socket running at port " << port_recv << "\n";

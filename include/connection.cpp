@@ -38,15 +38,18 @@ void connection::handshake_monitor::join_event(){
     }
 }
 
-connection::connection(){
+connection::connection(TConnectionIdx cid){
+    this->cid = cid;
     this->addr_send = "";
     this->addr_recv = "";
     this->connected = false;
     this->registered = false;
 }
 
-connection::connection(zmq::context_t &ctx, std::string addr_send, std::string addr_recv, zmq::socket_type type, TConnectionIdx last_sent_idx)
+connection::connection(TConnectionIdx cid, zmq::context_t &ctx, std::string addr_send, std::string addr_recv, 
+    zmq::socket_type type, TConnectionIdx last_sent_idx)
 {
+    this->cid = cid;
     this->addr_send = addr_send;
     this->addr_recv = addr_recv;
     this->connected = false;
@@ -95,20 +98,20 @@ TConnectionIdx connection::registry(){
     this->socket_recv.send(message_0mq, zmq::send_flags::none);
 
     // #ifdef VERBOSE
-        _m = "send " + std::to_string(this->cid) + "\n";
+        _m = "registry send " + std::to_string(this->cid) + "\n";
         std::cout << _m;
     // #endif
     
     auto resp_val = this->socket_recv.recv(reply_0mq, zmq::recv_flags::none);
     // #ifdef VERBOSE
-        _m = "recv " + std::to_string(this->cid) + " - registration successful\n";
+        _m = "registry recv " + std::to_string(this->cid) + " - registration successful\n";
         std::cout << _m;
     // #endif
     
     TConnectionIdx new_idx = std::stoi(reply_0mq.to_string());
     this->cid = new_idx;
     // #ifdef VERBOSE
-        str+="new id: " +std::to_string(this->cid);
+        str+="new connection id: " +std::to_string(this->cid);
         std::cout << str + "\n";
     // #endif
     this->registered = true;
@@ -213,10 +216,11 @@ std::pair<std::string, std::string> connection::recv_message(){
         std::cout << "recv_message zmsgidx: " << zmsgidx.to_string() << "\n";
         std::cout << "recv_message zmsgtype : " <<  type << "\n";
         if(type == CONN_MSG_INTERNAL){
+            std::cout << "recv_message received CONN_MSG_INTERNAL\n";
             this->last_sent_idx += 1;
             zmsg = zmq::message_t(std::to_string(this->last_sent_idx));
             std::cout << "recv_message sending last_sent_idx: " << this->last_sent_idx << "\n";
-            this->socket_recv.send(zidx, zmq::send_flags::sndmore);
+            this->socket_recv.send(zmsgidx, zmq::send_flags::sndmore);
             this->socket_recv.send(zmsg, zmq::send_flags::none);
             std::cout << "last_sent_idx: " << this->last_sent_idx << " sent \n";
         }else{

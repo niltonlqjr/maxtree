@@ -37,7 +37,7 @@ class scheduler_of_workers{
         connection c;
         scheduler_of_workers();
         scheduler_of_workers(zmq::context_t &context, std::string address_recv, std::string address_send);
-        void set_info(zmq::context_t &context, std::string address_recv, std::string address_send);
+        void set_info(TConnectionIdx cid, zmq::context_t &context, std::string address_recv, std::string address_send);
         void insert_worker(Worker w);
         Worker get_free_worker();
         template <class T> size_t search_free_worker_by_function(T value, T function(Worker));
