@@ -16,7 +16,7 @@
 
 
 /* Worker class must have the operators < (lower than), > (greater than) and == (equal to) */
-template <class Worker>
+template <class Worker, class Type_idx = TWorkerIdx>
 class scheduler_of_workers{
     protected:
         void wait_worker(std::unique_lock<std::mutex> &l);
@@ -24,7 +24,7 @@ class scheduler_of_workers{
         bool bindable,running;
         std::condition_variable cv, cv_send, cv_recv;
         std::deque<Worker> free_workers;
-        std::deque<Worker> busy_workers;
+        std::unordered_map<Type_idx, Worker> busy_workers;
         std::queue<std::string> send_msg_queue;
         std::queue<std::pair<std::string, std::string>> recv_msg_queue;
         
@@ -32,14 +32,18 @@ class scheduler_of_workers{
         void loop_recv();
         void loop_send();
         std::thread thread_recv, thread_send;
-
-    public:
+        
+        public:
         connection c;
         scheduler_of_workers();
         scheduler_of_workers(zmq::context_t &context, std::string address_recv, std::string address_send);
         void set_info(TConnectionIdx cid, zmq::context_t &context, std::string address_recv, std::string address_send);
         void insert_worker(Worker w);
+
         Worker get_free_worker();
+        Worker get_busy_worker_by_idx(Type_idx idx);
+        void set_busy_worker(Type_idx idx, Worker w);
+        
         template <class T> size_t search_free_worker_by_function(T value, T function(Worker));
         void finish_worker(Worker w);
         void clear();

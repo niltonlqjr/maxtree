@@ -366,8 +366,9 @@ void process_task_request(message &recv_msg){
     std::string _m;
     // _m = "worker " + std::to_string(recv_msg.sender) + " going to waiting queue\n";
     // std::cout << _m;
-    w = G_busy_workers.get_worker(recv_msg.sender);
-    G_waiting_workers.insert_worker(w);
+    // w = G_busy_workers.get_worker(recv_msg.sender);
+    // G_waiting_workers.insert_worker(w);
+    w = G_workers.get_busy_worker_by_idx(recv_msg.sender);
 }
 
 void search_pair(){

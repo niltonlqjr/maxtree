@@ -1,6 +1,5 @@
 #include <vips/vips8>
 // #include <vips/image.h> // to include VipsAccess enum
-
 #include <iostream>
 #include <vector>
 #include <deque>
@@ -33,6 +32,9 @@ using namespace vips;
 
 bool print_only_trees, verbose;
 
+// TODO: 
+//  - use schedule_of_workers to connect at manager
+//  - write worker code to connect to local scheduler of workers.
 
 extern std::pair<uint32_t, uint32_t> GRID_DIMS;
 
