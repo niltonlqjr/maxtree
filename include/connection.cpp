@@ -1,40 +1,35 @@
 #include "connection.hpp"
 #include <iostream>
 
-
-connection::handshake_monitor::handshake_monitor(std::string name){
+connection::handshake_monitor::handshake_monitor(std::string name): zmq::monitor_t(){
     this->handshake_done = false;
     this->monitor_name = name;
 }
-
 void connection::handshake_monitor::on_event_handshake_succeeded(const zmq_event_t &event, const char *addr){
-    std::unique_lock<std::mutex> l(this->lock);
+    // std::unique_lock<std::mutex> l(this->lock);
     this->handshake_done = true;
     this->cv.notify_all();
 }
-
 void connection::handshake_monitor::wait_handshake(){
     std::unique_lock<std::mutex> l(this->lock);
-    this->thread_monitor.join();
-    if(!handshake_done){
+    std::cout << "join monitor thread\n";
+    this->thread_monitor->join();
+    if(!this->handshake_done){
         this->cv.wait(l);
     }
 }
-
 void connection::handshake_monitor::func_check_event(){
     this->check_event(-1);
 }
-
 void connection::handshake_monitor::event(zmq::socket_t &socket){
     std::unique_lock<std::mutex> l(this->lock);
     this->init(socket, this->monitor_name, ZMQ_EVENT_HANDSHAKE_SUCCEEDED);
     socket.set(zmq::sockopt::linger, 0);
-    this->thread_monitor = std::thread(&connection::handshake_monitor::func_check_event, this);
+    this->thread_monitor = new std::thread(&connection::handshake_monitor::func_check_event, this);
 }
-
 void connection::handshake_monitor::join_event(){
-    if(this->thread_monitor.joinable()){
-        this->thread_monitor.join();
+    if(this->thread_monitor->joinable()){
+        this->thread_monitor->join();
     }
 }
 
@@ -133,13 +128,20 @@ void connection::connect(){
         std::string monitor_send_name = "inproc://monitor_send" + std::to_string(this->cid);
         handshake_monitor monitor_send(monitor_send_name);
         monitor_send.event(this->socket_send);
+        _m = std::to_string(this->cid) + " connecting to server: " + this->addr_recv;
+        std::cout << _m << "\n";
         this->socket_send.connect(this->addr_send);
-        monitor_send.wait_handshake();
 
-        #ifdef VERBOSE
-            _m = std::to_string(this->get_index()) + "connected socket_send at: " + this->addr_send + "\n";
+        _m = "handshaking";
+        std::cout << _m << "\n";
+        monitor_send.wait_handshake();
+        _m = "handshake done!";
+        std::cout << _m << "\n";
+        
+        // #ifdef VERBOSE
+            _m = std::to_string(this->cid) + "connected socket_send at: " + this->addr_send + "\n";
             std::cout << _m;
-        #endif
+        // #endif
 
         std::string monitor_recv_name = "inproc://monitor_recv" + std::to_string(this->cid);
         handshake_monitor monitor_recv(monitor_recv_name);

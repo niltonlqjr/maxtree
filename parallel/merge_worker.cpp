@@ -478,41 +478,30 @@ int main(int argc, char *argv[]){
                   << "    when these information were passed in command line, the configuration file values will be ignored\n";
         exit(EX_USAGE); 
     }
-
     read_config(argv[1]);
-
-    
     if(argc >= 3){
         G_input_name = argv[2];
     }else if(G_input_name == ""){
         std::cout << "input file not defined, please, define it in config file or in command line.\n";
         exit(EX_NOINPUT);
     }
-    zmq::context_t context_main(1);
-
     if(argc >= 4){
         G_out_name = argv[3];
     }
-
+    
+    zmq::context_t context_main(1);
     std::string server_recv_addr = G_protocol + "://" + G_server_ip + ":" + G_server_recv_port;
     std::string server_send_addr = G_protocol + "://" + G_server_ip + ":" + G_server_send_port;
-
-
-
     std::cout << "configurations:\n";
     print_worker_config();
     std::cout << "====================\n";
     std::cout << "get grid dims from server: " << server_recv_addr << "\n";
-    
-
     connection G_local_conn(TConnectionIdxNULL, context_main, server_recv_addr, server_send_addr, zmq::socket_type::dealer);
-    
     G_local_conn.registry();
     G_local_conn.connect();
 
     GRID_DIMS = get_grid_dims(G_local_conn);
     
-
     G_glines = GRID_DIMS.first;
     G_gcolumns = GRID_DIMS.second;
     std::cout << G_glines<<","<<G_gcolumns<<"\n";
@@ -529,19 +518,6 @@ int main(int argc, char *argv[]){
         )
     );
 
-    // uint64_t size_bytes = sizeof(maxtree_node) * in->width() * in->height(); 
-    // std::cout << "\n========\n";
-    // std::cout << "size per maxtree node:" << sizeof(maxtree_node) << " Bytes \n";
-    // std::cout << "maxtree total size (estimated) " << size_bytes << " Bytes \n";
-    // std::cout << "maxtree total size (estimated) " << (size_bytes >> 20) << "MB \n";
-    // std::cout<< "\n========\n\n";
-
-    // size_bytes = sizeof(boundary_node) * in->width() * in->height(); 
-    // std::cout << "\n========\n";
-    // std::cout << "size per boudary tree node:" << sizeof(boundary_node) << " Bytes \n";
-    // std::cout << "maxtree total size (estimated) " << size_bytes << " Bytes \n";
-    // std::cout << "maxtree total size (estimated) " << (size_bytes >> 20) << "MB \n";
-    // std::cout<< "\n========\n\n";
     std::cout << "image size: " << in->width() << "x" << in->height() << "\n";
     // registry_threads(G_num_threads, server_send_addr, server_recv_addr, context_main);
     // calc_tile_boundary_tree(G_num_threads, server_addr, self_addr);

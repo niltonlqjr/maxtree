@@ -2,6 +2,7 @@
 #include <condition_variable>
 #include <mutex>
 #include <thread>
+#include <atomic>
 #include "const_enum_define.hpp"
 #include "src/hps.h"
 
@@ -36,9 +37,9 @@ class connection{
             private:
                 std::condition_variable cv;
                 std::mutex lock;
-                bool handshake_done;
+                std::atomic<bool> handshake_done;
                 std::string monitor_name;
-                std::thread thread_monitor;
+                std::thread *thread_monitor;
                 void func_check_event();
             public:
                 handshake_monitor(std::string name);
